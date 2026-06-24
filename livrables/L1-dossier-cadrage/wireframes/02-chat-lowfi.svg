@@ -1,0 +1,128 @@
+<svg viewBox="0 0 1240 940" xmlns="http://www.w3.org/2000/svg" font-family="Inter, 'Segoe UI', sans-serif">
+  <style>
+    .fr{fill:#fff;stroke:#B5B5B5;stroke-width:1.5}
+    .rg{fill:#F4F4F4;stroke:#BBB;stroke-width:1.2;stroke-dasharray:6 4}
+    .el{fill:#ECECEC;stroke:#C4C4C4;stroke-width:1}
+    .bar{fill:#D7D7D7}.barl{fill:#E6E6E6}
+    .btn{fill:#E0E0E0;stroke:#BBB;stroke-width:1}
+    .rlbl{font-size:11px;fill:#7A7A7A;font-weight:700;letter-spacing:.6px}
+    .cap{font-size:11px;fill:#8C8C8C}
+    .num{fill:#D7263D}.numt{font-size:12px;fill:#fff;font-weight:700;text-anchor:middle}
+    .ltitle{font-size:13px;fill:#222;font-weight:700;letter-spacing:.5px}
+    .note{font-size:12.5px;fill:#333}
+    .title{font-size:14px;fill:#333;font-weight:700}
+    .mono{font-size:11px;fill:#777;font-family:'Roboto Mono',monospace}
+  </style>
+
+  <text x="40" y="28" class="title">NEOTRAVEL — WIREFRAME LOW-FIDELITY · Écran 2 : Conversation (collecte → devis → escalade)</text>
+
+  <!-- ===== MOCK FRAME ===== -->
+  <rect x="40" y="45" width="840" height="855" rx="6" class="fr"/>
+  <rect x="40" y="45" width="840" height="26" rx="6" fill="#EDEDED"/>
+  <circle cx="58" cy="58" r="4" fill="#C9C9C9"/><circle cx="72" cy="58" r="4" fill="#C9C9C9"/><circle cx="86" cy="58" r="4" fill="#C9C9C9"/>
+  <rect x="110" y="50" width="320" height="16" rx="8" fill="#fff" stroke="#D5D5D5"/><text x="120" y="62" class="cap">neotravel.fr/chat</text>
+
+  <!-- column separator -->
+  <line x1="558" y1="85" x2="558" y2="870" stroke="#E2E2E2" stroke-dasharray="4 4"/>
+  <text x="80" y="98" class="rlbl">FIL DE CONVERSATION</text>
+
+  <!-- agent bubble 1 -->
+  <circle cx="92" cy="135" r="12" class="el"/>
+  <rect x="110" y="118" width="300" height="42" rx="10" class="el"/>
+  <rect x="126" y="132" width="250" height="7" rx="3" class="bar"/><rect x="126" y="145" width="180" height="7" rx="3" class="bar"/>
+  <!-- prospect bubble -->
+  <rect x="320" y="172" width="190" height="34" rx="10" fill="#E2E2E2" stroke="#CFCFCF"/>
+  <rect x="336" y="186" width="150" height="7" rx="3" fill="#CFCFCF"/>
+  <!-- agent bubble 2 (question) -->
+  <circle cx="92" cy="238" r="12" class="el"/>
+  <rect x="110" y="218" width="320" height="42" rx="10" class="el"/>
+  <rect x="126" y="232" width="270" height="7" rx="3" class="bar"/><rect x="126" y="245" width="200" height="7" rx="3" class="bar"/>
+
+  <!-- DEVIS CARD -->
+  <rect x="90" y="280" width="380" height="180" rx="8" fill="#fff" stroke="#BDBDBD"/>
+  <rect x="90" y="280" width="380" height="30" rx="8" fill="#E0E0E0"/>
+  <text x="106" y="300" class="cap" font-weight="700">Devis — NeoTravel</text>
+  <text x="108" y="332" class="mono">Forfait transfert ............</text><rect x="378" y="324" width="76" height="9" rx="3" class="bar"/>
+  <text x="108" y="352" class="mono">Coefficients (saison, urgence)</text><rect x="378" y="344" width="76" height="9" rx="3" class="bar"/>
+  <text x="108" y="372" class="mono">Options ....................</text><rect x="378" y="364" width="76" height="9" rx="3" class="bar"/>
+  <rect x="90" y="390" width="380" height="32" rx="0" fill="#D2D2D2"/>
+  <text x="108" y="411" class="title" font-size="13">Total TTC : 1 628 €</text>
+  <text x="108" y="442" class="cap">Prix calculé par le moteur déterministe · valable sous réserve de dispo.</text>
+
+  <!-- devis action buttons -->
+  <rect x="90" y="474" width="190" height="34" rx="17" class="btn"/><text x="185" y="496" class="cap" text-anchor="middle" font-weight="700">Recevoir par email</text>
+  <rect x="292" y="474" width="140" height="34" rx="17" fill="#fff" stroke="#BDBDBD"/><text x="362" y="496" class="cap" text-anchor="middle">Modifier ma demande</text>
+
+  <!-- escalade alt state -->
+  <text x="80" y="548" class="rlbl">ÉTAT ALTERNATIF — CAS COMPLEXE (HITL)</text>
+  <circle cx="92" cy="585" r="12" class="el"/>
+  <rect x="110" y="566" width="340" height="44" rx="10" fill="#F0F0F0" stroke="#C4C4C4" stroke-dasharray="5 3"/>
+  <rect x="126" y="580" width="300" height="7" rx="3" class="bar"/><rect x="126" y="593" width="230" height="7" rx="3" class="bar"/>
+
+  <!-- composer (fixed bottom) -->
+  <rect x="90" y="650" width="340" height="46" rx="10" fill="#fff" stroke="#BBB"/>
+  <rect x="110" y="669" width="240" height="8" rx="4" class="barl"/><text x="120" y="676" class="cap">Votre message…</text>
+  <rect x="440" y="650" width="46" height="46" rx="10" class="btn"/><polygon points="456,664 474,673 456,682" fill="#8C8C8C"/>
+
+  <!-- ===== RÉCAP PANEL ===== -->
+  <rect x="580" y="110" width="270" height="340" rx="8" class="rg"/>
+  <text x="596" y="132" class="rlbl">VOTRE DEMANDE</text>
+  <!-- checklist -->
+  <rect x="596" y="150" width="15" height="15" rx="3" class="el"/><text x="600" y="162" class="cap">✓</text><text x="620" y="162" class="cap" font-size="12">Départ : Lyon</text>
+  <rect x="596" y="180" width="15" height="15" rx="3" class="el"/><text x="600" y="192" class="cap">✓</text><text x="620" y="192" class="cap" font-size="12">Destination : Annecy</text>
+  <rect x="596" y="210" width="15" height="15" rx="3" class="el"/><text x="600" y="222" class="cap">✓</text><text x="620" y="222" class="cap" font-size="12">Date : 14/07</text>
+  <rect x="596" y="240" width="15" height="15" rx="3" class="el"/><text x="600" y="252" class="cap">✓</text><text x="620" y="252" class="cap" font-size="12">Passagers : 50</text>
+  <rect x="596" y="270" width="15" height="15" rx="3" fill="#fff" stroke="#C4C4C4"/><text x="620" y="282" class="cap" font-size="12" fill="#B26A00">Options ? (manquant)</text>
+  <!-- completeness -->
+  <text x="596" y="330" class="cap" font-weight="700">Complétude</text>
+  <rect x="596" y="342" width="40" height="14" class="el"/><rect x="640" y="342" width="40" height="14" class="el"/><rect x="684" y="342" width="40" height="14" class="el"/><rect x="728" y="342" width="40" height="14" class="el"/><rect x="772" y="342" width="40" height="14" fill="#fff" stroke="#C4C4C4"/>
+  <text x="596" y="380" class="cap" font-size="12">80 % — il manque les options</text>
+
+  <!-- ===== CALLOUT NUMBERS ===== -->
+  <circle cx="498" cy="139" r="11" class="num"/><text x="498" y="143" class="numt">1</text>
+  <circle cx="490" cy="350" r="11" class="num"/><text x="490" y="354" class="numt">2</text>
+  <circle cx="862" cy="124" r="11" class="num"/><text x="862" y="128" class="numt">3</text>
+  <circle cx="508" cy="673" r="11" class="num"/><text x="508" y="677" class="numt">4</text>
+  <circle cx="452" cy="491" r="11" class="num"/><text x="452" y="495" class="numt">5</text>
+  <circle cx="470" cy="588" r="11" class="num"/><text x="470" y="592" class="numt">6</text>
+
+  <!-- ===== LEGEND ===== -->
+  <text x="908" y="70" class="ltitle">ANNOTATIONS</text>
+  <line x1="908" y1="80" x2="1200" y2="80" stroke="#DDD"/>
+
+  <circle cx="918" cy="112" r="10" class="num"/><text x="918" y="116" class="numt">1</text>
+  <text x="938" y="108" class="note">Fil de conversation : bulles</text>
+  <text x="938" y="124" class="note">agent (gauche) ↔ prospect</text>
+  <text x="938" y="140" class="note">(droite). Qualification pas à pas.</text>
+
+  <circle cx="918" cy="184" r="10" class="num"/><text x="918" y="188" class="numt">2</text>
+  <text x="938" y="174" class="note">Carte devis insérée dans le fil.</text>
+  <text x="938" y="190" class="note">Prix généré par le MOTEUR</text>
+  <text x="938" y="206" class="note">déterministe — jamais écrit par</text>
+  <text x="938" y="222" class="note">l'IA dans une phrase.</text>
+
+  <circle cx="918" cy="262" r="10" class="num"/><text x="918" y="266" class="numt">3</text>
+  <text x="938" y="252" class="note">Panneau récap : se remplit au</text>
+  <text x="938" y="268" class="note">fil de la collecte (transparence).</text>
+  <text x="938" y="284" class="note">Signale les champs manquants.</text>
+
+  <circle cx="918" cy="324" r="10" class="num"/><text x="918" y="328" class="numt">4</text>
+  <text x="938" y="320" class="note">Champ de saisie fixe en bas.</text>
+
+  <circle cx="918" cy="360" r="10" class="num"/><text x="918" y="364" class="numt">5</text>
+  <text x="938" y="356" class="note">Actions sur le devis : recevoir</text>
+  <text x="938" y="372" class="note">par email / modifier la demande.</text>
+
+  <circle cx="918" cy="408" r="10" class="num"/><text x="918" y="412" class="numt">6</text>
+  <text x="938" y="404" class="note">Cas complexe → escalade vers</text>
+  <text x="938" y="420" class="note">un conseiller humain (HITL),</text>
+  <text x="938" y="436" class="note">avec le contexte transmis.</text>
+
+  <line x1="908" y1="466" x2="1200" y2="466" stroke="#DDD"/>
+  <text x="908" y="492" class="rlbl">INTENTION</text>
+  <text x="908" y="514" class="note">Le récapitulatif s'affiche AVANT</text>
+  <text x="908" y="530" class="note">l'envoi. Un indicateur « l'agent</text>
+  <text x="908" y="546" class="note">rédige… » apparaît pendant les</text>
+  <text x="908" y="562" class="note">appels d'outils. Le prix reste</text>
+  <text x="908" y="578" class="note">toujours produit par le code.</text>
+</svg>

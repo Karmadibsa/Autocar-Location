@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Charte NeoTravel — voir WIREFRAMES_CHARTE_GRAPHIQUE.md */
+:root {
+  --brand: #0e7a66;
+  --brand-dark: #0a5346;
+  --brand-soft: #d9f0ea;
+  --accent: #c6f24e;
+  --accent-dark: #a9d62e;
+  --ink: #14201d;
+  --ink-soft: #5c6b66;
+  --bg: #ffffff;
+  --bg-muted: #f4f8f6;
+  --border: #e3eae7;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

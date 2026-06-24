@@ -1,0 +1,14 @@
+{
+  "name": "neotravel",
+  "version": "0.1.0",
+  "description": "Automatisation du cycle commercial NeoTravel — moteur de devis déterministe + agent IA (Option A : n8n).",
+  "private": true,
+  "scripts": {
+    "test": "node --test \"pricing/*.test.js\"",
+    "demo": "node pricing/demo.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "docx": "^9.7.1"
+  }
+}
