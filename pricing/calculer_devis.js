@@ -1,10 +1,10 @@
-// calculer_devis.js — Moteur de tarification DÉTERMINISTE de NeoTravel
+// calculer_devis.js — Moteur de tarification DÉTERMINISTE d'Autocar Location
 // -----------------------------------------------------------------------------
 // RÈGLE D'OR : ce code est la SEULE source de vérité du prix. Le LLM ne calcule
 // jamais — il ne fait qu'appeler cette fonction avec des paramètres validés.
 // Aucune dépendance externe => copiable tel quel dans un nœud Code n8n.
 //
-// Pipeline (cf. ARCHITECTURE_ET_REGLES.md §3.2.bis) :
+// Pipeline (cf. DOC_TECHNIQUE.md §8 — Le moteur de prix) :
 //   1. base_transport  = grille(distance)         si distance <= 180
 //                      = distance × 2 × 2,5 €      si distance > 180
 //      si aller_retour -> base × 2

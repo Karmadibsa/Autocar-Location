@@ -85,8 +85,8 @@ racine/
 ├─ n8n/                     L'agent IA
 │  ├─ build-workflow.js     Génère agent-workflow.json (prompts + nœuds)
 │  ├─ agent-workflow.json   Workflow à importer dans n8n
-│  ├─ relances-workflow.json Workflow planifié qui appelle /api/relances
-│  └─ system-prompt.md      Le prompt système de l'agent
+│  └─ relances-workflow.json Workflow planifié qui appelle /api/relances
+│   (prompts générés par build-workflow.js)
 │
 ├─ supabase/                Base de données
 │  ├─ schema.sql            Tables + enums + RLS + barème (référence)
@@ -214,7 +214,7 @@ npm run build && npx vitest run    # build + 26 tests
 # Agent : importer n8n/agent-workflow.json + n8n/relances-workflow.json dans n8n
 ```
 
-- Installation détaillée : **`GUIDE_INSTALLATION.md`**
+- Clés à brancher : **`web/.env.local.example`** (Supabase, n8n, Resend, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`)
 - Déploiement (Vercel + n8n) : **`DEPLOIEMENT.md`**
 - En un clic (Windows) : **`start.bat`**
 

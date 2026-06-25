@@ -53,8 +53,8 @@ npm run demo  # affiche des devis exemples détaillés
 - **Arrondi prévisible** au centime (robuste aux artefacts flottants).
 - **Déterminisme garanti** (testé) : deux appels identiques ⇒ résultat identique.
 
-## ⚠️ Hypothèses à valider au follow-up (25/06)
-Voir `ARCHITECTURE_ET_REGLES.md §9` : formule > 180 km, seuils des codes date, ordre marge/TVA, distance, péages. Marquées `[HYPOTHESE]` dans `matrices.js`.
+## Hypothèses de barème
+Formule > 180 km, seuils des codes date, ordre marge/TVA, distance, péages : marquées `[HYPOTHESE]` dans `matrices.js`. Le barème est pilotable (voir `pricing_config` en base et `DOC_TECHNIQUE.md §8`).
 
 ## Synchro module ↔ n8n
 `n8n-code-node.js` est un **inline** de `matrices.js` + `calculer_devis.js`. En cas de modif : changer le module testé d'abord, relancer `npm test`, puis reporter dans le nœud n8n.

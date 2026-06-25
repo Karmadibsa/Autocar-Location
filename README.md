@@ -42,12 +42,10 @@ npm run dev                        # http://localhost:3000
 
 | Document | Contenu |
 |----------|---------|
-| **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, « où modifier quoi », flux. |
-| [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md) | Comptes & clés à créer/brancher |
+| **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, install, « où modifier quoi », flux. |
 | [DEPLOIEMENT.md](DEPLOIEMENT.md) | Mise en ligne (Vercel + n8n) |
 | [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
-| [ARCHITECTURE_ET_REGLES.md](ARCHITECTURE_ET_REGLES.md) | Règles métier, go/no-go |
-| [WIREFRAMES_CHARTE_GRAPHIQUE.md](WIREFRAMES_CHARTE_GRAPHIQUE.md) | Charte graphique |
+| [n8n/README.md](n8n/README.md) · [pricing/README.md](pricing/README.md) | Montage de l'agent · moteur de prix |
 | `livrables/` | Dossier de cadrage, argumentaire, wireframes |
 
 ## Variables d'environnement
