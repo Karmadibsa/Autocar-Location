@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   return new Response(Buffer.from(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="devis-neotravel.pdf"',
+      "Content-Disposition": 'attachment; filename="devis-autocar-location.pdf"',
     },
   });
 }

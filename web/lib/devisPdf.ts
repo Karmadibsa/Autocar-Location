@@ -1,6 +1,8 @@
-// Génère un PDF de devis NeoTravel (pdf-lib, pur JS).
+// Génère un PDF de devis Autocar Location (pdf-lib, pur JS), aspect facture.
 // On évite les glyphes non WinAnsi (→, €) : on écrit "->" et "EUR".
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 type Ligne = { libelle: string; montant: number };
 export type DevisPdf = {
@@ -22,6 +24,8 @@ export type ParamsPdf = {
 const BRAND = rgb(0.054, 0.478, 0.4);
 const INK = rgb(0.08, 0.125, 0.114);
 const GREY = rgb(0.36, 0.42, 0.4);
+const LIGHT = rgb(0.95, 0.97, 0.96);
+const ACCENT = rgb(0.776, 0.949, 0.306);
 
 export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -30,64 +34,92 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const W = 595;
   const M = 50;
-  let y = 790;
+  let y = 800;
 
   const text = (s: string, x: number, yy: number, size = 11, f = font, color = INK) =>
     page.drawText(s, { x, y: yy, size, font: f, color });
+  const right = (s: string, xRight: number, yy: number, size = 11, f = font, color = INK) =>
+    page.drawText(s, { x: xRight - f.widthOfTextAtSize(s, size), y: yy, size, font: f, color });
   const eur = (n?: number) => `${(n ?? 0).toFixed(2)} EUR`;
 
-  // En-tête
-  text("NeoTravel", M, y, 22, bold, BRAND);
-  text("Transport de groupe en autocar", M, y - 16, 10, font, GREY);
-  text("DEVIS", W - M - 70, y, 20, bold, BRAND);
-  y -= 50;
-  page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 1, color: BRAND });
-  y -= 30;
-
-  // Infos client / trajet
-  if (params.nom) {
-    text("A l'attention de :", M, y, 10, bold);
-    text(String(params.nom), M + 95, y, 10);
-    y -= 18;
+  // --- En-tête : logo + marque (gauche) / DEVIS + réf (droite) ---
+  let logo: PDFImage | null = null;
+  try {
+    const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
+    logo = await doc.embedPng(buf);
+  } catch {
+    /* logo best-effort */
   }
-  const trajet = `${params.depart ?? "?"} -> ${params.destination ?? "?"}`;
-  text("Trajet :", M, y, 10, bold);
-  text(trajet, M + 95, y, 10);
-  y -= 18;
-  text("Date :", M, y, 10, bold);
-  text(`${params.date_depart ?? "-"}${params.aller_retour ? " (aller/retour)" : ""}`, M + 95, y, 10);
-  y -= 18;
-  text("Passagers :", M, y, 10, bold);
-  text(String(params.nb_passagers ?? "-"), M + 95, y, 10);
-  y -= 35;
+  let brandX = M;
+  if (logo) {
+    const h = 38;
+    const w = (logo.width / logo.height) * h;
+    page.drawImage(logo, { x: M, y: y - h + 4, width: w, height: h });
+    brandX = M + w + 10;
+  }
+  text("Autocar Location", brandX, y - 8, 18, bold, BRAND);
+  text("Transport de groupe en autocar avec chauffeur", brandX, y - 24, 9, font, GREY);
 
-  // Prestation (version client : pas de marge ni de coefficients)
-  text("Prestation", M, y, 11, bold, BRAND);
-  text("Montant", W - M - 80, y, 11, bold, BRAND);
+  const ref = "DV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  right("DEVIS", W - M, y - 4, 20, bold, BRAND);
+  right(`Réf. ${ref}`, W - M, y - 22, 9, font, GREY);
+  right(`Émis le ${new Date().toLocaleDateString("fr-FR")}`, W - M, y - 34, 9, font, GREY);
+
+  y -= 56;
+  page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 1, color: BRAND });
+  y -= 26;
+
+  // --- À l'attention de ---
+  if (params.nom) {
+    text("A l'attention de", M, y, 9, bold, GREY);
+    text(String(params.nom), M, y - 14, 12, bold);
+    y -= 36;
+  }
+
+  // --- Résumé de la demande (encadré) ---
+  const boxH = 78;
+  page.drawRectangle({ x: M, y: y - boxH, width: W - 2 * M, height: boxH, color: LIGHT });
+  text("RESUME DE LA DEMANDE", M + 12, y - 18, 9, bold, BRAND);
+  const col1 = M + 12;
+  const col2 = M + 270;
+  const resume = (label: string, val: string, x: number, yy: number) => {
+    text(label, x, yy, 8, font, GREY);
+    text(val, x, yy - 13, 10, bold);
+  };
+  resume("Trajet", `${params.depart ?? "?"} -> ${params.destination ?? "?"}`, col1, y - 40);
+  resume("Date de depart", params.date_depart ?? "-", col2, y - 40);
+  resume("Type", params.aller_retour ? "Aller-retour" : "Aller simple", col1, y - 70);
+  resume("Passagers", String(params.nb_passagers ?? "-"), col2, y - 70);
+  y -= boxH + 30;
+
+  // --- Prestation (version client : pas de marge ni de coefficients) ---
+  text("PRESTATION", M, y, 10, bold, BRAND);
+  right("MONTANT", W - M, y, 10, bold, BRAND);
   y -= 8;
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: GREY });
-  y -= 18;
+  y -= 20;
   text("Transport de groupe en autocar avec chauffeur", M, y, 10);
-  text(eur(devis.prix_ht), W - M - 80, y, 10);
+  right(eur(devis.prix_ht), W - M, y, 10);
   y -= 22;
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: GREY });
   y -= 22;
+
+  // --- Totaux ---
   text("Total HT", W - M - 200, y, 10, font, GREY);
-  text(eur(devis.prix_ht), W - M - 80, y, 10);
+  right(eur(devis.prix_ht), W - M, y, 10);
   y -= 16;
   text("TVA (10%)", W - M - 200, y, 10, font, GREY);
-  text(eur(devis.tva), W - M - 80, y, 10);
-  y -= 24;
+  right(eur(devis.tva), W - M, y, 10);
+  y -= 26;
 
-  // Total TTC mis en avant
-  page.drawRectangle({ x: M, y: y - 6, width: W - 2 * M, height: 28, color: rgb(0.776, 0.949, 0.306) });
-  text("TOTAL TTC", M + 10, y + 2, 13, bold, INK);
-  text(eur(devis.prix_ttc), W - M - 110, y + 2, 13, bold, INK);
+  page.drawRectangle({ x: M, y: y - 6, width: W - 2 * M, height: 30, color: ACCENT });
+  text("TOTAL TTC", M + 12, y + 3, 13, bold, INK);
+  right(eur(devis.prix_ttc), W - M - 12, y + 3, 13, bold, INK);
   y -= 60;
 
-  // Mentions
-  text("Tarif sous reserve de disponibilite. Devis genere automatiquement.", M, y, 9, font, GREY);
-  text("NeoTravel - intermediation transport de groupe - depuis 2010", M, y - 14, 9, font, GREY);
+  // --- Mentions ---
+  text("Tarif sous reserve de disponibilite. Devis genere automatiquement, valable 30 jours.", M, y, 9, font, GREY);
+  text("Autocar Location - intermediation transport de groupe - depuis 2010", M, y - 14, 9, font, GREY);
 
   return doc.save();
 }

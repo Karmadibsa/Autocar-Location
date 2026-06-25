@@ -38,7 +38,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-white/90 px-6 py-3 backdrop-blur">
-      <a href="/" className="text-lg font-bold text-[var(--brand)]">NeoTravel</a>
+      <a href="/" className="flex items-center gap-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Autocar Location" className="h-8 w-auto" />
+        <span className="text-lg font-bold text-[var(--brand)]">Autocar Location</span>
+      </a>
       <div className="flex items-center gap-1">
         {!email && <a href="/login" className={linkBox}>Connexion</a>}
         {email && isAdmin && <a href="/admin" className={linkBox}>Dashboard</a>}

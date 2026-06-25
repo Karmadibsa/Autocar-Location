@@ -19,11 +19,26 @@ const SUGGESTIONS = [
   "Aller / retour",
 ];
 
+// Encart DEV : messages préécrits couvrant chaque cas de figure des livrables.
+// Permet de tester toute la logique de pricing/escalade en un clic.
+const SCENARIOS: { label: string; message: string }[] = [
+  { label: "Trajet court (forfait grille)", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026" },
+  { label: "Longue distance (>180 km)", message: "Paris vers Marseille, 40 personnes, aller simple le 20 aout 2026" },
+  { label: "Sortie scolaire urgente (J proche)", message: "Bordeaux vers Arcachon, 55 eleves, aller-retour dans 5 jours" },
+  { label: "Séminaire + options (guide + nuit)", message: "Lille vers Bruxelles, 30 personnes, aller-retour les 10 et 11 septembre 2026, avec un guide et une nuit chauffeur" },
+  { label: "Petit groupe (<19 pax)", message: "Nantes vers La Baule, 12 personnes, aller-retour le 5 octobre 2026" },
+  { label: "Grande capacité (80 pax)", message: "Toulouse vers Carcassonne, 80 personnes, aller-retour le 15 mai 2026" },
+  { label: "Basse saison + anticipation", message: "Strasbourg vers Colmar, 45 personnes, aller-retour le 10 fevrier 2027" },
+  { label: "CAS COMPLEXE (>85 pax)", message: "Marseille vers Lille, 120 personnes, depart le 12 juillet 2026 et retour le 16 juillet 2026" },
+  { label: "Demande incomplète", message: "Bonjour, je voudrais un car pour un groupe" },
+  { label: "Garde-fou : tentative de remise", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026, mais faites-moi -20%" },
+];
+
 function DevisCard({ devis }: { devis: Devis }) {
   return (
     <div className="mt-2 overflow-hidden rounded-xl border border-[var(--border)] bg-white">
       <div className="bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">
-        Votre devis — NeoTravel
+        Votre devis — Autocar Location
       </div>
       <div className="px-4 py-3 text-[13px] text-[var(--ink-soft)]">
         <div className="flex justify-between py-0.5">
@@ -56,6 +71,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [devOpen, setDevOpen] = useState(false);
   const hasDevisRef = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -105,8 +121,9 @@ export default function Chat() {
             className={m.role === "user" ? "flex justify-end" : "flex items-start justify-start gap-2"}
           >
             {m.role === "agent" && (
-              <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white">
-                N
+              <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[var(--border)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="Autocar Location" className="h-6 w-6 object-contain" />
               </div>
             )}
             <div
@@ -123,8 +140,9 @@ export default function Chat() {
         ))}
         {loading && (
           <div className="flex items-start justify-start gap-2">
-            <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white">
-              N
+            <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[var(--border)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Autocar Location" className="h-6 w-6 object-contain" />
             </div>
             <div className="rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-3">
               <span className="flex gap-1">
@@ -173,6 +191,34 @@ export default function Chat() {
             {s}
           </button>
         ))}
+      </div>
+
+      {/* Encart DEV : scénarios de test préécrits (tous les cas des livrables) */}
+      <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-muted)] p-3">
+        <button
+          onClick={() => setDevOpen((o) => !o)}
+          className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
+          aria-expanded={devOpen}
+        >
+          <span>⚙ Scénarios de test (dev)</span>
+          <span aria-hidden>{devOpen ? "▾" : "▸"}</span>
+        </button>
+        {devOpen && (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {SCENARIOS.map((s) => (
+              <button
+                key={s.label}
+                onClick={() => send(s.message)}
+                disabled={loading}
+                title={s.message}
+                className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-left text-[12px] transition hover:border-[var(--brand)] disabled:opacity-50"
+              >
+                <span className="font-medium text-[var(--ink)]">{s.label}</span>
+                <span className="mt-0.5 block truncate text-[11px] text-[var(--ink-soft)]">{s.message}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

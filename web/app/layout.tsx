@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "NeoTravel — Votre devis autocar, en conversation",
+  title: "Autocar Location — Votre devis autocar, en conversation",
   description:
     "Décrivez votre trajet de groupe, on s'occupe du reste. Devis autocar rapide, clair et sans engagement.",
 };

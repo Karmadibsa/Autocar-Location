@@ -6,7 +6,7 @@ type Coord = { lat: number; lon: number };
 async function geocode(ville: string): Promise<Coord | null> {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(ville + ", France")}`;
   try {
-    const r = await fetch(url, { headers: { "User-Agent": "NeoTravel-demo/1.0 (contact@neotravel.test)" } });
+    const r = await fetch(url, { headers: { "User-Agent": "AutocarLocation-demo/1.0 (contact@autocar-location.test)" } });
     if (!r.ok) return null;
     const j = (await r.json()) as { lat: string; lon: string }[];
     if (!Array.isArray(j) || !j[0]) return null;

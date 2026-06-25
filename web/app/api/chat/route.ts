@@ -6,6 +6,7 @@ import { buildDevisPdf } from "@/lib/devisPdf";
 import { calculerDevis } from "@/lib/calculerDevis";
 import { distanceKm } from "@/lib/distance";
 import { estUrgent, prochaineRelance } from "@/lib/relances";
+import { devisEmailHtml } from "@/lib/emailDevis";
 
 type Devis = {
   prix_ht?: number;
@@ -226,24 +227,11 @@ async function sendDevisEmail(to: string, devis: Devis, params: Params) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
-  // Vue CLIENT : une seule ligne de prestation + TVA + TTC (jamais marge/coeff/AR interne)
-  const row = (libelle: string, montant?: number) =>
-    `<tr><td style="padding:4px 0">${libelle}</td><td style="text-align:right">${(montant ?? 0).toFixed(2)} €</td></tr>`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;color:#14201d">
-      <h2 style="color:#0e7a66">Votre devis — NeoTravel</h2>
-      <p>${params.depart ?? ""} → ${params.destination ?? ""} · ${params.nb_passagers ?? ""} passagers · départ ${params.date_depart ?? ""}${params.aller_retour ? " · aller-retour" : ""}</p>
-      <table style="border-collapse:collapse;width:100%">
-        ${row("Transport de groupe en autocar avec chauffeur", devis.prix_ht)}
-        ${row("TVA (10 %)", devis.tva)}
-      </table>
-      <p style="background:#c6f24e;padding:10px;font-weight:bold">Total TTC : ${devis.prix_ttc?.toFixed(2)} ${devis.devise ?? "EUR"}</p>
-      <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité. Le devis détaillé est en pièce jointe (PDF).</p>
-    </div>`;
+  const html = devisEmailHtml(devis, params);
   let attachments: { filename: string; content: string }[] | undefined;
   try {
     const pdf = await buildDevisPdf(devis, params);
-    attachments = [{ filename: "devis-neotravel.pdf", content: Buffer.from(pdf).toString("base64") }];
+    attachments = [{ filename: "devis-autocar-location.pdf", content: Buffer.from(pdf).toString("base64") }];
   } catch (e) {
     console.error("[pdf] génération échouée:", e);
   }
@@ -251,7 +239,7 @@ async function sendDevisEmail(to: string, devis: Devis, params: Params) {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, subject: "Votre devis NeoTravel", html, attachments }),
+      body: JSON.stringify({ from, to, subject: "Votre devis Autocar Location", html, attachments }),
     });
     if (!r.ok) console.error("[email] Resend:", r.status, (await r.text()).slice(0, 200));
   } catch (e) {

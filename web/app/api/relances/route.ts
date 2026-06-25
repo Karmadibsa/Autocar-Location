@@ -4,6 +4,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { prochaineRelance, estUrgent, typeRelance } from "@/lib/relances";
 import { buildDevisPdf } from "@/lib/devisPdf";
+import { devisEmailHtml } from "@/lib/emailDevis";
 
 type DevisDu = {
   id: string;
@@ -92,17 +93,21 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
-  const trajet = `${d.demandes?.depart ?? ""} → ${d.demandes?.destination ?? ""}`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;color:#14201d">
-      <h2 style="color:#0e7a66">Votre devis NeoTravel vous attend (relance ${numero}/2)</h2>
-      <p>Bonjour,</p>
-      <p>Sauf erreur, nous n'avons pas encore reçu votre retour sur votre devis pour le trajet <b>${trajet}</b>
-      (${d.demandes?.nb_passagers ?? "?"} passagers).</p>
-      <p style="background:#c6f24e;padding:10px;font-weight:bold">Total TTC : ${d.prix_ttc?.toFixed(2)} ${d.devise ?? "EUR"}</p>
-      <p>Nous restons à votre disposition pour toute question. Le devis (PDF) est en pièce jointe.</p>
-      <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité.</p>
-    </div>`;
+  const html = devisEmailHtml(
+    { prix_ht: d.prix_ht, tva: d.tva, prix_ttc: d.prix_ttc, devise: d.devise },
+    {
+      depart: d.demandes?.depart,
+      destination: d.demandes?.destination,
+      date_depart: d.demandes?.date_depart,
+      nb_passagers: d.demandes?.nb_passagers,
+      nom: d.clients?.nom,
+    },
+    {
+      titre: `Votre devis vous attend (relance ${numero}/2)`,
+      intro:
+        "Sauf erreur, nous n'avons pas encore reçu votre retour. Nous restons à votre disposition pour toute question.",
+    },
+  );
   let attachments: { filename: string; content: string }[] | undefined;
   try {
     const pdf = await buildDevisPdf(
@@ -115,7 +120,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
         nom: d.clients?.nom,
       },
     );
-    attachments = [{ filename: "devis-neotravel.pdf", content: Buffer.from(pdf).toString("base64") }];
+    attachments = [{ filename: "devis-autocar-location.pdf", content: Buffer.from(pdf).toString("base64") }];
   } catch {
     /* PDF best-effort */
   }
@@ -123,7 +128,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, subject: `Relance — votre devis NeoTravel`, html, attachments }),
+      body: JSON.stringify({ from, to, subject: `Relance — votre devis Autocar Location`, html, attachments }),
     });
   } catch {
     /* email best-effort */

@@ -47,7 +47,11 @@ export default function Login() {
     <main className="flex flex-1">
       {/* Panneau marque (desktop) */}
       <div className="hidden w-1/2 flex-col justify-center bg-[var(--brand)] p-12 text-white lg:flex">
-        <h2 className="text-3xl font-bold">NeoTravel</h2>
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Autocar Location" className="h-12 w-auto rounded-lg bg-white/90 p-1" />
+          <h2 className="text-3xl font-bold">Autocar Location</h2>
+        </div>
         <p className="mt-3 max-w-sm text-white/80">
           Suivez vos devis et vos échanges, ou pilotez l&apos;activité commerciale.
         </p>

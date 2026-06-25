@@ -57,7 +57,7 @@ export default function EspaceClient() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "devis-neotravel.pdf";
+    a.download = "devis-autocar-location.pdf";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -142,7 +142,7 @@ export default function EspaceClient() {
               <div className="mt-2 space-y-1 text-sm">
                 {(c.messages ?? []).map((m, i) => (
                   <p key={i}>
-                    <span className="font-semibold">{m.role === "user" ? "Vous" : "NeoTravel"} :</span>{" "}
+                    <span className="font-semibold">{m.role === "user" ? "Vous" : "Autocar Location"} :</span>{" "}
                     {m.contenu ?? m.content}
                   </p>
                 ))}
