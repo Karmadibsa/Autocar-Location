@@ -1,8 +1,8 @@
-# Prompt pour Figma Make — Interface prospect NeoTravel (haute-fidélité)
+# Prompt pour Figma Make — Interface prospect Autocar Location (haute-fidélité)
 
 ## Comment l'utiliser
 1. Ouvre **Figma Make**.
-2. **Joins les 3 fichiers** comme références : `wireframes/01-landing-lowfi.svg`, `wireframes/02-chat-lowfi.svg` (structure à respecter) et `WIREFRAMES_CHARTE_GRAPHIQUE.md` (charte complète).
+2. **Joins les wireframes** comme références : `wireframes/01-landing-lowfi.svg`, `wireframes/02-chat-lowfi.svg` (structure à respecter). La charte (couleurs/typo) est dans les tokens du prompt ci-dessous et dans `web/app/globals.css`.
 3. **Colle le prompt ci-dessous** (il contient déjà les tokens, donc il marche même sans les pièces jointes).
 4. Itère écran par écran si besoin (« génère d'abord la landing, puis l'écran de chat »).
 
