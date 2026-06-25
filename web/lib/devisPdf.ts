@@ -25,7 +25,7 @@ export type ParamsPdf = {
   ref?: string | null; // référence stable du devis (dérivée de l'id)
 };
 
-// Référence lisible et STABLE dérivée de l'id du devis (même devis = même réf.).
+/** Référence lisible et **stable** dérivée de l'id du devis (même devis ⇒ même réf.). */
 export function refDevis(id?: string | null): string {
   if (!id) return "DV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "");
   return "DV-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -37,6 +37,11 @@ const GREY = rgb(0.36, 0.42, 0.4);
 const LIGHT = rgb(0.95, 0.97, 0.96);
 const ACCENT = rgb(0.776, 0.949, 0.306);
 
+/**
+ * Génère le PDF d'un devis (vue client : prestation + TVA + TTC, jamais la marge),
+ * avec logo, référence stable et adresse de facturation.
+ * @returns Les octets du PDF (`Uint8Array`).
+ */
 export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const page = doc.addPage([595, 842]); // A4

@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: Autocar Location — API
+  version: "1.0.0"
+  description: |
+    API interne de l'application Autocar Location (routes serveur Next.js, `web/app/api/*`).
+
+    **Authentification** — la plupart des routes attendent dans le corps JSON un `token`
+    (l'`access_token` Supabase de l'utilisateur connecté). Le serveur le vérifie puis
+    agit avec la *service role key* (jamais exposée au navigateur).
+    - **Public** : `/chat`, `/contact`, `/devis-refuser-public` (capability par token de devis).
+    - **Client connecté** : `/my-data`, `/me`, `/profil-update`, `/devis-reponse`, `/devis-pdf`.
+    - **Admin** : `/admin-data`, `/demande-statut`, `/devis-manuel`, `/relances` (ou secret cron).
+servers:
+  - url: http://localhost:3000
+    description: Développement local
+tags:
+  - name: Chat
+  - name: Devis
+  - name: Client
+  - name: Admin
+  - name: Divers
+
+paths:
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: Conversation prospect (relais agent n8n + calcul + persistance + email)
+      description: Relaie la conversation à n8n, recalcule le devis avec la distance réelle (OSRM), persiste et envoie l'email si l'email est connu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026" }
+                history: { type: array, items: { $ref: "#/components/schemas/Msg" } }
+                sessionId: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Réponse de l'agent (+ devis ou escalade)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply: { type: string }
+                  devis: { $ref: "#/components/schemas/Devis" }
+                  escalade: { type: string, nullable: true }
+                  params: { $ref: "#/components/schemas/Params" }
+
+  /api/devis-reponse:
+    post:
+      tags: [Devis]
+      summary: Le client accepte / refuse son devis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, id, reponse]
+              properties:
+                token: { type: string, description: access_token du client }
+                id: { type: string, format: uuid, description: id du devis }
+                reponse: { type: string, enum: [accepte, refuse] }
+                raisons: { type: array, items: { type: string }, description: "motifs de refus (si reponse=refuse)" }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, properties: { ok: {type: boolean}, statut: {type: string} } } } } }
+        "403": { description: Le devis n'appartient pas au client }
+        "409": { description: Devis déjà traité }
+
+  /api/devis-refuser-public:
+    post:
+      tags: [Devis]
+      summary: Refuser un devis SANS compte (lien tokenisé reçu par email)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string, format: uuid, description: "token unique du devis (capability)" }
+                raisons: { type: array, items: { type: string } }
+      responses:
+        "200": { description: Refusé (ou déjà refusé) }
+        "404": { description: Token introuvable }
+        "409": { description: Devis non modifiable }
+
+  /api/devis-pdf:
+    post:
+      tags: [Devis]
+      summary: Génère et renvoie le PDF d'un devis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, token]
+              properties:
+                id: { type: string, format: uuid }
+                token: { type: string }
+      responses:
+        "200": { description: Le PDF, content: { application/pdf: { schema: { type: string, format: binary } } } }
+        "403": { description: Accès refusé (ni admin ni propriétaire) }
+
+  /api/devis-manuel:
+    post:
+      tags: [Admin]
+      summary: Devis sur-mesure pour un cas complexe (rejoint le pipeline)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, demande_id, prix_ht]
+              properties:
+                token: { type: string, description: access_token admin }
+                demande_id: { type: string, format: uuid }
+                prix_ht: { type: number, example: 2400 }
+      responses:
+        "200": { description: Devis créé + email envoyé, content: { application/json: { schema: { type: object, properties: { ok: {type: boolean}, prix_ttc: {type: number} } } } } }
+        "403": { description: Réservé aux admins }
+
+  /api/demande-statut:
+    post:
+      tags: [Admin]
+      summary: Marquer une demande (gagné / perdu / pris en charge)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, id, statut]
+              properties:
+                token: { type: string }
+                id: { type: string, format: uuid }
+                statut: { type: string, enum: [accepte, refuse, qualifiee, cloture] }
+      responses:
+        "200": { description: OK }
+        "403": { description: Réservé aux admins }
+
+  /api/relances:
+    post:
+      tags: [Admin]
+      summary: Traite les relances dues + expire les devis de plus de 30 jours
+      description: Appelable par le planificateur n8n (`secret`) ou par un admin (`token`).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secret: { type: string, description: "CRON_SECRET (planificateur)" }
+                token: { type: string, description: "access_token admin (alternative)" }
+      responses:
+        "200":
+          description: Bilan du traitement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  envoyees: { type: integer }
+                  cloturees: { type: integer }
+                  expirees: { type: integer }
+        "403": { description: Ni secret valide ni admin }
+
+  /api/admin-data:
+    post:
+      tags: [Admin]
+      summary: Données du dashboard (KPIs + pipeline + demandes détaillées)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token], properties: { token: { type: string } } }
+      responses:
+        "200":
+          description: KPIs + catégories + demandes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  leads: { type: integer }
+                  envoyes: { type: integer }
+                  acceptes: { type: integer }
+                  conversion: { type: integer }
+                  categories: { type: object }
+                  demandes: { type: array, items: { type: object } }
+        "403": { description: Réservé aux admins }
+
+  /api/my-data:
+    post:
+      tags: [Client]
+      summary: Devis + conversations + profil du client connecté
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token], properties: { token: { type: string } } }
+      responses:
+        "200":
+          description: Données du client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devis: { type: array, items: { $ref: "#/components/schemas/Devis" } }
+                  conversations: { type: array, items: { type: object } }
+                  email: { type: string }
+                  profil: { $ref: "#/components/schemas/Profil" }
+
+  /api/me:
+    post:
+      tags: [Client]
+      summary: Profil léger (email, rôle, nom) ; crée la fiche à la 1re connexion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token], properties: { token: { type: string } } }
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email: { type: string }
+                  role: { type: string, enum: [client, admin] }
+                  prenom: { type: string, nullable: true }
+                  nom: { type: string, nullable: true }
+
+  /api/profil-update:
+    post:
+      tags: [Client]
+      summary: Met à jour les coordonnées (adresse de facturation)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                prenom: { type: string }
+                nom: { type: string }
+                telephone: { type: string }
+                adresse: { type: string }
+                code_postal: { type: string }
+                ville: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/contact:
+    post:
+      tags: [Divers]
+      summary: Envoie le message du formulaire de contact (email)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom, email, message]
+              properties:
+                nom: { type: string }
+                email: { type: string, format: email }
+                message: { type: string }
+      responses:
+        "200": { description: Message envoyé }
+        "400": { description: Champs manquants ou email invalide }
+        "502": { description: Échec de l'envoi }
+
+components:
+  schemas:
+    Msg:
+      type: object
+      properties:
+        role: { type: string, enum: [user, agent] }
+        content: { type: string }
+    Params:
+      type: object
+      properties:
+        depart: { type: string, nullable: true }
+        destination: { type: string, nullable: true }
+        date_depart: { type: string, nullable: true }
+        nb_passagers: { type: integer, nullable: true }
+        aller_retour: { type: boolean, nullable: true }
+        email: { type: string, nullable: true }
+    Devis:
+      type: object
+      properties:
+        prix_ht: { type: number }
+        tva: { type: number }
+        prix_ttc: { type: number }
+        devise: { type: string, example: EUR }
+        lignes: { type: array, items: { type: object } }
+    Profil:
+      type: object
+      properties:
+        prenom: { type: string, nullable: true }
+        nom: { type: string, nullable: true }
+        telephone: { type: string, nullable: true }
+        adresse: { type: string, nullable: true }
+        code_postal: { type: string, nullable: true }
+        ville: { type: string, nullable: true }

@@ -237,7 +237,17 @@ npm run build && npx vitest run    # build + 26 tests
 
 ---
 
-## 12. Conventions de code
+## 12. Documentation générée automatiquement
+
+Deux références **interactives** complètent ce document :
+
+- **API (Swagger UI)** — lance le front puis ouvre **`/docs`** (ex. `http://localhost:3000/docs`).
+  Explorateur de **toutes les routes** (`web/app/api/*`) : corps attendu, réponses, autorisations.
+  La source est `web/public/openapi.yaml`.
+- **Code (TypeDoc, façon Javadoc)** — `cd web && npm run doc`, puis ouvre `web/docs/index.html`.
+  Référence HTML auto-générée à partir du code TypeScript et des commentaires JSDoc de `web/lib/`.
+
+## 13. Conventions de code
 
 - **Un commentaire en tête de chaque fichier** explique son rôle (lire le haut du fichier = comprendre le fichier).
 - TypeScript strict côté front ; fonctions métier **pures et testées** isolées dans `web/lib/`.
@@ -247,7 +257,7 @@ npm run build && npx vitest run    # build + 26 tests
 
 ---
 
-## 13. Glossaire
+## 14. Glossaire
 
 - **Lead / demande** : un besoin de transport exprimé par un prospect.
 - **Devis déterministe** : prix calculé par des règles fixes (jamais par l'IA).

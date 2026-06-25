@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Autocar Location — Référence du code (web/lib)",
+  "entryPoints": [
+    "lib/calculerDevis.ts",
+    "lib/distance.ts",
+    "lib/relances.ts",
+    "lib/devisPdf.ts",
+    "lib/emailDevis.ts",
+    "lib/useAuth.ts",
+    "lib/supabaseClient.ts",
+    "lib/supabaseAdmin.ts"
+  ],
+  "out": "docs",
+  "exclude": ["**/*.test.ts"],
+  "readme": "none",
+  "excludePrivate": true,
+  "hideGenerator": true
+}

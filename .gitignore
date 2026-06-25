@@ -8,6 +8,9 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 
+# Doc générée (TypeDoc) — régénérable via `npm run doc`
+web/docs/
+
 # Environnement (secrets — ne jamais committer)
 .env
 .env.local

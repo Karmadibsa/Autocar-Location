@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Doc TypeDoc générée (HTML/JS) — ne pas linter.
+    "docs/**",
   ]),
 ]);
 

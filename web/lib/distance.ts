@@ -25,6 +25,10 @@ export function parseOsrmDistance(payload: unknown): number | null {
   return typeof meters === "number" ? metersToKm(meters) : null;
 }
 
+/**
+ * Distance routière réelle entre deux villes (km), via Nominatim (géocodage) + OSRM.
+ * @returns Les km arrondis, ou `null` en cas d'échec (l'appelant garde alors l'estimation).
+ */
 export async function distanceKm(depart: string, destination: string): Promise<number | null> {
   if (!depart || !destination) return null;
   const [a, b] = await Promise.all([geocode(depart), geocode(destination)]);

@@ -1,5 +1,6 @@
 // Logique de relances (testable) : J+2 si urgent, J+3 puis J+7 sinon, max 2 puis clôture.
 
+/** Une demande est « urgente » si le départ est dans moins de 7 jours. */
 export function estUrgent(
   dateDepart: string | null | undefined,
   dateDemande: string = new Date().toISOString().slice(0, 10),
@@ -29,14 +30,15 @@ export function prochaineRelance(
   return nbRelancesEffectuees === 0 ? plus(3) : plus(4); // standard : J+3 (création) puis J+7
 }
 
-// Type de relance pour la table relances (J2 / J3 / J7).
+/** Libellé du type de relance pour la table `relances` (J2 si urgent, sinon J3 puis J7). */
 export function typeRelance(urgent: boolean, numero: number): "J2" | "J3" | "J7" {
   if (urgent) return "J2";
   return numero === 1 ? "J3" : "J7";
 }
 
-// Un devis envoyé est valable VALIDITE_JOURS jours ; au-delà il expire.
+/** Durée de validité d'un devis envoyé (jours) ; au-delà il expire. */
 export const VALIDITE_JOURS = 30;
+/** Vrai si un devis envoyé à `dateEnvoi` a dépassé sa validité (`VALIDITE_JOURS`). */
 export function estExpire(
   dateEnvoi: string | null | undefined,
   validiteJours: number = VALIDITE_JOURS,

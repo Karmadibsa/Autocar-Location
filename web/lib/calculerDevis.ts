@@ -77,6 +77,15 @@ function normOpts(o: ParamsDevis["options"]) {
   );
 }
 
+/**
+ * Calcule un devis de transport de groupe de façon **déterministe** (la règle d'or :
+ * le prix vient toujours d'ici, jamais du LLM).
+ *
+ * @param params - Paramètres validés : passagers, dates, distance, aller-retour, options.
+ * @param M - Barème (matrices). Par défaut, le barème intégré `MATRICES`.
+ * @returns Un devis chiffré (`prix_ht`, `tva`, `prix_ttc`, `lignes`, `coefficients`),
+ *          ou `{ erreur }` si un paramètre est invalide, ou `{ escalade }` si > 85 passagers.
+ */
 export function calculerDevis(params: ParamsDevis, M = MATRICES): DevisResult {
   const { nb_passagers, date_depart, date_demande, distance_km, aller_retour = false, options = [] } = params;
   if (typeof nb_passagers !== "number" || !Number.isFinite(nb_passagers) || nb_passagers <= 0)

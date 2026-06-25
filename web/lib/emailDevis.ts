@@ -22,6 +22,10 @@ function ligneResume(label: string, valeur: string) {
   </tr>`;
 }
 
+/**
+ * Construit le HTML de l'email de devis (vue client : résumé + HT/TVA/TTC + boutons).
+ * @param opts.refuseToken - Si fourni, ajoute le lien « refuser sans compte ».
+ */
 export function devisEmailHtml(
   devis: EmailDevis,
   params: EmailParams,
