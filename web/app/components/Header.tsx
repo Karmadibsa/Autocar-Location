@@ -2,6 +2,7 @@
 
 // En-tête commun : affiche les liens selon l'état de connexion + le rôle.
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Header() {
@@ -47,20 +48,20 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-white/90 px-6 py-3 backdrop-blur">
-      <a href="/" className="flex items-center gap-2 transition hover:opacity-80">
+      <Link href="/" className="flex items-center gap-2 transition hover:opacity-80">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="Autocar Location" width={232} height={162} className="h-8 w-auto" />
         <span className="text-lg font-bold text-[var(--brand)]">Autocar Location</span>
-      </a>
+      </Link>
       <div className="flex items-center gap-1">
         {email && (
           <span className="mr-1 hidden text-sm text-[var(--ink-soft)] sm:inline">
             Bonjour, <b className="text-[var(--ink)]">{display}</b>
           </span>
         )}
-        {!email && <a href="/login" className={linkBox}>Connexion</a>}
-        {email && isAdmin && <a href="/admin" className={linkBox}>Dashboard</a>}
-        {email && !isAdmin && <a href="/espace-client" className={link}>Mon espace</a>}
+        {!email && <Link href="/login" className={linkBox}>Connexion</Link>}
+        {email && isAdmin && <Link href="/admin" className={linkBox}>Dashboard</Link>}
+        {email && !isAdmin && <Link href="/espace-client" className={link}>Mon espace</Link>}
         {email && (
           <button
             onClick={() => supabase?.auth.signOut()}

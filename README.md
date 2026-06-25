@@ -1,51 +1,61 @@
-# NeoTravel — Automatisation du cycle commercial
+# Autocar Location — Automatisation du cycle commercial
 
-Prototype d'automatisation commerciale pour NeoTravel (transport de groupe en autocar) :
-captation → qualification → **devis déterministe** → envoi → relances → pilotage.
-Cas d'étude MBA1. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOUAMI.
+Prototype qui automatise le cycle commercial d'un intermédiaire en **transport de groupe
+en autocar** : captation → qualification (agent IA) → **devis déterministe** → email/PDF →
+relances automatiques → dashboard de pilotage.
 
-> **Règle d'or** : l'IA qualifie et oriente ; le **prix vient toujours de `calculer_devis()`** (code déterministe), jamais du LLM.
+Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOUAMI.
+
+> ⭐ **Règle d'or** : l'IA qualifie et oriente ; le **prix vient toujours du code
+> déterministe** (`calculerDevis`), **jamais** du modèle de langage.
 
 ## Stack (Option A hybride)
-- **Front** : Next.js 16 (App Router, TypeScript, Tailwind) — `web/`
-- **Agent** : n8n (nœud AI Agent, gpt-4o-mini) — `n8n/`
+
+- **Front** : Next.js 16 (App Router, TypeScript, Tailwind v4) — `web/`
+- **Agent IA** : n8n + Gemma (`gemma-4-31b-it`, gratuit) — `n8n/`
 - **Données** : Supabase (PostgreSQL + Auth + RLS) — `supabase/`
-- **Pricing** : `calculer_devis()` testé — `pricing/`
-- **Emails** : Resend · **Déploiement** : Vercel
+- **Pricing** : moteur `calculerDevis` testé — `pricing/` + `web/lib/`
+- **Emails** : Resend · **Distance** : OSRM/Nominatim · **Déploiement** : Vercel
 
-## Structure
-```
-pricing/    moteur de devis déterministe + tests (npm test)
-supabase/   schema.sql (tables + RLS + seed matrices)
-n8n/        system-prompt.md + guide de montage des workflows
-web/        app Next.js (landing + chat, /admin, /espace-client)
-livrables/  dossier de cadrage, argumentaire, wireframes
-```
+## Démarrage rapide
 
-## Lancer en local
 ```bash
-# 1. Pricing (aucune clé requise)
-npm install         # à la racine (outils)
-npm test            # 13 tests du moteur de devis
+# 1. Moteur de prix (aucune clé requise)
+npm install && npm test            # tests du moteur de devis
 
 # 2. Base de données
-#   → exécuter supabase/schema.sql dans Supabase (SQL Editor)
+#    → exécuter supabase/reset-complet.sql dans Supabase (SQL Editor)
 
 # 3. Front
 cd web
-cp .env.local.example .env.local   # puis remplir les clés
+cp .env.local.example .env.local   # remplir les clés
 npm install
-npm run dev          # http://localhost:3000
+npm run dev                        # http://localhost:3000
 
 # 4. Agent
-npx n8n              # http://localhost:5678 — voir n8n/README.md
+#    → importer n8n/agent-workflow.json + n8n/relances-workflow.json dans n8n
 ```
 
+> Sous Windows, **`start.bat`** lance le front + n8n en un clic (avec logs).
+
 ## Documentation
-- **`GUIDE_INSTALLATION.md`** — ce que l'utilisateur doit créer/brancher (comptes & clés).
-- **`PROCEDURE_DEV.md`** — plan de développement en 7 phases + plan de test.
-- **`livrables/L1-dossier-cadrage/`** — dossier de cadrage, argumentaire des choix, wireframes.
-- **`WIREFRAMES_CHARTE_GRAPHIQUE.md`** — charte graphique (couleurs, typo, composants).
+
+| Document | Contenu |
+|----------|---------|
+| **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, « où modifier quoi », flux. |
+| [GUIDE_INSTALLATION.md](GUIDE_INSTALLATION.md) | Comptes & clés à créer/brancher |
+| [DEPLOIEMENT.md](DEPLOIEMENT.md) | Mise en ligne (Vercel + n8n) |
+| [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
+| [ARCHITECTURE_ET_REGLES.md](ARCHITECTURE_ET_REGLES.md) | Règles métier, go/no-go |
+| [WIREFRAMES_CHARTE_GRAPHIQUE.md](WIREFRAMES_CHARTE_GRAPHIQUE.md) | Charte graphique |
+| `livrables/` | Dossier de cadrage, argumentaire, wireframes |
 
 ## Variables d'environnement
-Voir `web/.env.local.example` (Supabase, OpenAI, n8n, Resend). Les secrets ne sont jamais committés (`.gitignore`).
+
+Voir **`web/.env.local.example`** (Supabase, n8n, Resend, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`).
+Les secrets ne sont **jamais** committés (`.gitignore`). La clé du LLM reste **dans n8n**.
+
+## Tests
+
+- Moteur de prix : `npm test` (racine)
+- Front : `cd web && npx vitest run` (26 tests : pricing, distance, PDF, email, relances)

@@ -63,6 +63,33 @@ function compareDemandes(a: DemandeRow, b: DemandeRow, key: string): number {
   if (typeof va === "number" && typeof vb === "number") return va - vb;
   return String(va).localeCompare(String(vb), "fr");
 }
+
+// En-tête de colonne triable (cliquer pour trier asc/desc).
+function SortTh({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  k: string;
+  sortKey: string;
+  sortDir: "asc" | "desc";
+  onSort: (k: string) => void;
+}) {
+  return (
+    <th className="px-3 py-2">
+      <button
+        onClick={() => onSort(k)}
+        className="flex items-center gap-1 font-medium text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
+      >
+        {label}
+        <span aria-hidden className="text-[10px]">{sortKey === k ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
+}
 type Data = {
   ok: boolean;
   leads?: number;
@@ -226,17 +253,8 @@ export default function AdminPage() {
       setSortDir(key === "trajet" || key === "client" || key === "statut" ? "asc" : "desc");
     }
   }
-  // En-tête de colonne triable
-  const Th = ({ label, k }: { label: string; k: string }) => (
-    <th className="px-3 py-2">
-      <button
-        onClick={() => trier(k)}
-        className="flex items-center gap-1 font-medium text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
-      >
-        {label}
-        <span aria-hidden className="text-[10px]">{sortKey === k ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span>
-      </button>
-    </th>
+  const th = (label: string, k: string) => (
+    <SortTh label={label} k={k} sortKey={sortKey} sortDir={sortDir} onSort={trier} />
   );
   return (
     <main className="mx-auto max-w-5xl p-6">
@@ -296,14 +314,14 @@ export default function AdminPage() {
         <table className="w-full text-sm">
           <thead className="bg-[var(--bg-muted)] text-left text-[var(--ink-soft)]">
             <tr>
-              <Th label="Trajet" k="trajet" />
-              <Th label="Client" k="client" />
-              <Th label="Départ" k="date_depart" />
-              <Th label="Pax" k="nb_passagers" />
-              <Th label="Montant TTC" k="montant" />
-              <Th label="Statut" k="statut" />
-              <Th label="Relances" k="relances" />
-              <Th label="Reçu le" k="created_at" />
+              {th("Trajet", "trajet")}
+              {th("Client", "client")}
+              {th("Départ", "date_depart")}
+              {th("Pax", "nb_passagers")}
+              {th("Montant TTC", "montant")}
+              {th("Statut", "statut")}
+              {th("Relances", "relances")}
+              {th("Reçu le", "created_at")}
               <th className="px-3 py-2"></th>
             </tr>
           </thead>

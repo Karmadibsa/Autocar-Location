@@ -2,6 +2,7 @@
 
 // Portail client (protégé) : devis, réponses, conversations, gestion du compte.
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
@@ -144,18 +145,18 @@ export default function EspaceClient() {
             Bonjour {profil.prenom || email}, content de vous revoir.
           </p>
         </div>
-        <a href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
+        <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
           <Plus className="h-4 w-4" /> Nouveau devis
-        </a>
+        </Link>
       </div>
 
       {role === "admin" && (
-        <a
+        <Link
           href="/admin"
           className="mt-4 block rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)] transition hover:bg-white"
         >
           Vous êtes administrateur → accéder au <b>dashboard de pilotage</b>.
-        </a>
+        </Link>
       )}
 
       <h2 className="mt-6 text-lg font-semibold">Mes devis</h2>

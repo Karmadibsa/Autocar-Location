@@ -3,6 +3,7 @@
 // Page publique de refus de devis (lien tokenisé reçu par email, sans compte).
 // On lit le token via window.location pour éviter une contrainte Suspense.
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
 const RAISONS_REFUS = [
@@ -52,9 +53,9 @@ export default function RefuserDevis() {
             C'est noté, votre devis a bien été refusé. Merci de nous avoir prévenus — et au
             plaisir pour un prochain voyage&nbsp;!
           </p>
-          <a href="/" className="mt-5 inline-block rounded-full bg-[var(--brand)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]">
+          <Link href="/" className="mt-5 inline-block rounded-full bg-[var(--brand)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]">
             Retour à l'accueil
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="rounded-2xl border border-[var(--border)] bg-white p-8 shadow-sm">

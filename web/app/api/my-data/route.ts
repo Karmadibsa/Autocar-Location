@@ -24,6 +24,13 @@ export async function POST(request: Request) {
     sb.from("conversations").select("*").eq("client_id", client.id).order("updated_at", { ascending: false }),
   ]);
 
-  const { id: _id, ...profil } = client;
+  const profil = {
+    prenom: client.prenom,
+    nom: client.nom,
+    telephone: client.telephone,
+    adresse: client.adresse,
+    code_postal: client.code_postal,
+    ville: client.ville,
+  };
   return Response.json({ devis: devis ?? [], conversations: conversations ?? [], email, profil });
 }

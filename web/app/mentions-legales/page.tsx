@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Info } from "lucide-react";
 
 export const metadata = { title: "Mentions légales — Autocar Location" };
@@ -42,9 +43,9 @@ export default function MentionsLegales() {
           <h2 className="font-semibold">Données personnelles</h2>
           <p className="text-[var(--ink-soft)]">
             Voir la page{" "}
-            <a className="text-[var(--brand)] underline hover:text-[var(--brand-dark)]" href="/confidentialite">
+            <Link className="text-[var(--brand)] underline hover:text-[var(--brand-dark)]" href="/confidentialite">
               Confidentialité &amp; RGPD
-            </a>.
+            </Link>.
           </p>
         </div>
       </section>
