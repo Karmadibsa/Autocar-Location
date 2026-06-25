@@ -1,15 +1,18 @@
 -- =============================================================================
--- Migration : ajoute la colonne "prenom" à clients + renseigne les comptes démo.
--- À lancer une fois dans Supabase → SQL Editor (sans tout réinitialiser).
+-- Migration non destructive vers le schéma récent (sans tout réinitialiser).
+-- Ajoute prénom/adresse aux clients + token aux devis, renseigne les comptes
+-- démo et garantit le rôle admin. Idempotent : relançable sans risque.
 -- =============================================================================
 alter table clients add column if not exists prenom text;
+alter table clients add column if not exists nom text;
+alter table clients add column if not exists adresse text;
+alter table clients add column if not exists code_postal text;
+alter table clients add column if not exists ville text;
+alter table devis   add column if not exists token uuid not null default gen_random_uuid();
 
-update clients set prenom = 'Lucas', nom = 'Bernard' where email = 'client1@email.fr';
-update clients set prenom = 'Emma',  nom = 'Durand'  where email = 'client2@email.fr';
-update clients set prenom = 'Marie', nom = 'Dubois'  where email = 'marie.dubois@email.fr';
-update clients set prenom = 'Paul',  nom = 'Martin'  where email = 'paul.martin@email.fr';
+update clients set prenom='Lucas', nom='Bernard', adresse='12 rue de la République', code_postal='69001', ville='Lyon'    where email='client1@email.fr';
+update clients set prenom='Emma',  nom='Durand',  adresse='5 avenue des Fleurs',     code_postal='44000', ville='Nantes'  where email='client2@email.fr';
 
--- S'assure que le compte admin a bien le rôle 'admin' (sinon /admin redirige).
-insert into profiles (id, role)
-  select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
+-- Rôle admin (sinon /admin redirige vers l'espace client)
+insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
   on conflict (id) do update set role = 'admin';

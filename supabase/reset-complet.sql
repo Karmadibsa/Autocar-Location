@@ -1,7 +1,7 @@
 -- =============================================================================
--- NeoTravel — RESET COMPLET (à lancer dans Supabase → SQL Editor)
--- Supprime TOUT (tables + types) puis recrée le schéma propre + données de démo.
--- Ne touche PAS aux comptes auth.users (tes connexions restent valides).
+-- Autocar Location — RESET COMPLET (Supabase → SQL Editor → Run)
+-- Supprime TOUT (tables + types) puis recrée le schéma propre + un jeu de
+-- données clair couvrant tous les statuts. Ne touche PAS aux comptes auth.users.
 -- =============================================================================
 
 drop table if exists conversations, relances, devis, demandes, clients, pricing_config, profiles cascade;
@@ -29,6 +29,7 @@ create table clients (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid references auth.users(id) on delete set null,
   email text not null, type_client text, prenom text, nom text, telephone text,
+  adresse text, code_postal text, ville text,
   consentement boolean not null default false, created_at timestamptz not null default now()
 );
 create unique index clients_email_key on clients (lower(email));
@@ -51,6 +52,7 @@ create table devis (
   lignes jsonb not null default '[]'::jsonb, coefficients jsonb not null default '[]'::jsonb,
   statut statut_devis not null default 'brouillon', pdf_url text, date_envoi timestamptz,
   prochaine_relance timestamptz, nb_relances integer not null default 0,
+  token uuid not null default gen_random_uuid(),
   created_at timestamptz not null default now()
 );
 
@@ -91,80 +93,88 @@ alter table relances enable row level security;
 alter table conversations enable row level security;
 create policy profiles_self on profiles for select using (id = auth.uid() or is_admin());
 create policy clients_select on clients for select using (auth_user_id = auth.uid() or is_admin());
+create policy clients_update on clients for update using (auth_user_id = auth.uid() or is_admin());
 create policy demandes_select on demandes for select using (is_admin() or client_id in (select id from clients where auth_user_id = auth.uid()));
 create policy devis_select on devis for select using (is_admin() or client_id in (select id from clients where auth_user_id = auth.uid()));
 create policy conversations_select on conversations for select using (is_admin() or client_id in (select id from clients where auth_user_id = auth.uid()));
 create policy relances_admin on relances for select using (is_admin());
 
--- ---------- (Re)définir les rôles admin pour les comptes existants ----------
+-- ---------- Rôle admin pour le compte existant ----------
 insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
   on conflict (id) do update set role = 'admin';
 
--- ---------- DONNÉES DE DÉMO (couvre tous les statuts du pipeline) ----------
-insert into clients (id, email, type_client, prenom, nom, telephone, consentement) values
- ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Lucas','Bernard','0600000001',true),
- ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Emma','Durand','0600000002',true),
- ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie','Dubois','0600000003',true),
- ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul','Martin','0600000004',true);
+-- ============================================================================
+-- DONNÉES DE DÉMO — chaque demande est liée à un client ; tous les statuts
+-- ============================================================================
+insert into clients (id, email, type_client, prenom, nom, telephone, adresse, code_postal, ville, consentement) values
+ ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Lucas','Bernard','0612345601','12 rue de la République','69001','Lyon',true),
+ ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Emma','Durand','0612345602','5 avenue des Fleurs','44000','Nantes',true),
+ ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie','Dubois','0612345603','40 boulevard Haussmann','75009','Paris',true),
+ ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul','Martin','0612345604','8 cours de l''Intendance','33000','Bordeaux',true),
+ ('c5000000-0000-0000-0000-000000000005','sophie.leroy@email.fr','association','Sophie','Leroy','0612345605','22 rue Nationale','59000','Lille',true),
+ ('c6000000-0000-0000-0000-000000000006','thomas.moreau@email.fr','collectivite','Thomas','Moreau','0612345606','1 place du Capitole','31000','Toulouse',true);
 
--- 1) EN ATTENTE + relance DUE maintenant (démo relance)
+-- 1) Lucas — EN ATTENTE + relance DUE maintenant (démo relance)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','Lyon','Annecy','2026-07-12',true,50,139,'normal','devis_envoye', now() - interval '1 day');
+ ('d0000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','Lyon','Annecy','2026-07-12',true,50,139,'normal','devis_envoye', now() - interval '1 day');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, prochaine_relance, nb_relances, created_at) values
- ('e1000000-0000-0000-0000-000000000001','d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001',1957.30,195.73,2153.03,'EUR',
+ ('e0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001',1957.30,195.73,2153.03,'EUR',
   '[{"libelle":"Forfait transfert 139 km","montant":740},{"libelle":"Aller/retour (x2)","montant":740},{"libelle":"Coefficients (x1.15)","montant":222},{"libelle":"Marge +15%","montant":255.30}]'::jsonb,
   '[{"libelle":"Saison (haute)","valeur":0.10},{"libelle":"Anticipation (DD_URGENT)","valeur":0.05}]'::jsonb,'envoye', now() - interval '1 day', now() - interval '1 hour', 0, now() - interval '1 day');
 insert into conversations (id, client_id, demande_id, messages, updated_at) values
- ('f1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','d1000000-0000-0000-0000-000000000001',
+ ('f0000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000001',
   '[{"role":"agent","content":"Bonjour, quel est votre besoin ?"},{"role":"user","content":"Lyon vers Annecy, 50 personnes le 12 juillet aller-retour"},{"role":"agent","content":"Votre devis est disponible."}]'::jsonb, now() - interval '1 day');
 
--- 2) GAGNÉ
+-- 2) Marie Dubois — GAGNÉ
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d2000000-0000-0000-0000-000000000002','c3000000-0000-0000-0000-000000000003','Bordeaux','Biarritz','2026-09-05',true,45,185,'normal','accepte', now() - interval '6 days');
+ ('d0000000-0000-0000-0000-000000000002','c3000000-0000-0000-0000-000000000003','Bordeaux','Biarritz','2026-09-05',true,45,185,'normal','accepte', now() - interval '6 days');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
- ('e2000000-0000-0000-0000-000000000002','d2000000-0000-0000-0000-000000000002','c3000000-0000-0000-0000-000000000003',1180.00,118.00,1298.00,'EUR',
+ ('e0000000-0000-0000-0000-000000000002','d0000000-0000-0000-0000-000000000002','c3000000-0000-0000-0000-000000000003',1180.00,118.00,1298.00,'EUR',
   '[{"libelle":"Longue distance 185 km","montant":925},{"libelle":"Coefficients (x1.05)","montant":101.25},{"libelle":"Marge +15%","montant":153.75}]'::jsonb,
   '[{"libelle":"Saison (moyenne)","valeur":0}]'::jsonb,'accepte', now() - interval '6 days', 0, now() - interval '6 days');
 
--- 3) PERDU (refusé)
-insert into demandes (id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d3000000-0000-0000-0000-000000000003','Marseille','Avignon','2026-05-10',true,60,100,'normal','refuse', now() - interval '5 days');
-insert into devis (id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
- ('e3000000-0000-0000-0000-000000000003','d3000000-0000-0000-0000-000000000003',1240.00,124.00,1364.00,'EUR',
+-- 3) Paul Martin — PERDU (refusé)
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
+ ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,60,100,'normal','refuse', now() - interval '5 days');
+insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
+ ('e0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004',1240.00,124.00,1364.00,'EUR',
   '[{"libelle":"Forfait transfert 100 km","montant":580},{"libelle":"Aller/retour (x2)","montant":580},{"libelle":"Coefficients (x1.15)","montant":174},{"libelle":"Marge +15%","montant":143.40}]'::jsonb,
   '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
 
--- 4) À TRAITER (cas complexes > 85 passagers)
-insert into demandes (id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d4000000-0000-0000-0000-000000000004','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 85 : transfert a un commercial.', now() - interval '3 days'),
- ('d4000000-0000-0000-0000-000000000005','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 85 : transfert a un commercial.', now() - interval '4 hours');
+-- 4) Sophie Leroy — À TRAITER (cas complexe > 85)
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
+ ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 85 : transfert a un commercial.', now() - interval '3 days');
 
--- 5) EN ATTENTE — relance 1
+-- 5) Thomas Moreau — À TRAITER (cas complexe, urgent)
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
+ ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 85 : transfert a un commercial.', now() - interval '4 hours');
+
+-- 6) Marie Dubois — EN ATTENTE (relance 1)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d5000000-0000-0000-0000-000000000006','c4000000-0000-0000-0000-000000000004','Lille','Bruxelles','2026-09-10',true,30,110,'normal','relance_1', now() - interval '4 days');
+ ('d0000000-0000-0000-0000-000000000006','c3000000-0000-0000-0000-000000000003','Lille','Bruxelles','2026-09-10',true,30,110,'normal','relance_1', now() - interval '4 days');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, prochaine_relance, nb_relances, created_at) values
- ('e5000000-0000-0000-0000-000000000006','d5000000-0000-0000-0000-000000000006','c4000000-0000-0000-0000-000000000004',860.00,86.00,946.00,'EUR',
+ ('e0000000-0000-0000-0000-000000000006','d0000000-0000-0000-0000-000000000006','c3000000-0000-0000-0000-000000000003',860.00,86.00,946.00,'EUR',
   '[{"libelle":"Forfait transfert 110 km","montant":620},{"libelle":"Coefficients (x1.05)","montant":31},{"libelle":"Marge +15%","montant":97.65}]'::jsonb,
   '[{"libelle":"Anticipation (DD_NORMAL)","valeur":-0.05}]'::jsonb,'envoye', now() - interval '4 days', now() + interval '3 days', 1, now() - interval '4 days');
 
--- 6) EN ATTENTE — relance 2
-insert into demandes (id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d6000000-0000-0000-0000-000000000007','Nantes','La Baule','2026-10-02',true,12,75,'normal','relance_2', now() - interval '8 days');
-insert into devis (id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, prochaine_relance, nb_relances, created_at) values
- ('e6000000-0000-0000-0000-000000000007','d6000000-0000-0000-0000-000000000007',540.00,54.00,594.00,'EUR',
+-- 7) Paul Martin — EN ATTENTE (relance 2, due)
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
+ ('d0000000-0000-0000-0000-000000000007','c4000000-0000-0000-0000-000000000004','Nantes','La Baule','2026-10-02',true,12,75,'normal','relance_2', now() - interval '8 days');
+insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, prochaine_relance, nb_relances, created_at) values
+ ('e0000000-0000-0000-0000-000000000007','d0000000-0000-0000-0000-000000000007','c4000000-0000-0000-0000-000000000004',540.00,54.00,594.00,'EUR',
   '[{"libelle":"Forfait transfert 75 km","montant":430},{"libelle":"Coefficients (x0.95)","montant":-21.50},{"libelle":"Marge +15%","montant":61.50}]'::jsonb,
   '[{"libelle":"Petit groupe 12 pax","valeur":-0.05}]'::jsonb,'envoye', now() - interval '8 days', now() - interval '2 hours', 2, now() - interval '8 days');
 
--- 7) PERDU — clôturé après 2 relances
-insert into demandes (id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d7000000-0000-0000-0000-000000000008','Nice','Monaco','2026-06-28',true,55,25,'normal','cloture', now() - interval '14 days');
-insert into devis (id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
- ('e7000000-0000-0000-0000-000000000008','d7000000-0000-0000-0000-000000000008',720.00,72.00,792.00,'EUR',
+-- 8) Sophie Leroy — PERDU (clôturé après relances, devis expiré)
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
+ ('d0000000-0000-0000-0000-000000000008','c5000000-0000-0000-0000-000000000005','Nice','Monaco','2026-06-28',true,55,25,'normal','cloture', now() - interval '40 days');
+insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
+ ('e0000000-0000-0000-0000-000000000008','d0000000-0000-0000-0000-000000000008','c5000000-0000-0000-0000-000000000005',720.00,72.00,792.00,'EUR',
   '[{"libelle":"Forfait transfert 25 km","montant":250},{"libelle":"Aller/retour (x2)","montant":250},{"libelle":"Coefficients (x1.15)","montant":75},{"libelle":"Marge +15%","montant":83.25}]'::jsonb,
-  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '14 days', 2, now() - interval '14 days');
+  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '40 days', 2, now() - interval '40 days');
 
--- 8) Haut de funnel (sans devis) : nouveau lead / qualifiée / incomplète
-insert into demandes (id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d8000000-0000-0000-0000-000000000009','Rennes','Saint-Malo','2026-08-15',true,25,70,'normal','nouveau_lead', now() - interval '2 hours'),
- ('d8000000-0000-0000-0000-000000000010','Paris','Deauville','2026-08-20',false,35,200,'normal','qualifiee', now() - interval '2 days'),
- ('d8000000-0000-0000-0000-000000000011','Strasbourg','Colmar',null,false,null,null,'normal','incomplete', now() - interval '1 day');
+-- 9-11) Haut de funnel (sans devis), reliés à des clients
+insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
+ ('d0000000-0000-0000-0000-000000000009','c6000000-0000-0000-0000-000000000006','Rennes','Saint-Malo','2026-08-15',true,25,70,'normal','nouveau_lead', now() - interval '2 hours'),
+ ('d0000000-0000-0000-0000-000000000010','c3000000-0000-0000-0000-000000000003','Paris','Deauville','2026-08-20',false,35,200,'normal','qualifiee', now() - interval '2 days'),
+ ('d0000000-0000-0000-0000-000000000011','c4000000-0000-0000-0000-000000000004','Strasbourg','Colmar',null,false,null,null,'normal','incomplete', now() - interval '1 day');

@@ -1,7 +1,7 @@
 -- =============================================================================
--- NeoTravel — Schéma Supabase (PostgreSQL)
+-- Autocar Location — Schéma Supabase (PostgreSQL)
 -- À exécuter dans Supabase : SQL Editor → coller → Run.
--- 6 tables + enums + RLS + seed des matrices de pricing.
+-- 7 tables + enums + RLS + seed des matrices de pricing.
 -- Sécurité : un client ne voit que ses données (RLS) ; l'agent n8n et le
 -- dashboard admin utilisent la SERVICE ROLE KEY (côté serveur, bypass RLS).
 -- =============================================================================
@@ -45,6 +45,9 @@ create table if not exists clients (
   prenom        text,
   nom           text,
   telephone     text,
+  adresse       text,                          -- adresse de facturation
+  code_postal   text,
+  ville         text,
   consentement  boolean not null default false, -- RGPD : consentement minimal
   created_at    timestamptz not null default now()
 );
@@ -88,6 +91,7 @@ create table if not exists devis (
   date_envoi       timestamptz,
   prochaine_relance timestamptz,
   nb_relances      integer not null default 0,
+  token            uuid not null default gen_random_uuid(), -- lien email "refuser sans compte"
   created_at       timestamptz not null default now()
 );
 create index if not exists devis_demande_idx on devis(demande_id);
