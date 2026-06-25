@@ -16,12 +16,12 @@ insert into demandes (id, client_id, depart, destination, date_depart, aller_ret
  ('d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001','Lyon','Annecy','2026-07-12',true,50,150,'devis_envoye', now() - interval '1 day')
 on conflict do nothing;
 
-insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, created_at) values
+insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, prochaine_relance, created_at) values
  ('e1000000-0000-0000-0000-000000000001','d1000000-0000-0000-0000-000000000001','c1000000-0000-0000-0000-000000000001',
   2063.10, 206.31, 2269.41, 'EUR',
   '[{"libelle":"Forfait transfert 150 km","montant":780},{"libelle":"Aller/retour (x2)","montant":780},{"libelle":"Coefficients (x1.15)","montant":234},{"libelle":"Marge +15%","montant":269.10}]'::jsonb,
   '[{"libelle":"Saison (haute)","valeur":0.10},{"libelle":"Anticipation (DD_URGENT)","valeur":0.05}]'::jsonb,
-  'envoye', now() - interval '1 day', now() - interval '1 day')
+  'envoye', now() - interval '1 day', now() - interval '1 hour', now() - interval '1 day')
 on conflict do nothing;
 
 insert into conversations (id, client_id, demande_id, messages, updated_at) values

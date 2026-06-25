@@ -2,7 +2,7 @@
 
 // Dashboard (protégé admin) : KPIs + vue opérationnelle (à traiter / en attente /
 // gagnés / perdus) + table avec le détail COMPLET du devis (vue pro).
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
@@ -63,6 +63,7 @@ export default function AdminPage() {
   const { loading, email, role, session } = useAuth();
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [relanceMsg, setRelanceMsg] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -70,16 +71,34 @@ export default function AdminPage() {
     else if (role !== "admin") router.replace("/espace-client");
   }, [loading, email, role, router]);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!session || role !== "admin") return;
-    fetch("/api/admin-data", {
+    const r = await fetch("/api/admin-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: session.access_token }),
-    })
-      .then((r) => r.json())
-      .then(setData);
+    });
+    setData(await r.json());
   }, [session, role]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  async function lancerRelances() {
+    if (!session) return;
+    setRelanceMsg("Traitement…");
+    const r = await fetch("/api/relances", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token }),
+    });
+    const j = await r.json();
+    setRelanceMsg(
+      j.ok ? `${j.envoyees} relance(s) envoyée(s) · ${j.cloturees} clôturée(s).` : "Erreur",
+    );
+    loadData();
+  }
 
   if (loading || role !== "admin") {
     return (
@@ -104,7 +123,18 @@ export default function AdminPage() {
       </div>
 
       {/* Vue opérationnelle */}
-      <h2 className="mt-8 text-lg font-semibold">Vue opérationnelle</h2>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">Vue opérationnelle</h2>
+        <div className="flex items-center gap-2 text-sm">
+          {relanceMsg && <span className="text-[var(--ink-soft)]">{relanceMsg}</span>}
+          <button
+            onClick={lancerRelances}
+            className="rounded-full border border-[var(--brand)] px-3 py-1.5 font-medium text-[var(--brand)]"
+          >
+            Lancer les relances dues
+          </button>
+        </div>
+      </div>
       <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Cat label="À traiter" value={cat?.aTraiter ?? 0} note="Intervention humaine (cas complexes)" accent />
         <Cat label="En attente" value={cat?.enAttente ?? 0} note="Relances automatiques en cours" />

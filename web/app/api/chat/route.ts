@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildDevisPdf } from "@/lib/devisPdf";
 import { calculerDevis } from "@/lib/calculerDevis";
 import { distanceKm } from "@/lib/distance";
+import { estUrgent, prochaineRelance } from "@/lib/relances";
 
 type Devis = {
   prix_ht?: number;
@@ -148,7 +149,9 @@ async function persist(
   const emailAjouteApres = !!clientId && devisExistait && !existing?.client_id;
 
   if (!devisExistait) {
-    // Première fois : on crée la demande + le devis (avec le prix figé)
+    // Première fois : on crée la demande + le devis (avec le prix figé) et on
+    // programme la 1re relance (J+2 urgent / J+3 standard).
+    const urgent = estUrgent(params.date_depart ?? null);
     await sb.from("demandes").upsert({
       id: sessionId,
       client_id: clientId,
@@ -158,6 +161,7 @@ async function persist(
       aller_retour: !!params.aller_retour,
       nb_passagers: params.nb_passagers ?? null,
       distance_km: params.distance_km ?? null,
+      urgence: urgent ? "urgent" : "normal",
       statut: "devis_envoye",
     });
     await sb.from("devis").insert({
@@ -172,6 +176,7 @@ async function persist(
       coefficients: devis.coefficients ?? [],
       statut: "envoye",
       date_envoi: new Date().toISOString(),
+      prochaine_relance: prochaineRelance(urgent, 0),
     });
   } else if (emailAjouteApres) {
     // Le devis existait sans client : on relie le client SANS toucher au prix
