@@ -1,4 +1,4 @@
-# NeoTravel — Déploiement en ligne
+# Autocar Location — Déploiement en ligne
 
 > Oui, c'est déployable et **quasi 100 % gratuit**. Le seul point délicat est n8n (toujours en ligne + gratuit).
 > Rappel : héberger la stack en prod = **bonus** au barème. Pour la soutenance, **n8n local + tunnel est accepté**.
@@ -24,6 +24,7 @@
    - `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` (secrets)
    - `EMAIL_FROM`
    - `N8N_WEBHOOK_URL` = l'URL **publique** de n8n (tunnel ou hébergé) + `/webhook/neotravel`
+   - `CRON_SECRET` = secret partagé pour `/api/relances` (mettre la même valeur côté n8n)
 4. Deploy → tu obtiens une URL `https://...vercel.app`.
 5. Supabase → **Authentication → URL Configuration → Site URL** = l'URL Vercel.
 
@@ -39,7 +40,13 @@
 
 **Reco** : pour la soutenance, **local + tunnel** (gratuit, accepté). Pour une démo publique permanente, **Fly.io** ou **Oracle Cloud Free**.
 
-## 3. Points d'attention
+## 3. Relances automatiques en production
+Le workflow **Relances** (Schedule) doit appeler le **front déployé**, pas `localhost` :
+1. Dans n8n → workflow Relances → nœud **HTTP Request** → URL = `https://<ton-front>.vercel.app/api/relances`.
+2. Body JSON = `{ "secret": "<CRON_SECRET>" }` (même valeur que la variable Vercel).
+3. Garder le workflow **publié** ; en hébergé (Fly.io/Oracle) il tourne 24/7. En local+tunnel, il ne tourne que quand ta machine est allumée (suffisant pour la démo, déclenchable aussi via le bouton admin « Lancer les relances dues »).
+
+## 4. Points d'attention
 - **Secrets** : `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` → variables **serveur** (jamais `NEXT_PUBLIC_`). La clé **Gemma** reste dans n8n.
 - **N8N_WEBHOOK_URL** : doit pointer vers une URL **joignable depuis internet** (pas `localhost`) une fois le front déployé.
 - **Supabase Auth** : Site URL = domaine de prod.
