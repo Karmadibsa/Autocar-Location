@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/useAuth";
+import StatutBadge from "@/app/components/StatutBadge";
 
 type Ligne = { libelle: string; montant: number };
 type Devis = {
@@ -44,6 +45,23 @@ export default function EspaceClient() {
       });
   }, [session]);
 
+  async function downloadPdf(id: string) {
+    if (!session) return;
+    const res = await fetch("/api/devis-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, token: session.access_token }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "devis-neotravel.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading || !email) {
     return <main className="mx-auto max-w-md flex-1 p-8 text-[var(--ink-soft)]">Chargement…</main>;
   }
@@ -80,10 +98,13 @@ export default function EspaceClient() {
         <div className="mt-2 space-y-3">
           {devis.map((d) => (
             <div key={d.id} className="rounded-xl border border-[var(--border)] bg-white p-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-[var(--ink-soft)]">
-                  {new Date(d.created_at).toLocaleDateString("fr-FR")} · {d.statut}
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[var(--ink-soft)]">
+                    {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                  </span>
+                  <StatutBadge statut={d.statut} />
+                </div>
                 <span className="font-bold text-[var(--brand)]">
                   {d.prix_ttc?.toFixed(2)} {d.devise ?? "EUR"} TTC
                 </span>
@@ -96,6 +117,12 @@ export default function EspaceClient() {
                   </div>
                 ))}
               </div>
+              <button
+                onClick={() => downloadPdf(d.id)}
+                className="mt-3 rounded-full border border-[var(--brand)] px-3 py-1.5 text-xs font-medium text-[var(--brand)]"
+              >
+                Télécharger le PDF
+              </button>
             </div>
           ))}
         </div>

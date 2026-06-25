@@ -10,6 +10,7 @@ type DemandeRow = {
   nb_passagers: number | null;
   statut: string;
   created_at: string;
+  devis: { prix_ttc: number | null }[];
 };
 
 export async function POST(request: Request) {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     sb.from("devis").select("statut"),
     sb
       .from("demandes")
-      .select("id, depart, destination, nb_passagers, statut, created_at")
+      .select("id, depart, destination, nb_passagers, statut, created_at, devis(prix_ttc)")
       .order("created_at", { ascending: false })
       .limit(15),
   ]);

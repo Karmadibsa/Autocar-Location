@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/useAuth";
+import StatutBadge from "@/app/components/StatutBadge";
 
 type DemandeRow = {
   id: string;
@@ -13,6 +14,7 @@ type DemandeRow = {
   nb_passagers: number | null;
   statut: string;
   created_at: string;
+  devis?: { prix_ttc: number | null }[];
 };
 type Data = {
   ok: boolean;
@@ -84,6 +86,7 @@ export default function AdminPage() {
             <tr>
               <th className="px-3 py-2">Trajet</th>
               <th className="px-3 py-2">Pax</th>
+              <th className="px-3 py-2">Montant</th>
               <th className="px-3 py-2">Statut</th>
               <th className="px-3 py-2">Date</th>
             </tr>
@@ -91,17 +94,24 @@ export default function AdminPage() {
           <tbody>
             {demandes.map((d) => (
               <tr key={d.id} className="border-t border-[var(--border)]">
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 font-medium">
                   {d.depart ?? "?"} → {d.destination ?? "?"}
                 </td>
                 <td className="px-3 py-2">{d.nb_passagers ?? "—"}</td>
-                <td className="px-3 py-2">{d.statut}</td>
-                <td className="px-3 py-2">{new Date(d.created_at).toLocaleDateString("fr-FR")}</td>
+                <td className="px-3 py-2 font-semibold text-[var(--brand)]">
+                  {d.devis?.[0]?.prix_ttc != null ? `${d.devis[0].prix_ttc.toFixed(2)} €` : "—"}
+                </td>
+                <td className="px-3 py-2">
+                  <StatutBadge statut={d.statut} />
+                </td>
+                <td className="px-3 py-2 text-[var(--ink-soft)]">
+                  {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                </td>
               </tr>
             ))}
             {demandes.length === 0 && (
               <tr>
-                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={4}>
+                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={5}>
                   Aucune demande pour l&apos;instant.
                 </td>
               </tr>

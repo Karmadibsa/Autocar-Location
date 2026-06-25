@@ -2,6 +2,7 @@
 // Supabase et envoie le devis par email. La persistance ne bloque jamais la réponse.
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { buildDevisPdf } from "@/lib/devisPdf";
 
 type Devis = {
   prix_ht?: number;
@@ -170,11 +171,18 @@ async function sendDevisEmail(to: string, devis: Devis, params: Params) {
       <p style="background:#c6f24e;padding:10px;font-weight:bold">Total TTC : ${devis.prix_ttc?.toFixed(2)} ${devis.devise ?? "EUR"}</p>
       <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité.</p>
     </div>`;
+  let attachments: { filename: string; content: string }[] | undefined;
+  try {
+    const pdf = await buildDevisPdf(devis, params);
+    attachments = [{ filename: "devis-neotravel.pdf", content: Buffer.from(pdf).toString("base64") }];
+  } catch (e) {
+    console.error("[pdf] génération échouée:", e);
+  }
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, subject: "Votre devis NeoTravel", html }),
+      body: JSON.stringify({ from, to, subject: "Votre devis NeoTravel", html, attachments }),
     });
     if (!r.ok) console.error("[email] Resend:", r.status, (await r.text()).slice(0, 200));
   } catch (e) {
