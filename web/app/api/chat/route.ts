@@ -118,7 +118,7 @@ async function devisAvecOSRM(
 async function persist(
   sessionId: string | undefined,
   history: unknown,
-  data: { devis?: Devis | null; params?: Params },
+  data: { devis?: Devis | null; escalade?: string | null; params?: Params },
 ) {
   const sb = getAdminClient();
   if (!sb || !sessionId) return;
@@ -141,8 +141,27 @@ async function persist(
     if (clientId) await sb.from("conversations").update({ client_id: clientId }).eq("id", sessionId);
   }
 
-  // 3) Demande + devis. Le PREMIER devis fait foi : on ne réécrit pas le prix ensuite.
-  if (!devis) return;
+  // 3) Cas complexe (escalade > 85 pax / atypique) : pas de devis auto, mais on
+  // enregistre la demande pour le suivi humain (HITL) → visible dans "À traiter".
+  if (!devis) {
+    if (data.escalade && (params.depart || params.destination || params.nb_passagers)) {
+      await sb.from("demandes").upsert({
+        id: sessionId,
+        client_id: clientId,
+        depart: params.depart ?? null,
+        destination: params.destination ?? null,
+        date_depart: params.date_depart ?? null,
+        aller_retour: !!params.aller_retour,
+        nb_passagers: params.nb_passagers ?? null,
+        distance_km: params.distance_km ?? null,
+        statut: "cas_complexe",
+        commentaire: data.escalade,
+      });
+    }
+    return;
+  }
+
+  // 4) Demande + devis. Le PREMIER devis fait foi : on ne réécrit pas le prix ensuite.
 
   const { data: existing } = await sb.from("devis").select("id, client_id").eq("id", sessionId).maybeSingle();
   const devisExistait = !!existing;
@@ -207,16 +226,19 @@ async function sendDevisEmail(to: string, devis: Devis, params: Params) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
-  const lignes = (devis.lignes ?? [])
-    .map((l) => `<tr><td>${l.libelle}</td><td style="text-align:right">${l.montant.toFixed(2)} €</td></tr>`)
-    .join("");
+  // Vue CLIENT : une seule ligne de prestation + TVA + TTC (jamais marge/coeff/AR interne)
+  const row = (libelle: string, montant?: number) =>
+    `<tr><td style="padding:4px 0">${libelle}</td><td style="text-align:right">${(montant ?? 0).toFixed(2)} €</td></tr>`;
   const html = `
     <div style="font-family:Arial,sans-serif;color:#14201d">
       <h2 style="color:#0e7a66">Votre devis — NeoTravel</h2>
-      <p>${params.depart ?? ""} → ${params.destination ?? ""} · ${params.nb_passagers ?? ""} passagers · départ ${params.date_depart ?? ""}</p>
-      <table style="border-collapse:collapse;width:100%">${lignes}</table>
+      <p>${params.depart ?? ""} → ${params.destination ?? ""} · ${params.nb_passagers ?? ""} passagers · départ ${params.date_depart ?? ""}${params.aller_retour ? " · aller-retour" : ""}</p>
+      <table style="border-collapse:collapse;width:100%">
+        ${row("Transport de groupe en autocar avec chauffeur", devis.prix_ht)}
+        ${row("TVA (10 %)", devis.tva)}
+      </table>
       <p style="background:#c6f24e;padding:10px;font-weight:bold">Total TTC : ${devis.prix_ttc?.toFixed(2)} ${devis.devise ?? "EUR"}</p>
-      <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité.</p>
+      <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité. Le devis détaillé est en pièce jointe (PDF).</p>
     </div>`;
   let attachments: { filename: string; content: string }[] | undefined;
   try {

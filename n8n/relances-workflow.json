@@ -17,7 +17,7 @@
         "url": "http://localhost:3000/api/relances",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"secret\": \"REMPLACE_PAR_TON_CRON_SECRET\"\n}",
+        "jsonBody": "{\n  \"secret\": \"neotravel-relances-2026\"\n}",
         "options": {}
       },
       "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",

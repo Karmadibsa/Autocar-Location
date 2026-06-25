@@ -22,7 +22,12 @@ type DemandeRow = {
   id: string;
   depart: string | null;
   destination: string | null;
+  date_depart: string | null;
+  aller_retour: boolean | null;
+  distance_km: number | null;
   nb_passagers: number | null;
+  urgence: string | null;
+  commentaire: string | null;
   statut: string;
   created_at: string;
   devis: DevisFull[];
@@ -84,6 +89,17 @@ export default function AdminPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Action humaine sur une demande (gagné / perdu / pris en charge)
+  async function agir(id: string, statut: string) {
+    if (!session) return;
+    await fetch("/api/demande-statut", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, id, statut }),
+    });
+    loadData();
+  }
 
   async function lancerRelances() {
     if (!session) return;
@@ -149,11 +165,12 @@ export default function AdminPage() {
           <thead className="bg-[var(--bg-muted)] text-left text-[var(--ink-soft)]">
             <tr>
               <th className="px-3 py-2">Trajet</th>
+              <th className="px-3 py-2">Départ</th>
               <th className="px-3 py-2">Pax</th>
               <th className="px-3 py-2">Montant TTC</th>
               <th className="px-3 py-2">Statut</th>
               <th className="px-3 py-2">Relances</th>
-              <th className="px-3 py-2">Date</th>
+              <th className="px-3 py-2">Reçu le</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -165,6 +182,10 @@ export default function AdminPage() {
                   <tr className="border-t border-[var(--border)]">
                     <td className="px-3 py-2 font-medium">
                       {d.depart ?? "?"} → {d.destination ?? "?"}
+                    </td>
+                    <td className="px-3 py-2 text-[var(--ink-soft)]">
+                      {d.date_depart ? new Date(d.date_depart).toLocaleDateString("fr-FR") : "—"}
+                      {d.aller_retour ? " · A/R" : ""}
                     </td>
                     <td className="px-3 py-2">{d.nb_passagers ?? "—"}</td>
                     <td className="px-3 py-2 font-semibold text-[var(--brand)]">
@@ -178,35 +199,75 @@ export default function AdminPage() {
                       {new Date(d.created_at).toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-3 py-2">
-                      {dv && (
-                        <button
-                          onClick={() => setOpen(open === d.id ? null : d.id)}
-                          className="text-xs text-[var(--brand)] underline"
-                        >
-                          {open === d.id ? "Masquer" : "Détail"}
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setOpen(open === d.id ? null : d.id)}
+                        className="text-xs text-[var(--brand)] underline"
+                      >
+                        {open === d.id ? "Masquer" : "Détail"}
+                      </button>
                     </td>
                   </tr>
-                  {open === d.id && dv && (
+                  {open === d.id && (
                     <tr className="bg-[var(--bg-muted)]">
-                      <td colSpan={7} className="px-4 py-3">
-                        <div className="font-semibold">Détail interne (vue pro)</div>
-                        <div className="mt-1 font-mono text-xs text-[var(--ink-soft)]">
-                          {(dv.lignes ?? []).map((l, i) => (
-                            <div key={i} className="flex justify-between">
-                              <span>{l.libelle}</span>
-                              <span>{l.montant.toFixed(2)} €</span>
-                            </div>
-                          ))}
-                          <div className="mt-1 flex justify-between font-bold text-[var(--ink)]">
-                            <span>Total TTC</span>
-                            <span>{dv.prix_ttc?.toFixed(2)} €</span>
-                          </div>
+                      <td colSpan={8} className="px-4 py-3">
+                        {/* Résumé de la demande (toujours) */}
+                        <div className="font-semibold">Résumé de la demande</div>
+                        <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-[var(--ink-soft)] sm:grid-cols-3">
+                          <span>Trajet : {d.depart ?? "?"} → {d.destination ?? "?"}</span>
+                          <span>Date de départ : {d.date_depart ? new Date(d.date_depart).toLocaleDateString("fr-FR") : "—"}</span>
+                          <span>Trajet : {d.aller_retour ? "aller-retour" : "aller simple"}</span>
+                          <span>Passagers : {d.nb_passagers ?? "—"}</span>
+                          <span>Distance : {d.distance_km != null ? `${d.distance_km} km` : "—"}</span>
+                          <span>Urgence : {d.urgence ?? "—"}</span>
                         </div>
-                        {dv.coefficients && dv.coefficients.length > 0 && (
-                          <div className="mt-2 text-xs text-[var(--ink-soft)]">
-                            Coefficients : {dv.coefficients.map((c) => `${c.libelle} (${c.valeur > 0 ? "+" : ""}${Math.round(c.valeur * 100)}%)`).join(" · ")}
+
+                        {/* Cas complexe : motif d'escalade + intervention humaine */}
+                        {d.statut === "cas_complexe" && (
+                          <div className="mt-3 rounded-lg border border-[#E08A1E] bg-[#FDF4E6] p-2 text-xs">
+                            <b>Intervention humaine requise.</b>{" "}
+                            {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
+                          </div>
+                        )}
+
+                        {/* Détail interne du devis (vue pro) */}
+                        {dv && (
+                          <>
+                            <div className="mt-3 font-semibold">Détail interne (vue pro)</div>
+                            <div className="mt-1 font-mono text-xs text-[var(--ink-soft)]">
+                              {(dv.lignes ?? []).map((l, i) => (
+                                <div key={i} className="flex justify-between">
+                                  <span>{l.libelle}</span>
+                                  <span>{l.montant.toFixed(2)} €</span>
+                                </div>
+                              ))}
+                              <div className="mt-1 flex justify-between font-bold text-[var(--ink)]">
+                                <span>Total TTC</span>
+                                <span>{dv.prix_ttc?.toFixed(2)} €</span>
+                              </div>
+                            </div>
+                            {dv.coefficients && dv.coefficients.length > 0 && (
+                              <div className="mt-2 text-xs text-[var(--ink-soft)]">
+                                Coefficients : {dv.coefficients.map((c) => `${c.libelle} (${c.valeur > 0 ? "+" : ""}${Math.round(c.valeur * 100)}%)`).join(" · ")}
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Gestion (intervention humaine) */}
+                        {["cas_complexe", "devis_envoye", "relance_1", "relance_2", "qualifiee"].includes(d.statut) && (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-[var(--ink-soft)]">Marquer :</span>
+                            {d.statut === "cas_complexe" && (
+                              <button onClick={() => agir(d.id, "qualifiee")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs">
+                                Pris en charge
+                              </button>
+                            )}
+                            <button onClick={() => agir(d.id, "accepte")} className="rounded-full bg-[var(--brand)] px-3 py-1 text-xs font-medium text-white">
+                              Gagné
+                            </button>
+                            <button onClick={() => agir(d.id, "refuse")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs">
+                              Perdu
+                            </button>
                           </div>
                         )}
                       </td>
@@ -217,7 +278,7 @@ export default function AdminPage() {
             })}
             {demandes.length === 0 && (
               <tr>
-                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={7}>
+                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={8}>
                   Aucune demande pour l&apos;instant.
                 </td>
               </tr>
