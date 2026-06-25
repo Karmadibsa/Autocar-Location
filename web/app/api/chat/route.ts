@@ -1,21 +1,42 @@
-// Route handler du chat : relaie le message vers le webhook de l'agent n8n.
-// Tant que N8N_WEBHOOK_URL n'est pas configuré, renvoie une réponse "stub".
-// Logge la cause exacte des erreurs (visible dans logs/front.log).
+// Route du chat : relaie vers l'agent n8n, puis (best-effort) persiste dans
+// Supabase et envoie le devis par email. La persistance ne bloque jamais la réponse.
+import { getAdminClient } from "@/lib/supabaseAdmin";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+type Devis = {
+  prix_ht?: number;
+  tva?: number;
+  prix_ttc?: number;
+  devise?: string;
+  lignes?: { libelle: string; montant: number }[];
+  coefficients?: unknown;
+};
+type Params = {
+  nb_passagers?: number;
+  date_depart?: string;
+  aller_retour?: boolean;
+  distance_km?: number;
+  options?: unknown;
+  depart?: string;
+  destination?: string;
+  email?: string;
+  nom?: string;
+};
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const webhook = process.env.N8N_WEBHOOK_URL;
+  const sessionId: string | undefined = body?.sessionId;
+  const history = body?.history;
 
   if (!webhook) {
     return Response.json({
-      reply:
-        "👋 Merci ! L'agent IA n'est pas encore connecté (N8N_WEBHOOK_URL absent de .env.local).",
+      reply: "👋 L'agent IA n'est pas encore connecté (N8N_WEBHOOK_URL absent).",
       stub: true,
     });
   }
 
-  console.log("[chat] -> appel webhook n8n :", webhook);
-
+  let data: { reply?: string; devis?: Devis | null; escalade?: string | null; params?: Params } = {};
   try {
     const res = await fetch(webhook, {
       method: "POST",
@@ -23,38 +44,140 @@ export async function POST(request: Request) {
       body: JSON.stringify(body),
     });
     const text = await res.text();
-
     if (!res.ok) {
-      console.error(`[chat] n8n a répondu ${res.status} :`, text.slice(0, 500));
+      console.error(`[chat] n8n ${res.status}:`, text.slice(0, 400));
       return Response.json({
-        reply: `L'agent a renvoyé une erreur ${res.status}. Le workflow n8n est-il bien ACTIVÉ ? (détail dans logs/front.log)`,
+        reply: `L'agent a renvoyé une erreur ${res.status}. Workflow n8n activé ?`,
         error: true,
-        status: res.status,
       });
     }
-
-    // n8n peut renvoyer du JSON ({reply, devis}) ou du texte brut.
-    let data: unknown;
     try {
       data = JSON.parse(text);
     } catch {
       data = { reply: text };
     }
-    return Response.json(data);
   } catch (e) {
     const cause = (e as { cause?: unknown })?.cause;
-    const detail =
-      e instanceof Error
-        ? `${e.message}${cause ? " — " + String(cause) : ""}`
-        : String(e);
-    console.error("[chat] webhook injoignable :", detail);
-    return Response.json({
-      reply:
-        "Agent injoignable. Vérifie : (1) n8n lancé, (2) workflow ACTIVÉ, (3) URL du webhook. " +
-        "Détail : " +
-        detail,
-      error: true,
-      detail,
+    const detail = e instanceof Error ? `${e.message}${cause ? " — " + String(cause) : ""}` : String(e);
+    console.error("[chat] webhook injoignable:", detail);
+    return Response.json({ reply: "Agent injoignable. " + detail, error: true });
+  }
+
+  // --- Persistance + email (best-effort) ---
+  persist(sessionId, history, data).catch((e) =>
+    console.error("[chat] persistance échouée:", e),
+  );
+
+  return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade });
+}
+
+async function persist(
+  sessionId: string | undefined,
+  history: unknown,
+  data: { devis?: Devis | null; params?: Params },
+) {
+  const sb = getAdminClient();
+  if (!sb || !sessionId) return;
+
+  // 1) Conversation (une ligne par session)
+  await sb.from("conversations").upsert({
+    id: sessionId,
+    messages: history ?? [],
+    updated_at: new Date().toISOString(),
+  });
+
+  const params = data.params ?? {};
+  const email = params.email?.trim();
+  const devis = data.devis;
+
+  // 2) Client (par email) — seulement si l'email est connu
+  let clientId: string | null = null;
+  if (email) {
+    clientId = await getOrCreateClient(sb, email, params.nom);
+    if (clientId) await sb.from("conversations").update({ client_id: clientId }).eq("id", sessionId);
+  }
+
+  // 3) Demande + devis. Le PREMIER devis fait foi : on ne réécrit pas le prix ensuite.
+  if (!devis) return;
+
+  const { data: existing } = await sb.from("devis").select("id, client_id").eq("id", sessionId).maybeSingle();
+  const devisExistait = !!existing;
+  const emailAjouteApres = !!clientId && devisExistait && !existing?.client_id;
+
+  if (!devisExistait) {
+    // Première fois : on crée la demande + le devis (avec le prix figé)
+    await sb.from("demandes").upsert({
+      id: sessionId,
+      client_id: clientId,
+      depart: params.depart ?? null,
+      destination: params.destination ?? null,
+      date_depart: params.date_depart ?? null,
+      aller_retour: !!params.aller_retour,
+      nb_passagers: params.nb_passagers ?? null,
+      distance_km: params.distance_km ?? null,
+      statut: "devis_envoye",
     });
+    await sb.from("devis").insert({
+      id: sessionId,
+      demande_id: sessionId,
+      client_id: clientId,
+      prix_ht: devis.prix_ht,
+      tva: devis.tva,
+      prix_ttc: devis.prix_ttc,
+      devise: devis.devise ?? "EUR",
+      lignes: devis.lignes ?? [],
+      coefficients: devis.coefficients ?? [],
+      statut: "envoye",
+      date_envoi: new Date().toISOString(),
+    });
+  } else if (emailAjouteApres) {
+    // Le devis existait sans client : on relie le client SANS toucher au prix
+    await sb.from("demandes").update({ client_id: clientId }).eq("id", sessionId);
+    await sb.from("devis").update({ client_id: clientId }).eq("id", sessionId);
+  }
+
+  // Email : à la création avec email connu, ou quand l'email est ajouté ensuite
+  if (email && (!devisExistait || emailAjouteApres)) await sendDevisEmail(email, devis, params);
+}
+
+async function getOrCreateClient(
+  sb: SupabaseClient,
+  email: string,
+  nom?: string,
+): Promise<string | null> {
+  const { data: found } = await sb.from("clients").select("id").eq("email", email).maybeSingle();
+  if (found) return found.id;
+  const { data: created } = await sb
+    .from("clients")
+    .insert({ email, nom: nom ?? null, type_client: "particulier", consentement: true })
+    .select("id")
+    .single();
+  return created?.id ?? null;
+}
+
+async function sendDevisEmail(to: string, devis: Devis, params: Params) {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  if (!key) return;
+  const lignes = (devis.lignes ?? [])
+    .map((l) => `<tr><td>${l.libelle}</td><td style="text-align:right">${l.montant.toFixed(2)} €</td></tr>`)
+    .join("");
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#14201d">
+      <h2 style="color:#0e7a66">Votre devis — NeoTravel</h2>
+      <p>${params.depart ?? ""} → ${params.destination ?? ""} · ${params.nb_passagers ?? ""} passagers · départ ${params.date_depart ?? ""}</p>
+      <table style="border-collapse:collapse;width:100%">${lignes}</table>
+      <p style="background:#c6f24e;padding:10px;font-weight:bold">Total TTC : ${devis.prix_ttc?.toFixed(2)} ${devis.devise ?? "EUR"}</p>
+      <p style="color:#5c6b66;font-size:12px">Tarif sous réserve de disponibilité.</p>
+    </div>`;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to, subject: "Votre devis NeoTravel", html }),
+    });
+    if (!r.ok) console.error("[email] Resend:", r.status, (await r.text()).slice(0, 200));
+  } catch (e) {
+    console.error("[email] échec:", e);
   }
 }

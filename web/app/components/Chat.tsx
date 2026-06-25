@@ -53,6 +53,8 @@ export default function Chat() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const hasDevisRef = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,12 +72,16 @@ export default function Chat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, history }),
+        body: JSON.stringify({ message: content, history, sessionId }),
       });
       const data = await res.json();
+      // On fige le 1er devis : les recalculs ultérieurs (estimation distance qui
+      // varie) ne remplacent pas le devis déjà affiché.
+      const showDevis = data.devis && !hasDevisRef.current ? data.devis : undefined;
+      if (data.devis) hasDevisRef.current = true;
       setMessages((m) => [
         ...m,
-        { role: "agent", content: data.reply || "…", devis: data.devis },
+        { role: "agent", content: data.reply || "…", devis: showDevis },
       ]);
     } catch {
       setMessages((m) => [

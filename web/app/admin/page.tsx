@@ -1,10 +1,11 @@
-// Dashboard de pilotage (protégé en pratique par l'auth admin / RLS).
-// Lit Supabase côté serveur via la service role key.
-import { getAdminClient } from "@/lib/supabaseAdmin";
+"use client";
 
-export const dynamic = "force-dynamic";
+// Dashboard (protégé) : connexion requise + rôle admin, sinon redirection.
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/useAuth";
 
-type DevisRow = { statut: string; prix_ttc: number | null };
 type DemandeRow = {
   id: string;
   depart: string | null;
@@ -12,6 +13,14 @@ type DemandeRow = {
   nb_passagers: number | null;
   statut: string;
   created_at: string;
+};
+type Data = {
+  ok: boolean;
+  leads?: number;
+  envoyes?: number;
+  acceptes?: number;
+  conversion?: number;
+  demandes?: DemandeRow[];
 };
 
 function Kpi({ label, value }: { label: string; value: string | number }) {
@@ -23,49 +32,49 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export default async function AdminPage() {
-  const sb = getAdminClient();
+export default function AdminPage() {
+  const router = useRouter();
+  const { loading, email, role, session } = useAuth();
+  const [data, setData] = useState<Data | null>(null);
 
-  if (!sb) {
-    return (
-      <main className="mx-auto max-w-2xl p-8">
-        <h1 className="text-2xl font-bold">Dashboard — configuration requise</h1>
-        <p className="mt-3 text-[var(--ink-soft)]">
-          Renseigne <code>NEXT_PUBLIC_SUPABASE_URL</code> et{" "}
-          <code>SUPABASE_SERVICE_ROLE_KEY</code> dans <code>web/.env.local</code>{" "}
-          (voir <code>GUIDE_INSTALLATION.md</code>), puis recharge.
-        </p>
-      </main>
-    );
+  // Gardes de route
+  useEffect(() => {
+    if (loading) return;
+    if (!email) router.replace("/login");
+    else if (role !== "admin") router.replace("/espace-client");
+  }, [loading, email, role, router]);
+
+  // Données du dashboard
+  useEffect(() => {
+    if (!session || role !== "admin") return;
+    fetch("/api/admin-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token }),
+    })
+      .then((r) => r.json())
+      .then(setData);
+  }, [session, role]);
+
+  if (loading || role !== "admin") {
+    return <main className="mx-auto max-w-md p-8 text-[var(--ink-soft)]">Chargement…</main>;
   }
 
-  const [{ count: leads }, devisRes, demandesRes] = await Promise.all([
-    sb.from("demandes").select("*", { count: "exact", head: true }),
-    sb.from("devis").select("statut, prix_ttc"),
-    sb
-      .from("demandes")
-      .select("id, depart, destination, nb_passagers, statut, created_at")
-      .order("created_at", { ascending: false })
-      .limit(10),
-  ]);
-
-  const devis = (devisRes.data ?? []) as DevisRow[];
-  const demandes = (demandesRes.data ?? []) as DemandeRow[];
-  const envoyes = devis.filter((d) => d.statut === "envoye").length;
-  const acceptes = devis.filter((d) => d.statut === "accepte").length;
-  const conversion = devis.length
-    ? Math.round((acceptes / devis.length) * 100)
-    : 0;
-
+  const demandes = data?.demandes ?? [];
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <h1 className="text-2xl font-bold">Pilotage commercial</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Pilotage commercial</h1>
+        <button onClick={() => supabase?.auth.signOut()} className="text-sm text-[var(--ink-soft)] underline">
+          Déconnexion
+        </button>
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Leads reçus" value={leads ?? 0} />
-        <Kpi label="Devis envoyés" value={envoyes} />
-        <Kpi label="Devis acceptés" value={acceptes} />
-        <Kpi label="Taux de conversion" value={`${conversion} %`} />
+        <Kpi label="Leads reçus" value={data?.leads ?? 0} />
+        <Kpi label="Devis envoyés" value={data?.envoyes ?? 0} />
+        <Kpi label="Devis acceptés" value={data?.acceptes ?? 0} />
+        <Kpi label="Taux de conversion" value={`${data?.conversion ?? 0} %`} />
       </div>
 
       <h2 className="mt-8 text-lg font-semibold">Dernières demandes</h2>
@@ -87,9 +96,7 @@ export default async function AdminPage() {
                 </td>
                 <td className="px-3 py-2">{d.nb_passagers ?? "—"}</td>
                 <td className="px-3 py-2">{d.statut}</td>
-                <td className="px-3 py-2">
-                  {new Date(d.created_at).toLocaleDateString("fr-FR")}
-                </td>
+                <td className="px-3 py-2">{new Date(d.created_at).toLocaleDateString("fr-FR")}</td>
               </tr>
             ))}
             {demandes.length === 0 && (

@@ -14,6 +14,8 @@ const SYSTEM = [
   "Tu es deja en conversation : ne te re-presente pas et ne redis pas Bonjour a chaque message ; poursuis l'echange.",
   "Reponds en texte simple : pas de LaTeX ni de symboles comme \\rightarrow ; ecris 'vers' ou une fleche simple.",
   "Quand un devis chiffre est disponible, il est affiche separement au client : ne reecris pas le montant toi-meme, invite simplement le client a le consulter.",
+  "Une fois le devis disponible, demande poliment au client son email (et son nom si possible) pour lui envoyer le devis.",
+  "IMPORTANT : ne montre JAMAIS ton raisonnement interne, tes notes d'analyse, tes etapes, ni des listes a puces. Reponds UNIQUEMENT par le message final destine au client, en francais, en 1 a 3 phrases.",
   "Ton : chaleureux, clair, rassurant.",
 ].join(" ");
 
@@ -24,7 +26,7 @@ const EXTRACTION_PROMPT =
   "=A partir de la conversation ci-dessous, extrais les parametres du devis en JSON STRICT et RIEN d'autre (aucun texte autour). " +
   "Date du jour : {{ new Date().toISOString().substring(0,10) }}. Pour date_depart, si l'annee n'est pas precisee, choisis la prochaine date FUTURE correspondante (jamais une date passee). " +
   "Si une information requise manque, mets sa valeur a null. Estime distance_km (distance routiere approximative en km entre la ville de depart et la destination). " +
-  "Les cles attendues : nb_passagers (entier ou null), date_depart (format AAAA-MM-JJ ou null), aller_retour (true ou false), distance_km (nombre ou null), options (liste parmi guide, nuit_chauffeur, peages). " +
+  "Les cles attendues : nb_passagers (entier ou null), date_depart (format AAAA-MM-JJ ou null), aller_retour (true ou false), distance_km (nombre ou null), options (liste parmi guide, nuit_chauffeur, peages), depart (ville ou null), destination (ville ou null), email (ou null), nom (ou null). " +
   "Conversation :\\n{{ " + HISTORY + " }}";
 
 // Code du nœud "Calculer Devis" : parse le JSON extrait + calcul deterministe.
@@ -147,7 +149,7 @@ const workflow = {
       retryOnFail: true, maxTries: 3, waitBetweenTries: 2000 },
     { parameters: geminiParams, id: "66666666-6666-6666-6666-666666666666", name: "Gemini (agent)", type: "@n8n/n8n-nodes-langchain.lmChatGoogleGemini", typeVersion: 1, position: [600, 220], credentials: cred },
 
-    { parameters: { respondWith: "json", responseBody: "={{ { \"reply\": $json.output, \"devis\": $('Calculer Devis').item.json.devis, \"escalade\": $('Calculer Devis').item.json.escalade } }}", options: {} },
+    { parameters: { respondWith: "json", responseBody: "={{ { \"reply\": $json.output, \"devis\": $('Calculer Devis').item.json.devis, \"escalade\": $('Calculer Devis').item.json.escalade, \"params\": $('Calculer Devis').item.json.params } }}", options: {} },
       id: "77777777-7777-7777-7777-777777777777", name: "Respond to Webhook", type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1, position: [880, 0] },
   ],
   connections: {
