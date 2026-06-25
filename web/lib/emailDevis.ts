@@ -30,6 +30,7 @@ export function devisEmailHtml(
   const titre = opts.titre ?? "Votre devis";
   const intro = opts.intro ?? "Voici le récapitulatif de votre demande de transport de groupe.";
   const trajet = `${params.depart ?? "?"} &rarr; ${params.destination ?? "?"}`;
+  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
   return `
   <div style="font-family:Arial,Helvetica,sans-serif;color:#14201d;max-width:560px;margin:auto">
     <div style="background:${BRAND};color:#fff;padding:18px 22px;border-radius:12px 12px 0 0">
@@ -58,6 +59,13 @@ export function devisEmailHtml(
 
       <div style="background:${ACCENT};border-radius:10px;padding:12px 14px;margin-top:12px;font-weight:bold;display:flex;justify-content:space-between">
         <span>TOTAL TTC</span><span>${(devis.prix_ttc ?? 0).toFixed(2)} ${devis.devise ?? "EUR"}</span>
+      </div>
+
+      <div style="text-align:center;margin-top:20px">
+        <a href="${base}/espace-client" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:bold;font-size:14px">
+          Accéder à mon espace client
+        </a>
+        <p style="color:#8a958f;font-size:11px;margin-top:8px">Connectez-vous (ou créez un compte avec cet email) pour accepter votre devis.</p>
       </div>
 
       <p style="color:#8a958f;font-size:11px;margin-top:18px">

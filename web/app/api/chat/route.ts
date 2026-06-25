@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     console.error("[chat] persistance échouée:", e),
   );
 
-  return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade });
+  return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade, params: data.params });
 }
 
 // Recalcule le devis avec la distance OSRM réelle. Fallback = le devis de n8n.

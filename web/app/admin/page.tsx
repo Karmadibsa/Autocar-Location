@@ -41,6 +41,26 @@ const GROUPES: Record<string, string[]> = {
   gagnes: ["accepte"],
   perdus: ["refuse", "cloture"],
 };
+
+// Valeur d'une demande selon la clé de tri (texte ou nombre).
+function sortValue(d: DemandeRow, key: string): string | number {
+  switch (key) {
+    case "trajet": return d.depart ?? "";
+    case "client": return d.clients?.nom ?? d.clients?.email ?? "";
+    case "date_depart": return d.date_depart ?? "";
+    case "nb_passagers": return d.nb_passagers ?? 0;
+    case "montant": return d.devis?.[0]?.prix_ttc ?? 0;
+    case "statut": return d.statut;
+    case "relances": return d.devis?.[0]?.nb_relances ?? 0;
+    default: return d.created_at;
+  }
+}
+function compareDemandes(a: DemandeRow, b: DemandeRow, key: string): number {
+  const va = sortValue(a, key);
+  const vb = sortValue(b, key);
+  if (typeof va === "number" && typeof vb === "number") return va - vb;
+  return String(va).localeCompare(String(vb), "fr");
+}
 type Data = {
   ok: boolean;
   leads?: number;
@@ -96,6 +116,11 @@ export default function AdminPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [relanceMsg, setRelanceMsg] = useState("");
   const [filtre, setFiltre] = useState<string | null>(null);
+  const [prixManuel, setPrixManuel] = useState("");
+  const [manuelMsg, setManuelMsg] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<string>("created_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     if (loading) return;
@@ -117,6 +142,26 @@ export default function AdminPage() {
     loadData();
   }, [loadData]);
 
+  // Devis sur-mesure pour un cas complexe (étude commerciale humaine)
+  async function devisManuel(demande_id: string) {
+    if (!session) return;
+    const prix = Number(prixManuel.replace(",", "."));
+    if (!Number.isFinite(prix) || prix <= 0) {
+      setManuelMsg("Saisis un prix HT valide.");
+      return;
+    }
+    setManuelMsg("Envoi…");
+    const r = await fetch("/api/devis-manuel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, demande_id, prix_ht: prix }),
+    });
+    const j = await r.json();
+    setManuelMsg(j.ok ? `Devis créé (${j.prix_ttc} € TTC) et envoyé.` : "Erreur");
+    setPrixManuel("");
+    loadData();
+  }
+
   // Action humaine sur une demande (gagné / perdu / pris en charge)
   async function agir(id: string, statut: string) {
     if (!session) return;
@@ -137,11 +182,11 @@ export default function AdminPage() {
       body: JSON.stringify({ token: session.access_token }),
     });
     const j = await r.json();
-    setRelanceMsg(
-      j.ok
-        ? `${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s).`
-        : "Erreur",
-    );
+    if (!j.ok) setRelanceMsg("Erreur lors du traitement.");
+    else if ((j.envoyees ?? 0) + (j.cloturees ?? 0) + (j.expirees ?? 0) === 0)
+      setRelanceMsg("Aucune relance à envoyer pour le moment ✓");
+    else
+      setRelanceMsg(`${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s).`);
     loadData();
   }
 
@@ -154,12 +199,49 @@ export default function AdminPage() {
   }
 
   const toutes = data?.demandes ?? [];
-  const demandes = filtre ? toutes.filter((d) => GROUPES[filtre]?.includes(d.statut)) : toutes;
   const cat = data?.categories;
   const toggleFiltre = (k: string) => setFiltre((f) => (f === k ? null : k));
+  const q = search.trim().toLowerCase();
+  const demandes = [...toutes]
+    .filter((d) => !filtre || GROUPES[filtre]?.includes(d.statut))
+    .filter((d) => {
+      if (!q) return true;
+      const hay = [d.depart, d.destination, d.clients?.prenom, d.clients?.nom, d.clients?.email]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    })
+    .sort((a, b) => {
+      const cmp = compareDemandes(a, b, sortKey);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+  function trier(key: string) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "trajet" || key === "client" || key === "statut" ? "asc" : "desc");
+    }
+  }
+  // En-tête de colonne triable
+  const Th = ({ label, k }: { label: string; k: string }) => (
+    <th className="px-3 py-2">
+      <button
+        onClick={() => trier(k)}
+        className="flex items-center gap-1 font-medium text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
+      >
+        {label}
+        <span aria-hidden className="text-[10px]">{sortKey === k ? (sortDir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
   return (
     <main className="mx-auto max-w-5xl p-6">
       <h1 className="text-2xl font-bold">Pilotage commercial</h1>
+      <p className="mt-1 text-sm text-[var(--ink-soft)]">
+        Suivi des leads, devis et relances — interventions humaines mises en avant.
+      </p>
 
       {/* KPIs */}
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -176,7 +258,7 @@ export default function AdminPage() {
           {relanceMsg && <span className="text-[var(--ink-soft)]">{relanceMsg}</span>}
           <button
             onClick={lancerRelances}
-            className="rounded-full border border-[var(--brand)] px-3 py-1.5 font-medium text-[var(--brand)]"
+            className="rounded-full border border-[var(--brand)] px-3 py-1.5 font-medium text-[var(--brand)] transition hover:bg-[var(--brand)] hover:text-white"
           >
             Lancer les relances dues
           </button>
@@ -190,26 +272,36 @@ export default function AdminPage() {
       </div>
 
       {/* Table détaillée */}
-      <div className="mt-8 flex items-center gap-3">
-        <h2 className="text-lg font-semibold">Demandes</h2>
-        {filtre && (
-          <button onClick={() => setFiltre(null)} className="text-xs text-[var(--brand)] underline">
-            Filtre actif — tout afficher
-          </button>
-        )}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">Demandes</h2>
+          <span className="text-xs text-[var(--ink-soft)]">{demandes.length} résultat(s)</span>
+          {filtre && (
+            <button onClick={() => setFiltre(null)} className="text-xs text-[var(--brand)] underline hover:text-[var(--brand-dark)]">
+              Filtre actif — tout afficher
+            </button>
+          )}
+        </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher (client, ville…)"
+          aria-label="Rechercher une demande"
+          className="w-full max-w-xs rounded-full border border-[var(--border)] px-4 py-1.5 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]"
+        />
       </div>
       <div className="mt-2 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-sm">
           <thead className="bg-[var(--bg-muted)] text-left text-[var(--ink-soft)]">
             <tr>
-              <th className="px-3 py-2">Trajet</th>
-              <th className="px-3 py-2">Client</th>
-              <th className="px-3 py-2">Départ</th>
-              <th className="px-3 py-2">Pax</th>
-              <th className="px-3 py-2">Montant TTC</th>
-              <th className="px-3 py-2">Statut</th>
-              <th className="px-3 py-2">Relances</th>
-              <th className="px-3 py-2">Reçu le</th>
+              <Th label="Trajet" k="trajet" />
+              <Th label="Client" k="client" />
+              <Th label="Départ" k="date_depart" />
+              <Th label="Pax" k="nb_passagers" />
+              <Th label="Montant TTC" k="montant" />
+              <Th label="Statut" k="statut" />
+              <Th label="Relances" k="relances" />
+              <Th label="Reçu le" k="created_at" />
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -218,7 +310,7 @@ export default function AdminPage() {
               const dv = d.devis?.[0];
               return (
                 <Fragment key={d.id}>
-                  <tr className="border-t border-[var(--border)]">
+                  <tr className="border-t border-[var(--border)] transition hover:bg-[var(--bg-muted)]">
                     <td className="px-3 py-2 font-medium">
                       {d.depart ?? "?"} → {d.destination ?? "?"}
                     </td>
@@ -243,7 +335,7 @@ export default function AdminPage() {
                     <td className="px-3 py-2">
                       <button
                         onClick={() => setOpen(open === d.id ? null : d.id)}
-                        className="text-xs text-[var(--brand)] underline"
+                        className="rounded-full px-2 py-1 text-xs font-medium text-[var(--brand)] underline transition hover:bg-[var(--brand-soft)] hover:no-underline"
                       >
                         {open === d.id ? "Masquer" : "Détail"}
                       </button>
@@ -263,11 +355,38 @@ export default function AdminPage() {
                           <span>Urgence : {d.urgence ?? "—"}</span>
                         </div>
 
-                        {/* Cas complexe : motif d'escalade + intervention humaine */}
+                        {/* Cas complexe : motif d'escalade + flux d'étude commerciale */}
                         {d.statut === "cas_complexe" && (
-                          <div className="mt-3 rounded-lg border border-[#E08A1E] bg-[#FDF4E6] p-2 text-xs">
-                            <b>Intervention humaine requise.</b>{" "}
-                            {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
+                          <div className="mt-3 rounded-lg border border-[#E08A1E] bg-[#FDF4E6] p-3 text-xs">
+                            <div className="font-semibold text-[#8A5A12]">⚠ Intervention humaine requise</div>
+                            <p className="mt-1 text-[#8A5A12]">
+                              {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
+                            </p>
+                            <div className="mt-3 border-t border-[#E8C98A] pt-3">
+                              <div className="font-medium text-[var(--ink)]">Étape 1 — Établir un devis sur-mesure</div>
+                              <p className="mt-0.5 text-[var(--ink-soft)]">
+                                Après étude (capacité, sous-traitance...), saisis le prix HT négocié. Le devis part au client et rejoint le pipeline (relances, acceptation).
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="0.01"
+                                  value={prixManuel}
+                                  onChange={(e) => setPrixManuel(e.target.value)}
+                                  placeholder="Prix HT (€)"
+                                  aria-label="Prix HT sur-mesure"
+                                  className="w-32 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs outline-none focus:border-[var(--brand)]"
+                                />
+                                <button
+                                  onClick={() => devisManuel(d.id)}
+                                  className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--brand-dark)]"
+                                >
+                                  Créer et envoyer le devis
+                                </button>
+                                {manuelMsg && <span className="text-[var(--ink-soft)]">{manuelMsg}</span>}
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -295,19 +414,24 @@ export default function AdminPage() {
                           </>
                         )}
 
-                        {/* Gestion (intervention humaine) */}
-                        {["cas_complexe", "devis_envoye", "relance_1", "relance_2", "qualifiee"].includes(d.statut) && (
+                        {/* Gestion : abandon d'un cas complexe */}
+                        {d.statut === "cas_complexe" && (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-[var(--ink-soft)]">Sinon :</span>
+                            <button onClick={() => agir(d.id, "refuse")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs transition hover:border-[#A12B2B] hover:text-[#A12B2B]">
+                              Abandonner (sans suite)
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Gestion : issue commerciale d'un devis en cours */}
+                        {["devis_envoye", "relance_1", "relance_2", "qualifiee"].includes(d.statut) && (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             <span className="text-xs text-[var(--ink-soft)]">Marquer :</span>
-                            {d.statut === "cas_complexe" && (
-                              <button onClick={() => agir(d.id, "qualifiee")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs">
-                                Pris en charge
-                              </button>
-                            )}
-                            <button onClick={() => agir(d.id, "accepte")} className="rounded-full bg-[var(--brand)] px-3 py-1 text-xs font-medium text-white">
+                            <button onClick={() => agir(d.id, "accepte")} className="rounded-full bg-[var(--brand)] px-3 py-1 text-xs font-medium text-white transition hover:bg-[var(--brand-dark)]">
                               Gagné
                             </button>
-                            <button onClick={() => agir(d.id, "refuse")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs">
+                            <button onClick={() => agir(d.id, "refuse")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs transition hover:border-[#A12B2B] hover:text-[#A12B2B]">
                               Perdu
                             </button>
                           </div>

@@ -94,7 +94,7 @@ export default function EspaceClient() {
             Bonjour {prenom ?? email}, content de vous revoir.
           </p>
         </div>
-        <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)]">
+        <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
           + Nouveau devis
         </a>
       </div>
@@ -102,7 +102,7 @@ export default function EspaceClient() {
       {role === "admin" && (
         <a
           href="/admin"
-          className="mt-4 block rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)]"
+          className="mt-4 block rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)] transition hover:bg-white"
         >
           Vous êtes administrateur → accéder au <b>dashboard de pilotage</b>.
         </a>
@@ -141,7 +141,7 @@ export default function EspaceClient() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => downloadPdf(d.id)}
-                  className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-xs font-medium text-[var(--brand)]"
+                  className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-xs font-medium text-[var(--brand)] transition hover:bg-[var(--brand-soft)]"
                 >
                   Télécharger le PDF
                 </button>
@@ -149,13 +149,13 @@ export default function EspaceClient() {
                   <>
                     <button
                       onClick={() => repondre(d.id, "accepte")}
-                      className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white"
+                      className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-dark)]"
                     >
                       Accepter le devis
                     </button>
                     <button
                       onClick={() => repondre(d.id, "refuse")}
-                      className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--ink-soft)]"
+                      className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--ink-soft)] transition hover:border-[#A12B2B] hover:text-[#A12B2B]"
                     >
                       Refuser
                     </button>

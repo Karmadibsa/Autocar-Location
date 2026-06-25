@@ -42,12 +42,12 @@ export default function Header() {
 
   const display = isAdmin ? "Admin" : name ?? email?.split("@")[0] ?? "";
 
-  const link = "rounded-full px-4 py-1.5 text-sm font-medium text-[var(--brand)] hover:underline";
-  const linkBox = "rounded-full border border-[var(--brand)] px-4 py-1.5 text-sm font-medium text-[var(--brand)]";
+  const link = "rounded-full px-4 py-1.5 text-sm font-medium text-[var(--brand)] transition hover:bg-[var(--brand-soft)]";
+  const linkBox = "rounded-full border border-[var(--brand)] px-4 py-1.5 text-sm font-medium text-[var(--brand)] transition hover:bg-[var(--brand)] hover:text-white";
 
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-white/90 px-6 py-3 backdrop-blur">
-      <a href="/" className="flex items-center gap-2">
+      <a href="/" className="flex items-center gap-2 transition hover:opacity-80">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="Autocar Location" className="h-8 w-auto" />
         <span className="text-lg font-bold text-[var(--brand)]">Autocar Location</span>
