@@ -42,6 +42,7 @@ create table if not exists clients (
   auth_user_id  uuid references auth.users(id) on delete set null,
   email         text not null,
   type_client   text,                         -- particulier, association, entreprise, collectivité
+  prenom        text,
   nom           text,
   telephone     text,
   consentement  boolean not null default false, -- RGPD : consentement minimal

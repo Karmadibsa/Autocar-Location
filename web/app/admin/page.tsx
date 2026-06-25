@@ -30,7 +30,7 @@ type DemandeRow = {
   commentaire: string | null;
   statut: string;
   created_at: string;
-  clients: { email: string | null; nom: string | null } | null;
+  clients: { email: string | null; prenom: string | null; nom: string | null } | null;
   devis: DevisFull[];
 };
 
@@ -223,7 +223,7 @@ export default function AdminPage() {
                       {d.depart ?? "?"} → {d.destination ?? "?"}
                     </td>
                     <td className="px-3 py-2 text-[var(--ink-soft)]">
-                      {d.clients?.nom ?? d.clients?.email ?? "—"}
+                      {[d.clients?.prenom, d.clients?.nom].filter(Boolean).join(" ") || d.clients?.email || "—"}
                     </td>
                     <td className="px-3 py-2 text-[var(--ink-soft)]">
                       {d.date_depart ? new Date(d.date_depart).toLocaleDateString("fr-FR") : "—"}

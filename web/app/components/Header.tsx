@@ -26,7 +26,7 @@ export default function Header() {
         const me = await r.json().catch(() => ({}));
         if (!active) return;
         setIsAdmin(me.role === "admin");
-        setName(me.nom ?? null);
+        setName(me.prenom ?? me.nom ?? null);
       } else if (active) {
         setIsAdmin(false);
         setName(null);

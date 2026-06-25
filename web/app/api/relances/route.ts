@@ -22,7 +22,7 @@ type DevisDu = {
     nb_passagers: number | null;
     urgence: string | null;
   } | null;
-  clients: { email: string | null; nom: string | null } | null;
+  clients: { email: string | null; prenom: string | null; nom: string | null } | null;
 };
 
 export async function POST(request: Request) {
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   const { data: dus } = await sb
     .from("devis")
     .select(
-      "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, nom)",
+      "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, prenom, nom)",
     )
     .eq("statut", "envoye")
     .lte("prochaine_relance", now)
@@ -112,7 +112,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
       destination: d.demandes?.destination,
       date_depart: d.demandes?.date_depart,
       nb_passagers: d.demandes?.nb_passagers,
-      nom: d.clients?.nom,
+      nom: [d.clients?.prenom, d.clients?.nom].filter(Boolean).join(" ") || null,
     },
     {
       titre: `Votre devis vous attend (relance ${numero}/2)`,

@@ -25,8 +25,8 @@ export async function POST(request: Request) {
   const { data: demande } = await sb.from("demandes").select("*").eq("id", devis.demande_id).maybeSingle();
   let nom: string | null = null;
   if (devis.client_id) {
-    const { data: c } = await sb.from("clients").select("nom").eq("id", devis.client_id).maybeSingle();
-    nom = c?.nom ?? null;
+    const { data: c } = await sb.from("clients").select("prenom, nom").eq("id", devis.client_id).maybeSingle();
+    nom = [c?.prenom, c?.nom].filter(Boolean).join(" ") || null;
   }
 
   const pdf = await buildDevisPdf(

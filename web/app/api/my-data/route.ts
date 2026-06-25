@@ -12,13 +12,13 @@ export async function POST(request: Request) {
   const email = userData?.user?.email;
   if (!email) return Response.json({ devis: [], conversations: [] });
 
-  const { data: client } = await sb.from("clients").select("id, nom").eq("email", email).maybeSingle();
-  if (!client) return Response.json({ devis: [], conversations: [], email, nom: null });
+  const { data: client } = await sb.from("clients").select("id, prenom, nom").eq("email", email).maybeSingle();
+  if (!client) return Response.json({ devis: [], conversations: [], email, prenom: null, nom: null });
 
   const [{ data: devis }, { data: conversations }] = await Promise.all([
     sb.from("devis").select("*").eq("client_id", client.id).order("created_at", { ascending: false }),
     sb.from("conversations").select("*").eq("client_id", client.id).order("updated_at", { ascending: false }),
   ]);
 
-  return Response.json({ devis: devis ?? [], conversations: conversations ?? [], email, nom: client.nom ?? null });
+  return Response.json({ devis: devis ?? [], conversations: conversations ?? [], email, prenom: client.prenom ?? null, nom: client.nom ?? null });
 }

@@ -24,7 +24,7 @@ export default function EspaceClient() {
   const { loading, email, role, session } = useAuth();
   const [devis, setDevis] = useState<Devis[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [nom, setNom] = useState<string | null>(null);
+  const [prenom, setPrenom] = useState<string | null>(null);
 
   // Garde de route : pas connecté -> /login
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function EspaceClient() {
     const d = await r.json();
     setDevis(d.devis ?? []);
     setConversations(d.conversations ?? []);
-    setNom(d.nom ?? null);
+    setPrenom(d.prenom ?? d.nom ?? null);
   }, [session]);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function EspaceClient() {
         <div>
           <h1 className="text-2xl font-bold">Mon espace</h1>
           <p className="text-sm text-[var(--ink-soft)]">
-            Bonjour {nom ?? email}, content de vous revoir.
+            Bonjour {prenom ?? email}, content de vous revoir.
           </p>
         </div>
         <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)]">

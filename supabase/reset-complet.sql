@@ -28,7 +28,7 @@ create function is_admin() returns boolean language sql stable security definer 
 create table clients (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid references auth.users(id) on delete set null,
-  email text not null, type_client text, nom text, telephone text,
+  email text not null, type_client text, prenom text, nom text, telephone text,
   consentement boolean not null default false, created_at timestamptz not null default now()
 );
 create unique index clients_email_key on clients (lower(email));
@@ -101,11 +101,11 @@ insert into profiles (id, role) select id, 'admin' from auth.users where email =
   on conflict (id) do update set role = 'admin';
 
 -- ---------- DONNÉES DE DÉMO (couvre tous les statuts du pipeline) ----------
-insert into clients (id, email, type_client, nom, telephone, consentement) values
- ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Client Un','0600000001',true),
- ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Client Deux','0600000002',true),
- ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie Dubois','0600000003',true),
- ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul Martin','0600000004',true);
+insert into clients (id, email, type_client, prenom, nom, telephone, consentement) values
+ ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Lucas','Bernard','0600000001',true),
+ ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Emma','Durand','0600000002',true),
+ ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie','Dubois','0600000003',true),
+ ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul','Martin','0600000004',true);
 
 -- 1) EN ATTENTE + relance DUE maintenant (démo relance)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values

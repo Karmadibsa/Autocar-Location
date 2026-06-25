@@ -8,11 +8,11 @@ truncate table conversations, relances, devis, demandes, clients restart identit
 -- ---------------------------------------------------------------------------
 -- Clients (dont les 2 comptes de démo, reliés par email)
 -- ---------------------------------------------------------------------------
-insert into clients (id, email, type_client, nom, telephone, consentement) values
- ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Client Un','0600000001',true),
- ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Client Deux','0600000002',true),
- ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie Dubois','0600000003',true),
- ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul Martin','0600000004',true)
+insert into clients (id, email, type_client, prenom, nom, telephone, consentement) values
+ ('c1000000-0000-0000-0000-000000000001','client1@email.fr','particulier','Lucas','Bernard','0600000001',true),
+ ('c2000000-0000-0000-0000-000000000002','client2@email.fr','particulier','Emma','Durand','0600000002',true),
+ ('c3000000-0000-0000-0000-000000000003','marie.dubois@email.fr','entreprise','Marie','Dubois','0600000003',true),
+ ('c4000000-0000-0000-0000-000000000004','paul.martin@email.fr','particulier','Paul','Martin','0600000004',true)
 on conflict do nothing;
 
 -- ===========================================================================

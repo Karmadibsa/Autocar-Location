@@ -12,6 +12,8 @@ export default function Login() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
@@ -30,7 +32,11 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
     } else {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { prenom: prenom.trim(), nom: nom.trim() } },
+      });
       if (error) setError(error.message);
       else setInfo("Compte créé. Vous pouvez vous connecter.");
     }
@@ -70,12 +76,35 @@ export default function Login() {
           </h1>
 
           <form onSubmit={submit} className="mt-6 space-y-3">
+            {mode === "signup" && (
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  required
+                  value={prenom}
+                  onChange={(e) => setPrenom(e.target.value)}
+                  placeholder="Prénom"
+                  aria-label="Prénom"
+                  className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                />
+                <input
+                  type="text"
+                  required
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                  placeholder="Nom"
+                  aria-label="Nom"
+                  className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                />
+              </div>
+            )}
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="votre@email.fr"
+              aria-label="Adresse email"
               className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
             />
             <input

@@ -13,7 +13,32 @@ export async function POST(request: Request) {
   if (!email || !uid) return Response.json({});
 
   const { data: profile } = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
-  const { data: client } = await sb.from("clients").select("nom").eq("email", email).maybeSingle();
+  const role = profile?.role ?? "client";
+  const meta = (u?.user?.user_metadata ?? {}) as { prenom?: string; nom?: string };
 
-  return Response.json({ email, role: profile?.role ?? "client", nom: client?.nom ?? null });
+  let client: { id: string; prenom: string | null; nom: string | null } | null = null;
+  const { data: found } = await sb
+    .from("clients")
+    .select("id, prenom, nom")
+    .eq("email", email)
+    .maybeSingle();
+  client = found ?? null;
+
+  if (!client && role !== "admin") {
+    // Première connexion d'un compte inscrit : on crée sa fiche depuis les métadonnées.
+    const { data: created } = await sb
+      .from("clients")
+      .insert({ email, prenom: meta.prenom || null, nom: meta.nom || null, type_client: "particulier", consentement: true })
+      .select("id, prenom, nom")
+      .single();
+    client = created ?? null;
+  } else if (client && (!client.prenom || !client.nom) && (meta.prenom || meta.nom)) {
+    // Fiche créée via le chat (sans prénom/nom) : on complète avec les métadonnées.
+    const prenom = client.prenom || meta.prenom || null;
+    const nom = client.nom || meta.nom || null;
+    await sb.from("clients").update({ prenom, nom }).eq("id", client.id);
+    client = { ...client, prenom, nom };
+  }
+
+  return Response.json({ email, role, prenom: client?.prenom ?? null, nom: client?.nom ?? null });
 }
