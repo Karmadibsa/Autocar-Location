@@ -3,6 +3,8 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildDevisPdf } from "@/lib/devisPdf";
+import { calculerDevis } from "@/lib/calculerDevis";
+import { distanceKm } from "@/lib/distance";
 
 type Devis = {
   prix_ht?: number;
@@ -64,12 +66,52 @@ export async function POST(request: Request) {
     return Response.json({ reply: "Agent injoignable. " + detail, error: true });
   }
 
+  // --- Distance routière réelle (OSRM) : recalcule le devis si possible ---
+  const recalc = await devisAvecOSRM(data.params, data.devis);
+  if (recalc) data.devis = recalc;
+
   // --- Persistance + email (best-effort) ---
   persist(sessionId, history, data).catch((e) =>
     console.error("[chat] persistance échouée:", e),
   );
 
   return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade });
+}
+
+// Recalcule le devis avec la distance OSRM réelle. Fallback = le devis de n8n.
+async function devisAvecOSRM(
+  params: Params | undefined,
+  fallback: Devis | null | undefined,
+): Promise<Devis | null | undefined> {
+  if (!params?.depart || !params?.destination || !params?.date_depart) return fallback;
+  const nb = Number(params.nb_passagers);
+  if (!Number.isFinite(nb) || nb <= 0) return fallback;
+
+  const km = await distanceKm(params.depart, params.destination);
+  if (!km) return fallback;
+
+  // Corrige une éventuelle année passée (extraction LLM)
+  let dd = String(params.date_depart).slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  if (dd < today) {
+    const parts = dd.split("-");
+    const y = new Date().getUTCFullYear();
+    const cand = `${y}-${parts[1]}-${parts[2]}`;
+    dd = cand < today ? `${y + 1}-${parts[1]}-${parts[2]}` : cand;
+  }
+
+  const r = calculerDevis({
+    nb_passagers: nb,
+    date_depart: dd,
+    date_demande: today,
+    distance_km: km,
+    aller_retour: !!params.aller_retour,
+    options: Array.isArray(params.options)
+      ? (params.options as (string | { code: string; quantite?: number })[])
+      : [],
+  });
+  if ("erreur" in r || "escalade" in r) return fallback;
+  return r as unknown as Devis;
 }
 
 async function persist(

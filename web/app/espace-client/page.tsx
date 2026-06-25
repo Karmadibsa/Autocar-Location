@@ -3,17 +3,17 @@
 // Portail client (protégé) : redirige vers /login si non connecté.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
+import Spinner from "@/app/components/Spinner";
 
-type Ligne = { libelle: string; montant: number };
 type Devis = {
   id: string;
+  prix_ht: number | null;
+  tva: number | null;
   prix_ttc: number | null;
   devise: string | null;
   statut: string;
-  lignes: Ligne[] | null;
   created_at: string;
 };
 type Message = { role: string; contenu?: string; content?: string };
@@ -63,21 +63,20 @@ export default function EspaceClient() {
   }
 
   if (loading || !email) {
-    return <main className="mx-auto max-w-md flex-1 p-8 text-[var(--ink-soft)]">Chargement…</main>;
+    return (
+      <main className="mx-auto max-w-md flex-1 p-8">
+        <Spinner />
+      </main>
+    );
   }
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Mon espace</h1>
-        <div className="flex items-center gap-3 text-sm">
-          <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 font-semibold text-[var(--ink)]">
-            + Nouveau devis
-          </a>
-          <button onClick={() => supabase?.auth.signOut()} className="text-[var(--ink-soft)] underline">
-            Déconnexion ({email})
-          </button>
-        </div>
+        <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)]">
+          + Nouveau devis
+        </a>
       </div>
 
       {role === "admin" && (
@@ -109,13 +108,15 @@ export default function EspaceClient() {
                   {d.prix_ttc?.toFixed(2)} {d.devise ?? "EUR"} TTC
                 </span>
               </div>
-              <div className="mt-2 font-mono text-[12px] text-[var(--ink-soft)]">
-                {(d.lignes ?? []).map((l, i) => (
-                  <div key={i} className="flex justify-between">
-                    <span>{l.libelle}</span>
-                    <span>{l.montant.toFixed(2)} €</span>
-                  </div>
-                ))}
+              <div className="mt-2 text-[12px] text-[var(--ink-soft)]">
+                <div className="flex justify-between">
+                  <span>Prestation de transport</span>
+                  <span>{d.prix_ht?.toFixed(2)} €</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TVA (10 %)</span>
+                  <span>{d.tva?.toFixed(2)} €</span>
+                </div>
               </div>
               <button
                 onClick={() => downloadPdf(d.id)}

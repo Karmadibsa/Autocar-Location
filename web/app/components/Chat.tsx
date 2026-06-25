@@ -25,13 +25,15 @@ function DevisCard({ devis }: { devis: Devis }) {
       <div className="bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">
         Votre devis — NeoTravel
       </div>
-      <div className="px-4 py-3 font-mono text-[13px] text-[var(--ink-soft)]">
-        {devis.lignes?.map((l, i) => (
-          <div key={i} className="flex justify-between gap-3 py-0.5">
-            <span>{l.libelle}</span>
-            <span className="whitespace-nowrap">{l.montant.toFixed(2)} €</span>
-          </div>
-        ))}
+      <div className="px-4 py-3 text-[13px] text-[var(--ink-soft)]">
+        <div className="flex justify-between py-0.5">
+          <span>Prestation de transport</span>
+          <span>{devis.prix_ht?.toFixed(2)} €</span>
+        </div>
+        <div className="flex justify-between py-0.5">
+          <span>TVA (10 %)</span>
+          <span>{devis.tva?.toFixed(2)} €</span>
+        </div>
       </div>
       <div className="bg-[var(--accent)] px-4 py-2 text-[15px] font-bold text-[var(--ink)]">
         Total TTC : {devis.prix_ttc?.toFixed(2)} {devis.devise ?? "EUR"}
@@ -100,13 +102,18 @@ export default function Chat() {
         {messages.map((m, i) => (
           <div
             key={i}
-            className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
+            className={m.role === "user" ? "flex justify-end" : "flex items-start justify-start gap-2"}
           >
+            {m.role === "agent" && (
+              <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white">
+                N
+              </div>
+            )}
             <div
               className={
                 m.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-sm bg-[var(--bg-muted)] px-4 py-2 text-[15px]"
-                  : "max-w-[85%] rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-2 text-[15px]"
+                  ? "max-w-[80%] rounded-2xl rounded-br-sm bg-[var(--bg-muted)] px-4 py-2 text-[15px] text-left"
+                  : "max-w-[85%] rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-2 text-[15px] text-left"
               }
             >
               {m.content}
@@ -115,9 +122,16 @@ export default function Chat() {
           </div>
         ))}
         {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-2 text-sm text-[var(--ink-soft)]">
-              l&apos;agent rédige…
+          <div className="flex items-start justify-start gap-2">
+            <div className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[var(--brand)] text-xs font-bold text-white">
+              N
+            </div>
+            <div className="rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-3">
+              <span className="flex gap-1">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:-0.2s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:-0.1s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)]" />
+              </span>
             </div>
           </div>
         )}

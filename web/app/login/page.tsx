@@ -15,7 +15,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  // Déjà connecté -> on redirige selon le rôle
   useEffect(() => {
     if (!loading && connected) {
       router.replace(role === "admin" ? "/admin" : "/espace-client");
@@ -45,75 +44,92 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto flex max-w-md flex-1 flex-col justify-center p-8">
-      <a href="/" className="text-lg font-bold text-[var(--brand)]">NeoTravel</a>
-      <h1 className="mt-6 text-2xl font-bold">
-        {mode === "login" ? "Connexion" : "Créer un compte"}
-      </h1>
-
-      <form onSubmit={submit} className="mt-6 space-y-3">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="votre@email.fr"
-          className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
-        />
-        <input
-          type="password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mot de passe (min. 6 caractères)"
-          className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
-        />
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]"
-        >
-          {mode === "login" ? "Se connecter" : "Créer mon compte"}
-        </button>
-        {error && <p className="text-sm text-[#d14343]">{error}</p>}
-        {info && <p className="text-sm text-[var(--brand)]">{info}</p>}
-      </form>
-
-      <button
-        onClick={() => {
-          setMode(mode === "login" ? "signup" : "login");
-          setError("");
-          setInfo("");
-        }}
-        className="mt-4 text-sm text-[var(--ink-soft)] underline"
-      >
-        {mode === "login" ? "Pas de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
-      </button>
-
-      {/* Module démo : connexion rapide */}
-      <div className="mt-8 rounded-xl border border-dashed border-[var(--border)] p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
-          Connexion rapide (démo)
+    <main className="flex flex-1">
+      {/* Panneau marque (desktop) */}
+      <div className="hidden w-1/2 flex-col justify-center bg-[var(--brand)] p-12 text-white lg:flex">
+        <h2 className="text-3xl font-bold">NeoTravel</h2>
+        <p className="mt-3 max-w-sm text-white/80">
+          Suivez vos devis et vos échanges, ou pilotez l&apos;activité commerciale.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <ul className="mt-6 space-y-2 text-sm text-white/85">
+          <li>✓ Vos devis en temps réel</li>
+          <li>✓ Historique de vos conversations</li>
+          <li>✓ PDF téléchargeable</li>
+        </ul>
+      </div>
+
+      {/* Formulaire */}
+      <div className="flex w-full flex-col justify-center p-8 lg:w-1/2">
+        <div className="mx-auto w-full max-w-sm">
+          <h1 className="text-2xl font-bold">
+            {mode === "login" ? "Connexion" : "Créer un compte"}
+          </h1>
+
+          <form onSubmit={submit} className="mt-6 space-y-3">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.fr"
+              className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+            />
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mot de passe (min. 6 caractères)"
+              className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+            />
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]"
+            >
+              {mode === "login" ? "Se connecter" : "Créer mon compte"}
+            </button>
+            {error && <p className="text-sm text-[#d14343]">{error}</p>}
+            {info && <p className="text-sm text-[var(--brand)]">{info}</p>}
+          </form>
+
           <button
-            onClick={() => quickLogin("admin@neotravel.fr", "123456")}
-            className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-sm text-[var(--brand)]"
+            onClick={() => {
+              setMode(mode === "login" ? "signup" : "login");
+              setError("");
+              setInfo("");
+            }}
+            className="mt-4 text-sm text-[var(--ink-soft)] underline"
           >
-            Admin
+            {mode === "login" ? "Pas de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
           </button>
-          <button
-            onClick={() => quickLogin("client1@email.fr", "client")}
-            className="rounded-full border border-[var(--border)] px-3 py-1.5 text-sm"
-          >
-            Client 1 (avec devis)
-          </button>
-          <button
-            onClick={() => quickLogin("client2@email.fr", "client")}
-            className="rounded-full border border-[var(--border)] px-3 py-1.5 text-sm"
-          >
-            Client 2 (sans devis)
-          </button>
+
+          {/* Module démo : connexion rapide */}
+          <div className="mt-8 rounded-xl border border-dashed border-[var(--border)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+              Connexion rapide (démo)
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => quickLogin("admin@neotravel.fr", "123456")}
+                className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-sm text-[var(--brand)]"
+              >
+                Admin
+              </button>
+              <button
+                onClick={() => quickLogin("client1@email.fr", "client")}
+                className="rounded-full border border-[var(--border)] px-3 py-1.5 text-sm"
+              >
+                Client 1 (avec devis)
+              </button>
+              <button
+                onClick={() => quickLogin("client2@email.fr", "client")}
+                className="rounded-full border border-[var(--border)] px-3 py-1.5 text-sm"
+              >
+                Client 2 (sans devis)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </main>

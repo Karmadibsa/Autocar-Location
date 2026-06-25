@@ -1,11 +1,8 @@
 import Chat from "./components/Chat";
-import Header from "./components/Header";
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <Header />
-
       {/* Hero conversationnel */}
       <section className="flex flex-col items-center bg-gradient-to-b from-white to-[var(--brand-soft)] px-4 pb-14 pt-10 sm:pt-16">
         <div className="w-full max-w-2xl text-center">
@@ -65,13 +62,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#0b1f1a] px-6 py-8 text-sm text-white/70">
-        <div className="mx-auto flex max-w-4xl flex-col justify-between gap-2 sm:flex-row">
-          <span>© {new Date().getFullYear()} NeoTravel — Transport de groupe</span>
-          <span>Mentions légales · RGPD · Contact</span>
-        </div>
-      </footer>
     </div>
   );
 }

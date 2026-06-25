@@ -61,18 +61,15 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   text(String(params.nb_passagers ?? "-"), M + 95, y, 10);
   y -= 35;
 
-  // Tableau des lignes
-  text("Detail", M, y, 11, bold, BRAND);
+  // Prestation (version client : pas de marge ni de coefficients)
+  text("Prestation", M, y, 11, bold, BRAND);
   text("Montant", W - M - 80, y, 11, bold, BRAND);
   y -= 8;
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: GREY });
   y -= 18;
-  for (const l of devis.lignes ?? []) {
-    text(l.libelle, M, y, 10);
-    text(eur(l.montant), W - M - 80, y, 10);
-    y -= 16;
-  }
-  y -= 6;
+  text("Transport de groupe en autocar avec chauffeur", M, y, 10);
+  text(eur(devis.prix_ht), W - M - 80, y, 10);
+  y -= 22;
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: GREY });
   y -= 22;
   text("Total HT", W - M - 200, y, 10, font, GREY);

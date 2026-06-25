@@ -40,12 +40,7 @@ export default function Header() {
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-white/90 px-6 py-3 backdrop-blur">
       <a href="/" className="text-lg font-bold text-[var(--brand)]">NeoTravel</a>
       <div className="flex items-center gap-1">
-        {!email && (
-          <>
-            <a href="/login" className={link}>Connexion</a>
-            <a href="/login" className={linkBox}>Espace pro</a>
-          </>
-        )}
+        {!email && <a href="/login" className={linkBox}>Connexion</a>}
         {email && isAdmin && <a href="/admin" className={linkBox}>Dashboard</a>}
         {email && !isAdmin && <a href="/espace-client" className={link}>Mon espace</a>}
         {email && (
