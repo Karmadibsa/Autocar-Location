@@ -38,4 +38,11 @@ describe("devisEmailHtml", () => {
     expect(r).toContain("Relance 1/2");
     expect(r).toContain("Sauf erreur...");
   });
+
+  it("ajoute le lien de refus uniquement si un token est fourni", () => {
+    expect(html).not.toContain("/devis/refuser");
+    const avecToken = devisEmailHtml(devis, params, { refuseToken: "abc-123" });
+    expect(avecToken).toContain("/devis/refuser?token=abc-123");
+    expect(avecToken).toContain("Refuser ce devis");
+  });
 });
