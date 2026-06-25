@@ -137,7 +137,8 @@ export default function Login() {
             {mode === "login" ? "Pas de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
           </button>
 
-          {/* Module démo : connexion rapide */}
+          {/* Module démo : connexion rapide (masqué en production) */}
+          {process.env.NODE_ENV !== "production" && (
           <div className="mt-8 rounded-xl border border-dashed border-[var(--border)] p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
               Connexion rapide (démo)
@@ -163,6 +164,7 @@ export default function Login() {
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
     </main>

@@ -72,6 +72,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [devOpen, setDevOpen] = useState(false);
+  const isDev = process.env.NODE_ENV !== "production"; // aides de test masquées en prod
   const hasDevisRef = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -193,7 +194,8 @@ export default function Chat() {
         ))}
       </div>
 
-      {/* Encart DEV : scénarios de test préécrits (tous les cas des livrables) */}
+      {/* Encart DEV : scénarios de test préécrits (masqué en production) */}
+      {isDev && (
       <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-muted)] p-3">
         <button
           onClick={() => setDevOpen((o) => !o)}
@@ -220,6 +222,7 @@ export default function Chat() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
