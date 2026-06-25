@@ -164,9 +164,10 @@ async function persist(
 
   // 4) Demande + devis. Le PREMIER devis fait foi : on ne réécrit pas le prix ensuite.
 
-  const { data: existing } = await sb.from("devis").select("id, client_id").eq("id", sessionId).maybeSingle();
+  const { data: existing } = await sb.from("devis").select("id, client_id, token").eq("id", sessionId).maybeSingle();
   const devisExistait = !!existing;
   const emailAjouteApres = !!clientId && devisExistait && !existing?.client_id;
+  const tokenDevis = (existing?.token as string | undefined) ?? crypto.randomUUID();
 
   if (!devisExistait) {
     // Première fois : on crée la demande + le devis (avec le prix figé) et on
@@ -197,6 +198,7 @@ async function persist(
       statut: "envoye",
       date_envoi: new Date().toISOString(),
       prochaine_relance: prochaineRelance(urgent, 0),
+      token: tokenDevis,
     });
   } else if (emailAjouteApres) {
     // Le devis existait sans client : on relie le client SANS toucher au prix
@@ -205,7 +207,7 @@ async function persist(
   }
 
   // Email : à la création avec email connu, ou quand l'email est ajouté ensuite
-  if (email && (!devisExistait || emailAjouteApres)) await sendDevisEmail(email, devis, params, sessionId);
+  if (email && (!devisExistait || emailAjouteApres)) await sendDevisEmail(email, devis, params, sessionId, tokenDevis);
 }
 
 async function getOrCreateClient(
@@ -223,11 +225,11 @@ async function getOrCreateClient(
   return created?.id ?? null;
 }
 
-async function sendDevisEmail(to: string, devis: Devis, params: Params, id?: string) {
+async function sendDevisEmail(to: string, devis: Devis, params: Params, id?: string, token?: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
-  const html = devisEmailHtml(devis, params);
+  const html = devisEmailHtml(devis, params, { refuseToken: token });
   let attachments: { filename: string; content: string }[] | undefined;
   try {
     const pdf = await buildDevisPdf(devis, { ...params, ref: refDevis(id) });

@@ -26,6 +26,7 @@ export async function POST(request: Request) {
   const tva = Math.round(ht * 0.1 * 100) / 100;
   const ttc = Math.round((ht + tva) * 100) / 100;
   const urgent = demande.urgence === "urgent" || estUrgent(demande.date_depart);
+  const tokenRefus = crypto.randomUUID();
 
   // Crée (ou remplace) le devis pour cette demande
   const devisRow = {
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     date_envoi: new Date().toISOString(),
     prochaine_relance: prochaineRelance(urgent, 0),
     nb_relances: 0,
+    token: tokenRefus,
   };
   await sb.from("devis").upsert(devisRow);
   await sb.from("demandes").update({ statut: "devis_envoye" }).eq("id", demande_id);
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
       const html = devisEmailHtml(devisRow, params, {
         titre: "Votre devis sur-mesure",
         intro: "Après étude de votre demande par un conseiller, voici votre devis personnalisé.",
+        refuseToken: tokenRefus,
       });
       let attachments;
       try {

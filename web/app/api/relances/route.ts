@@ -15,6 +15,7 @@ type DevisDu = {
   devise: string | null;
   lignes: { libelle: string; montant: number }[] | null;
   nb_relances: number | null;
+  token: string | null;
   demandes: {
     depart: string | null;
     destination: string | null;
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
   const { data: dus } = await sb
     .from("devis")
     .select(
-      "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, prenom, nom)",
+      "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, token, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, prenom, nom)",
     )
     .eq("statut", "envoye")
     .lte("prochaine_relance", now)
@@ -118,6 +119,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
       titre: `Votre devis vous attend (relance ${numero}/2)`,
       intro:
         "Sauf erreur, nous n'avons pas encore reçu votre retour. Nous restons à votre disposition pour toute question.",
+      refuseToken: d.token ?? undefined,
     },
   );
   let attachments: { filename: string; content: string }[] | undefined;

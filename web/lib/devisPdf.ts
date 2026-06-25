@@ -19,6 +19,9 @@ export type ParamsPdf = {
   nb_passagers?: number | null;
   aller_retour?: boolean | null;
   nom?: string | null;
+  adresse?: string | null;
+  code_postal?: string | null;
+  ville?: string | null;
   ref?: string | null; // référence stable du devis (dérivée de l'id)
 };
 
@@ -76,11 +79,23 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 1, color: BRAND });
   y -= 26;
 
-  // --- À l'attention de ---
-  if (params.nom) {
+  // --- À l'attention de (avec adresse de facturation si connue) ---
+  if (params.nom || params.adresse) {
     text("A l'attention de", M, y, 9, bold, GREY);
-    text(String(params.nom), M, y - 14, 12, bold);
-    y -= 36;
+    y -= 14;
+    if (params.nom) {
+      text(String(params.nom), M, y, 12, bold);
+      y -= 14;
+    }
+    if (params.adresse) {
+      text(String(params.adresse), M, y, 10, font, GREY);
+      y -= 13;
+    }
+    if (params.code_postal || params.ville) {
+      text(`${params.code_postal ?? ""} ${params.ville ?? ""}`.trim(), M, y, 10, font, GREY);
+      y -= 13;
+    }
+    y -= 10;
   }
 
   // --- Résumé de la demande (encadré) ---

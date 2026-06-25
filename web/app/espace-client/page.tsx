@@ -1,6 +1,6 @@
 "use client";
 
-// Portail client (protégé) : redirige vers /login si non connecté.
+// Portail client (protégé) : devis, réponses, conversations, gestion du compte.
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
@@ -18,20 +18,29 @@ type Devis = {
 };
 type Message = { role: string; contenu?: string; content?: string };
 type Conversation = { id: string; messages: Message[] | null; updated_at: string };
+type Profil = {
+  prenom: string;
+  nom: string;
+  telephone: string;
+  adresse: string;
+  code_postal: string;
+  ville: string;
+};
+const PROFIL_VIDE: Profil = { prenom: "", nom: "", telephone: "", adresse: "", code_postal: "", ville: "" };
 
 export default function EspaceClient() {
   const router = useRouter();
   const { loading, email, role, session } = useAuth();
   const [devis, setDevis] = useState<Devis[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [prenom, setPrenom] = useState<string | null>(null);
+  const [profil, setProfil] = useState<Profil>(PROFIL_VIDE);
+  const [profilMsg, setProfilMsg] = useState("");
+  const [manqueAdresse, setManqueAdresse] = useState(false);
 
-  // Garde de route : pas connecté -> /login
   useEffect(() => {
     if (!loading && !email) router.replace("/login");
   }, [loading, email, router]);
 
-  // Charge les données du client
   const loadData = useCallback(async () => {
     if (!session) return;
     const r = await fetch("/api/my-data", {
@@ -42,14 +51,13 @@ export default function EspaceClient() {
     const d = await r.json();
     setDevis(d.devis ?? []);
     setConversations(d.conversations ?? []);
-    setPrenom(d.prenom ?? d.nom ?? null);
+    if (d.profil) setProfil({ ...PROFIL_VIDE, ...cleanProfil(d.profil) });
   }, [session]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Réponse du client à un devis (accepter / refuser)
   async function repondre(id: string, reponse: "accepte" | "refuse") {
     if (!session) return;
     await fetch("/api/devis-reponse", {
@@ -57,7 +65,26 @@ export default function EspaceClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: session.access_token, id, reponse }),
     });
+    // Pour une facture en bonne et due forme, on invite à compléter l'adresse.
+    if (reponse === "accepte" && !profil.adresse) {
+      setManqueAdresse(true);
+      document.getElementById("mon-compte")?.scrollIntoView({ behavior: "smooth" });
+    }
     loadData();
+  }
+
+  async function saveProfil(e: React.FormEvent) {
+    e.preventDefault();
+    if (!session) return;
+    setProfilMsg("Enregistrement…");
+    const r = await fetch("/api/profil-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, ...profil }),
+    });
+    const j = await r.json();
+    setProfilMsg(j.ok ? "✓ Coordonnées enregistrées." : "Erreur");
+    if (j.ok && profil.adresse) setManqueAdresse(false);
   }
 
   async function downloadPdf(id: string) {
@@ -85,13 +112,20 @@ export default function EspaceClient() {
     );
   }
 
+  const champ = (k: keyof Profil) => ({
+    value: profil[k],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setProfil((p) => ({ ...p, [k]: e.target.value })),
+    className:
+      "w-full rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]",
+  });
+
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">Mon espace</h1>
           <p className="text-sm text-[var(--ink-soft)]">
-            Bonjour {prenom ?? email}, content de vous revoir.
+            Bonjour {profil.prenom || email}, content de vous revoir.
           </p>
         </div>
         <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
@@ -173,6 +207,34 @@ export default function EspaceClient() {
         </div>
       )}
 
+      {/* Mon compte */}
+      <h2 id="mon-compte" className="mt-8 scroll-mt-20 text-lg font-semibold">Mon compte</h2>
+      {manqueAdresse && (
+        <div className="mt-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] p-3 text-sm text-[#8A5A12]">
+          Merci d'avoir accepté ! Complétez votre <b>adresse</b> ci-dessous pour une facture en bonne et due forme.
+        </div>
+      )}
+      <form onSubmit={saveProfil} className="mt-2 rounded-xl border border-[var(--border)] bg-white p-4">
+        <p className="text-xs text-[var(--ink-soft)]">Email : {email}</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <input placeholder="Prénom" aria-label="Prénom" {...champ("prenom")} />
+          <input placeholder="Nom" aria-label="Nom" {...champ("nom")} />
+          <input placeholder="Téléphone" aria-label="Téléphone" {...champ("telephone")} />
+          <input placeholder="Adresse" aria-label="Adresse" {...champ("adresse")} />
+          <input placeholder="Code postal" aria-label="Code postal" {...champ("code_postal")} />
+          <input placeholder="Ville" aria-label="Ville" {...champ("ville")} />
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            type="submit"
+            className="rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]"
+          >
+            Enregistrer
+          </button>
+          {profilMsg && <span className="text-sm text-[var(--ink-soft)]">{profilMsg}</span>}
+        </div>
+      </form>
+
       <h2 className="mt-8 text-lg font-semibold">Mes conversations</h2>
       {conversations.length === 0 ? (
         <p className="mt-2 text-[var(--ink-soft)]">Aucune conversation.</p>
@@ -197,4 +259,10 @@ export default function EspaceClient() {
       )}
     </main>
   );
+}
+
+function cleanProfil(p: Record<string, unknown>): Partial<Profil> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(p)) if (typeof v === "string") out[k] = v;
+  return out as Partial<Profil>;
 }

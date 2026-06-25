@@ -25,7 +25,7 @@ function ligneResume(label: string, valeur: string) {
 export function devisEmailHtml(
   devis: EmailDevis,
   params: EmailParams,
-  opts: { titre?: string; intro?: string } = {},
+  opts: { titre?: string; intro?: string; refuseToken?: string } = {},
 ): string {
   const titre = opts.titre ?? "Votre devis";
   const intro = opts.intro ?? "Voici le récapitulatif de votre demande de transport de groupe.";
@@ -63,9 +63,16 @@ export function devisEmailHtml(
 
       <div style="text-align:center;margin-top:20px">
         <a href="${base}/espace-client" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:bold;font-size:14px">
-          Accéder à mon espace client
+          Créer mon compte / Accepter le devis
         </a>
-        <p style="color:#8a958f;font-size:11px;margin-top:8px">Connectez-vous (ou créez un compte avec cet email) pour accepter votre devis.</p>
+        <p style="color:#8a958f;font-size:11px;margin-top:8px">Créez un compte (ou connectez-vous) avec cet email pour accepter votre devis.</p>
+        ${
+          opts.refuseToken
+            ? `<p style="margin-top:14px;font-size:13px">Pas intéressé ?
+                 <a href="${base}/devis/refuser?token=${opts.refuseToken}" style="color:#A12B2B;text-decoration:underline">Refuser ce devis</a>
+                 (sans créer de compte).</p>`
+            : ""
+        }
       </div>
 
       <p style="color:#8a958f;font-size:11px;margin-top:18px">

@@ -24,9 +24,19 @@ export async function POST(request: Request) {
 
   const { data: demande } = await sb.from("demandes").select("*").eq("id", devis.demande_id).maybeSingle();
   let nom: string | null = null;
+  let adresse: string | null = null;
+  let code_postal: string | null = null;
+  let ville: string | null = null;
   if (devis.client_id) {
-    const { data: c } = await sb.from("clients").select("prenom, nom").eq("id", devis.client_id).maybeSingle();
+    const { data: c } = await sb
+      .from("clients")
+      .select("prenom, nom, adresse, code_postal, ville")
+      .eq("id", devis.client_id)
+      .maybeSingle();
     nom = [c?.prenom, c?.nom].filter(Boolean).join(" ") || null;
+    adresse = c?.adresse ?? null;
+    code_postal = c?.code_postal ?? null;
+    ville = c?.ville ?? null;
   }
 
   const pdf = await buildDevisPdf(
@@ -38,6 +48,9 @@ export async function POST(request: Request) {
       nb_passagers: demande?.nb_passagers,
       aller_retour: demande?.aller_retour,
       nom,
+      adresse,
+      code_postal,
+      ville,
       ref: refDevis(devis.id),
     },
   );

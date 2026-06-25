@@ -49,6 +49,18 @@ export default function Login() {
     if (error) setError(error.message);
   }
 
+  async function motDePasseOublie() {
+    setError("");
+    setInfo("");
+    if (!supabase) return setError("Configuration Supabase manquante.");
+    if (!email) return setError("Entrez d'abord votre email ci-dessus.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) setError(error.message);
+    else setInfo("Si un compte existe, un email de réinitialisation vient d'être envoyé.");
+  }
+
   return (
     <main className="flex flex-1">
       {/* Panneau marque (desktop) */}
@@ -126,16 +138,23 @@ export default function Login() {
             {info && <p className="text-sm text-[var(--brand)]">{info}</p>}
           </form>
 
-          <button
-            onClick={() => {
-              setMode(mode === "login" ? "signup" : "login");
-              setError("");
-              setInfo("");
-            }}
-            className="mt-4 text-sm text-[var(--ink-soft)] underline"
-          >
-            {mode === "login" ? "Pas de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
-          </button>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+            <button
+              onClick={() => {
+                setMode(mode === "login" ? "signup" : "login");
+                setError("");
+                setInfo("");
+              }}
+              className="text-sm text-[var(--ink-soft)] underline hover:text-[var(--ink)]"
+            >
+              {mode === "login" ? "Pas de compte ? Créer un compte" : "Déjà un compte ? Se connecter"}
+            </button>
+            {mode === "login" && (
+              <button onClick={motDePasseOublie} className="text-sm text-[var(--brand)] underline hover:text-[var(--brand-dark)]">
+                Mot de passe oublié ?
+              </button>
+            )}
+          </div>
 
           {/* Module démo : connexion rapide (masqué en production) */}
           {process.env.NODE_ENV !== "production" && (
