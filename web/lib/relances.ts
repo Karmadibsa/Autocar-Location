@@ -34,3 +34,16 @@ export function typeRelance(urgent: boolean, numero: number): "J2" | "J3" | "J7"
   if (urgent) return "J2";
   return numero === 1 ? "J3" : "J7";
 }
+
+// Un devis envoyé est valable VALIDITE_JOURS jours ; au-delà il expire.
+export const VALIDITE_JOURS = 30;
+export function estExpire(
+  dateEnvoi: string | null | undefined,
+  validiteJours: number = VALIDITE_JOURS,
+  from: Date = new Date(),
+): boolean {
+  if (!dateEnvoi) return false;
+  const env = new Date(dateEnvoi).getTime();
+  if (isNaN(env)) return false;
+  return from.getTime() - env > validiteJours * 86400000;
+}

@@ -2,7 +2,7 @@
 // Supabase et envoie le devis par email. La persistance ne bloque jamais la réponse.
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildDevisPdf } from "@/lib/devisPdf";
+import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { calculerDevis } from "@/lib/calculerDevis";
 import { distanceKm } from "@/lib/distance";
 import { estUrgent, prochaineRelance } from "@/lib/relances";
@@ -205,7 +205,7 @@ async function persist(
   }
 
   // Email : à la création avec email connu, ou quand l'email est ajouté ensuite
-  if (email && (!devisExistait || emailAjouteApres)) await sendDevisEmail(email, devis, params);
+  if (email && (!devisExistait || emailAjouteApres)) await sendDevisEmail(email, devis, params, sessionId);
 }
 
 async function getOrCreateClient(
@@ -223,14 +223,14 @@ async function getOrCreateClient(
   return created?.id ?? null;
 }
 
-async function sendDevisEmail(to: string, devis: Devis, params: Params) {
+async function sendDevisEmail(to: string, devis: Devis, params: Params, id?: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
   const html = devisEmailHtml(devis, params);
   let attachments: { filename: string; content: string }[] | undefined;
   try {
-    const pdf = await buildDevisPdf(devis, params);
+    const pdf = await buildDevisPdf(devis, { ...params, ref: refDevis(id) });
     attachments = [{ filename: "devis-autocar-location.pdf", content: Buffer.from(pdf).toString("base64") }];
   } catch (e) {
     console.error("[pdf] génération échouée:", e);

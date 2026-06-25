@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { estUrgent, prochaineRelance, typeRelance } from "./relances";
+import { estUrgent, prochaineRelance, typeRelance, estExpire } from "./relances";
 
 describe("relances", () => {
   it("estUrgent : départ < 7 jours", () => {
@@ -27,5 +27,12 @@ describe("relances", () => {
     expect(typeRelance(true, 1)).toBe("J2");
     expect(typeRelance(false, 1)).toBe("J3");
     expect(typeRelance(false, 2)).toBe("J7");
+  });
+
+  it("estExpire : > 30 jours après l'envoi", () => {
+    const now = new Date("2026-06-25T12:00:00Z");
+    expect(estExpire("2026-05-01T00:00:00Z", 30, now)).toBe(true); // 55 j
+    expect(estExpire("2026-06-10T00:00:00Z", 30, now)).toBe(false); // 15 j
+    expect(estExpire(null, 30, now)).toBe(false);
   });
 });

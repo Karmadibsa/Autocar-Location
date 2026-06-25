@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     sb
       .from("demandes")
       .select(
-        "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance)",
+        "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, clients(email, nom), devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance)",
       )
       .order("created_at", { ascending: false })
       .limit(20),

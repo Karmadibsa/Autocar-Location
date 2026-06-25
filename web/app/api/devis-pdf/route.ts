@@ -1,6 +1,6 @@
 // Génère et renvoie le PDF d'un devis. Accès : admin OU propriétaire du devis.
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { buildDevisPdf } from "@/lib/devisPdf";
+import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 
 export async function POST(request: Request) {
   const { id, token } = await request.json().catch(() => ({}));
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       nb_passagers: demande?.nb_passagers,
       aller_retour: demande?.aller_retour,
       nom,
+      ref: refDevis(devis.id),
     },
   );
 

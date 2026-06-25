@@ -2,8 +2,8 @@
 // et nb_relances < 2. Envoie l'email, met à jour les statuts, planifie la suivante
 // ou clôture. Appelable par : un admin (token) OU un planificateur (secret n8n).
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { prochaineRelance, estUrgent, typeRelance } from "@/lib/relances";
-import { buildDevisPdf } from "@/lib/devisPdf";
+import { prochaineRelance, estUrgent, typeRelance, estExpire } from "@/lib/relances";
+import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
 
 type DevisDu = {
@@ -43,6 +43,18 @@ export async function POST(request: Request) {
   if (!allowed) return Response.json({ ok: false, reason: "forbidden" }, { status: 403 });
 
   const now = new Date().toISOString();
+
+  // 0) Expiration : un devis envoyé depuis plus de 30 jours expire (demande clôturée).
+  let expirees = 0;
+  const { data: envoyes } = await sb.from("devis").select("id, demande_id, date_envoi").eq("statut", "envoye");
+  for (const v of envoyes ?? []) {
+    if (estExpire(v.date_envoi)) {
+      await sb.from("devis").update({ statut: "expire", prochaine_relance: null }).eq("id", v.id);
+      await sb.from("demandes").update({ statut: "cloture" }).eq("id", v.demande_id);
+      expirees++;
+    }
+  }
+
   const { data: dus } = await sb
     .from("devis")
     .select(
@@ -86,7 +98,7 @@ export async function POST(request: Request) {
     if (!next) cloturees++;
   }
 
-  return Response.json({ ok: true, envoyees, cloturees });
+  return Response.json({ ok: true, envoyees, cloturees, expirees });
 }
 
 async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
@@ -118,6 +130,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
         date_depart: d.demandes?.date_depart,
         nb_passagers: d.demandes?.nb_passagers,
         nom: d.clients?.nom,
+        ref: refDevis(d.id),
       },
     );
     attachments = [{ filename: "devis-autocar-location.pdf", content: Buffer.from(pdf).toString("base64") }];

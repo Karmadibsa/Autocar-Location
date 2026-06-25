@@ -19,7 +19,14 @@ export type ParamsPdf = {
   nb_passagers?: number | null;
   aller_retour?: boolean | null;
   nom?: string | null;
+  ref?: string | null; // référence stable du devis (dérivée de l'id)
 };
+
+// Référence lisible et STABLE dérivée de l'id du devis (même devis = même réf.).
+export function refDevis(id?: string | null): string {
+  if (!id) return "DV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  return "DV-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
+}
 
 const BRAND = rgb(0.054, 0.478, 0.4);
 const INK = rgb(0.08, 0.125, 0.114);
@@ -60,7 +67,7 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   text("Autocar Location", brandX, y - 8, 18, bold, BRAND);
   text("Transport de groupe en autocar avec chauffeur", brandX, y - 24, 9, font, GREY);
 
-  const ref = "DV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const ref = params.ref ?? refDevis(null);
   right("DEVIS", W - M, y - 4, 20, bold, BRAND);
   right(`Réf. ${ref}`, W - M, y - 22, 9, font, GREY);
   right(`Émis le ${new Date().toLocaleDateString("fr-FR")}`, W - M, y - 34, 9, font, GREY);

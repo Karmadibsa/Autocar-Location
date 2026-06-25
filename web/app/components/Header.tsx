@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function Header() {
   const [email, setEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [name, setName] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -17,13 +18,19 @@ export default function Header() {
       if (!active) return;
       setEmail(s?.user.email ?? null);
       if (s) {
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", s.user.id)
-          .maybeSingle();
-        if (active) setIsAdmin(p?.role === "admin");
-      } else if (active) setIsAdmin(false);
+        const r = await fetch("/api/me", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: s.access_token }),
+        });
+        const me = await r.json().catch(() => ({}));
+        if (!active) return;
+        setIsAdmin(me.role === "admin");
+        setName(me.nom ?? null);
+      } else if (active) {
+        setIsAdmin(false);
+        setName(null);
+      }
     }
     load();
     const sub = supabase?.auth.onAuthStateChange(() => load());
@@ -32,6 +39,8 @@ export default function Header() {
       sub?.data.subscription.unsubscribe();
     };
   }, []);
+
+  const display = isAdmin ? "Admin" : name ?? email?.split("@")[0] ?? "";
 
   const link = "rounded-full px-4 py-1.5 text-sm font-medium text-[var(--brand)] hover:underline";
   const linkBox = "rounded-full border border-[var(--brand)] px-4 py-1.5 text-sm font-medium text-[var(--brand)]";
@@ -44,6 +53,11 @@ export default function Header() {
         <span className="text-lg font-bold text-[var(--brand)]">Autocar Location</span>
       </a>
       <div className="flex items-center gap-1">
+        {email && (
+          <span className="mr-1 hidden text-sm text-[var(--ink-soft)] sm:inline">
+            Bonjour, <b className="text-[var(--ink)]">{display}</b>
+          </span>
+        )}
         {!email && <a href="/login" className={linkBox}>Connexion</a>}
         {email && isAdmin && <a href="/admin" className={linkBox}>Dashboard</a>}
         {email && !isAdmin && <a href="/espace-client" className={link}>Mon espace</a>}

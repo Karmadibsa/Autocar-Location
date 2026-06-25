@@ -30,7 +30,16 @@ type DemandeRow = {
   commentaire: string | null;
   statut: string;
   created_at: string;
+  clients: { email: string | null; nom: string | null } | null;
   devis: DevisFull[];
+};
+
+// Regroupement statut -> catégorie opérationnelle (sert aussi au filtre).
+const GROUPES: Record<string, string[]> = {
+  aTraiter: ["cas_complexe"],
+  enAttente: ["devis_envoye", "relance_1", "relance_2"],
+  gagnes: ["accepte"],
+  perdus: ["refuse", "cloture"],
 };
 type Data = {
   ok: boolean;
@@ -51,15 +60,32 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function Cat({ label, value, note, accent }: { label: string; value: number; note: string; accent?: boolean }) {
+function Cat({
+  label,
+  value,
+  note,
+  accent,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  note: string;
+  accent?: boolean;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const base = accent && value > 0 ? "border-[#E08A1E] bg-[#FDF4E6]" : "border-[var(--border)] bg-white";
   return (
-    <div
-      className={`rounded-xl border p-4 ${accent && value > 0 ? "border-[#E08A1E] bg-[#FDF4E6]" : "border-[var(--border)] bg-white"}`}
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-xl border p-4 text-left transition hover:border-[var(--brand)] ${active ? "ring-2 ring-[var(--brand)]" : ""} ${base}`}
     >
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm font-medium">{label}</div>
       <div className="text-xs text-[var(--ink-soft)]">{note}</div>
-    </div>
+    </button>
   );
 }
 
@@ -69,6 +95,7 @@ export default function AdminPage() {
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [relanceMsg, setRelanceMsg] = useState("");
+  const [filtre, setFiltre] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -111,7 +138,9 @@ export default function AdminPage() {
     });
     const j = await r.json();
     setRelanceMsg(
-      j.ok ? `${j.envoyees} relance(s) envoyée(s) · ${j.cloturees} clôturée(s).` : "Erreur",
+      j.ok
+        ? `${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s).`
+        : "Erreur",
     );
     loadData();
   }
@@ -124,8 +153,10 @@ export default function AdminPage() {
     );
   }
 
-  const demandes = data?.demandes ?? [];
+  const toutes = data?.demandes ?? [];
+  const demandes = filtre ? toutes.filter((d) => GROUPES[filtre]?.includes(d.statut)) : toutes;
   const cat = data?.categories;
+  const toggleFiltre = (k: string) => setFiltre((f) => (f === k ? null : k));
   return (
     <main className="mx-auto max-w-5xl p-6">
       <h1 className="text-2xl font-bold">Pilotage commercial</h1>
@@ -152,19 +183,27 @@ export default function AdminPage() {
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Cat label="À traiter" value={cat?.aTraiter ?? 0} note="Intervention humaine (cas complexes)" accent />
-        <Cat label="En attente" value={cat?.enAttente ?? 0} note="Relances automatiques en cours" />
-        <Cat label="Gagnés" value={cat?.gagnes ?? 0} note="Devis acceptés" />
-        <Cat label="Perdus" value={cat?.perdus ?? 0} note="Refusés / clôturés" />
+        <Cat label="À traiter" value={cat?.aTraiter ?? 0} note="Intervention humaine (cas complexes)" accent active={filtre === "aTraiter"} onClick={() => toggleFiltre("aTraiter")} />
+        <Cat label="En attente" value={cat?.enAttente ?? 0} note="Relances automatiques en cours" active={filtre === "enAttente"} onClick={() => toggleFiltre("enAttente")} />
+        <Cat label="Gagnés" value={cat?.gagnes ?? 0} note="Devis acceptés" active={filtre === "gagnes"} onClick={() => toggleFiltre("gagnes")} />
+        <Cat label="Perdus" value={cat?.perdus ?? 0} note="Refusés / clôturés" active={filtre === "perdus"} onClick={() => toggleFiltre("perdus")} />
       </div>
 
       {/* Table détaillée */}
-      <h2 className="mt-8 text-lg font-semibold">Demandes</h2>
+      <div className="mt-8 flex items-center gap-3">
+        <h2 className="text-lg font-semibold">Demandes</h2>
+        {filtre && (
+          <button onClick={() => setFiltre(null)} className="text-xs text-[var(--brand)] underline">
+            Filtre actif — tout afficher
+          </button>
+        )}
+      </div>
       <div className="mt-2 overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-sm">
           <thead className="bg-[var(--bg-muted)] text-left text-[var(--ink-soft)]">
             <tr>
               <th className="px-3 py-2">Trajet</th>
+              <th className="px-3 py-2">Client</th>
               <th className="px-3 py-2">Départ</th>
               <th className="px-3 py-2">Pax</th>
               <th className="px-3 py-2">Montant TTC</th>
@@ -182,6 +221,9 @@ export default function AdminPage() {
                   <tr className="border-t border-[var(--border)]">
                     <td className="px-3 py-2 font-medium">
                       {d.depart ?? "?"} → {d.destination ?? "?"}
+                    </td>
+                    <td className="px-3 py-2 text-[var(--ink-soft)]">
+                      {d.clients?.nom ?? d.clients?.email ?? "—"}
                     </td>
                     <td className="px-3 py-2 text-[var(--ink-soft)]">
                       {d.date_depart ? new Date(d.date_depart).toLocaleDateString("fr-FR") : "—"}
@@ -209,7 +251,7 @@ export default function AdminPage() {
                   </tr>
                   {open === d.id && (
                     <tr className="bg-[var(--bg-muted)]">
-                      <td colSpan={8} className="px-4 py-3">
+                      <td colSpan={9} className="px-4 py-3">
                         {/* Résumé de la demande (toujours) */}
                         <div className="font-semibold">Résumé de la demande</div>
                         <div className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-[var(--ink-soft)] sm:grid-cols-3">
@@ -278,7 +320,7 @@ export default function AdminPage() {
             })}
             {demandes.length === 0 && (
               <tr>
-                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={8}>
+                <td className="px-3 py-4 text-[var(--ink-soft)]" colSpan={9}>
                   Aucune demande pour l&apos;instant.
                 </td>
               </tr>

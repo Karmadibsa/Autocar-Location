@@ -1,7 +1,7 @@
 "use client";
 
 // Portail client (protégé) : redirige vers /login si non connecté.
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
@@ -24,6 +24,7 @@ export default function EspaceClient() {
   const { loading, email, role, session } = useAuth();
   const [devis, setDevis] = useState<Devis[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [nom, setNom] = useState<string | null>(null);
 
   // Garde de route : pas connecté -> /login
   useEffect(() => {
@@ -31,19 +32,33 @@ export default function EspaceClient() {
   }, [loading, email, router]);
 
   // Charge les données du client
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!session) return;
-    fetch("/api/my-data", {
+    const r = await fetch("/api/my-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: session.access_token }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        setDevis(d.devis ?? []);
-        setConversations(d.conversations ?? []);
-      });
+    });
+    const d = await r.json();
+    setDevis(d.devis ?? []);
+    setConversations(d.conversations ?? []);
+    setNom(d.nom ?? null);
   }, [session]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Réponse du client à un devis (accepter / refuser)
+  async function repondre(id: string, reponse: "accepte" | "refuse") {
+    if (!session) return;
+    await fetch("/api/devis-reponse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, id, reponse }),
+    });
+    loadData();
+  }
 
   async function downloadPdf(id: string) {
     if (!session) return;
@@ -73,7 +88,12 @@ export default function EspaceClient() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Mon espace</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Mon espace</h1>
+          <p className="text-sm text-[var(--ink-soft)]">
+            Bonjour {nom ?? email}, content de vous revoir.
+          </p>
+        </div>
         <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)]">
           + Nouveau devis
         </a>
@@ -118,12 +138,36 @@ export default function EspaceClient() {
                   <span>{d.tva?.toFixed(2)} €</span>
                 </div>
               </div>
-              <button
-                onClick={() => downloadPdf(d.id)}
-                className="mt-3 rounded-full border border-[var(--brand)] px-3 py-1.5 text-xs font-medium text-[var(--brand)]"
-              >
-                Télécharger le PDF
-              </button>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => downloadPdf(d.id)}
+                  className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-xs font-medium text-[var(--brand)]"
+                >
+                  Télécharger le PDF
+                </button>
+                {d.statut === "envoye" && (
+                  <>
+                    <button
+                      onClick={() => repondre(d.id, "accepte")}
+                      className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white"
+                    >
+                      Accepter le devis
+                    </button>
+                    <button
+                      onClick={() => repondre(d.id, "refuse")}
+                      className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--ink-soft)]"
+                    >
+                      Refuser
+                    </button>
+                  </>
+                )}
+                {d.statut === "accepte" && (
+                  <span className="text-xs font-medium text-[var(--brand)]">✓ Devis accepté — merci !</span>
+                )}
+                {d.statut === "refuse" && (
+                  <span className="text-xs text-[var(--ink-soft)]">Devis refusé.</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
