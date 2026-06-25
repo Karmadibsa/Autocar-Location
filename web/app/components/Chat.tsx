@@ -50,6 +50,13 @@ const OPTION_LABELS: Record<string, string> = {
   peages: "Péages",
 };
 
+// Persistance locale : la conversation survit aux changements de page.
+const STORE_KEY = "autocar_chat_v1";
+const GREETING: Msg = {
+  role: "agent",
+  content: "Bonjour 👋 Dites-moi votre besoin : départ, destination, dates et nombre de passagers.",
+};
+
 function cleanParams(p: Params | undefined): Params {
   const out: Params = {};
   if (!p) return out;
@@ -83,47 +90,82 @@ function DevisCard({ devis }: { devis: Devis }) {
   );
 }
 
-// Panneau latéral : récap des infos clés extraites de la conversation.
-function Recap({ p }: { p: Params }) {
+// Barre compacte : récap des infos clés extraites, sous la conversation.
+function RecapBar({ p }: { p: Params }) {
   const opts = Array.isArray(p.options)
     ? p.options.map((o) => (typeof o === "string" ? o : o.code)).map((c) => OPTION_LABELS[c] ?? c)
     : [];
-  const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] py-2 last:border-0">
-      <span className="text-xs text-[var(--ink-soft)]">{label}</span>
-      <span className="text-right text-[13px] font-medium text-[var(--ink)]">{value || "—"}</span>
-    </div>
-  );
+  const chips: string[] = [];
+  if (p.depart || p.destination) chips.push(`📍 ${p.depart ?? "?"} → ${p.destination ?? "?"}`);
+  if (p.date_depart) chips.push(`📅 ${p.date_depart}`);
+  if (p.nb_passagers != null) chips.push(`👥 ${p.nb_passagers} pax`);
+  if (p.aller_retour != null) chips.push(`🔁 ${p.aller_retour ? "Aller-retour" : "Aller simple"}`);
+  if (opts.length) chips.push(`➕ ${opts.join(", ")}`);
   return (
-    <aside className="h-fit rounded-2xl border border-[var(--border)] bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-bold">Votre demande</h3>
-      <p className="mb-2 text-xs text-[var(--ink-soft)]">Récapitulatif mis à jour en direct</p>
-      <Row label="Départ" value={p.depart} />
-      <Row label="Destination" value={p.destination} />
-      <Row label="Date" value={p.date_depart} />
-      <Row label="Passagers" value={p.nb_passagers != null ? `${p.nb_passagers}` : ""} />
-      <Row label="Trajet" value={p.aller_retour == null ? "" : p.aller_retour ? "Aller-retour" : "Aller simple"} />
-      <Row label="Options" value={opts.length ? opts.join(", ") : ""} />
-    </aside>
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-xs">
+      <span className="font-semibold text-[var(--ink)]">Votre demande :</span>
+      {chips.length ? (
+        chips.map((c) => (
+          <span key={c} className="rounded-full bg-[var(--bg-muted)] px-2.5 py-1 text-[var(--ink)]">
+            {c}
+          </span>
+        ))
+      ) : (
+        <span className="text-[var(--ink-soft)]">en cours de qualification…</span>
+      )}
+    </div>
   );
 }
 
 export default function Chat() {
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "agent",
-      content: "Bonjour 👋 Dites-moi votre besoin : départ, destination, dates et nombre de passagers.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [devOpen, setDevOpen] = useState(false);
   const [recap, setRecap] = useState<Params>({});
   const isDev = process.env.NODE_ENV !== "production"; // aides de test masquées en prod
   const lockedDevisRef = useRef<Devis | null>(null); // fige le 1er prix calculé
   const shownDevisRef = useRef(false); // le devis a-t-il déjà été révélé ?
+  const hydrated = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Restaure la conversation (après hydratation, pour éviter tout mismatch SSR).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const o = JSON.parse(raw);
+        if (o.sessionId) setSessionId(o.sessionId);
+        if (Array.isArray(o.messages) && o.messages.length) {
+          setMessages(o.messages);
+          if (o.messages.some((m: Msg) => m.devis)) shownDevisRef.current = true;
+        }
+        if (o.recap) setRecap(o.recap);
+      }
+    } catch {
+      /* stockage indisponible */
+    }
+    hydrated.current = true;
+  }, []);
+
+  // Sauvegarde à chaque évolution (conversation partagée landing ↔ widget flottant).
+  useEffect(() => {
+    if (!hydrated.current) return;
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ sessionId, messages, recap }));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [sessionId, messages, recap]);
+
+  function reset() {
+    setMessages([GREETING]);
+    setRecap({});
+    setSessionId(crypto.randomUUID());
+    lockedDevisRef.current = null;
+    shownDevisRef.current = false;
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -173,9 +215,15 @@ export default function Chat() {
   }
 
   return (
-    <div className="grid w-full gap-4 text-left lg:grid-cols-[1fr_300px]">
-      {/* Colonne conversation */}
+    <div className="flex w-full flex-col gap-3 text-left">
+      {/* Conversation */}
       <div className="rounded-2xl border border-[var(--border)] bg-white p-3 shadow-sm sm:p-4">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-xs font-semibold text-[var(--ink-soft)]">Assistant Autocar Location</span>
+          <button onClick={reset} className="text-xs text-[var(--ink-soft)] underline transition hover:text-[var(--brand)]">
+            Nouvelle conversation
+          </button>
+        </div>
         <div className="max-h-[46vh] min-h-[200px] space-y-3 overflow-y-auto px-1 py-1">
           {messages.map((m, i) => (
             <div
@@ -292,8 +340,8 @@ export default function Chat() {
         )}
       </div>
 
-      {/* Colonne récap (à droite sur desktop, dessous sur mobile) */}
-      <Recap p={recap} />
+      {/* Récap compact, sous la conversation */}
+      <RecapBar p={recap} />
     </div>
   );
 }

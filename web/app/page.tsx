@@ -20,6 +20,13 @@ const FEATURES: [string, string, string][] = [
   ["🔒", "Données protégées", "Vos informations restent confidentielles (RGPD), utilisées uniquement pour votre devis."],
 ];
 
+// Avis fictifs (démonstration) — avec un brin d'humour.
+const AVIS: [string, string, string][] = [
+  ["Camille R.", "Comité d'entreprise", "« Devis en 2 minutes chrono. J'ai mis plus de temps à choisir le resto du midi. »"],
+  ["Karim B.", "Club de foot U17", "« 18 ados, 0 imprévu côté transport. Un record. Le chauffeur, lui, a survécu. »"],
+  ["Hélène M.", "Association seniors", "« Clair, poli, et ça ne m'a jamais proposé d'assurance trottinette. Parfait. »"],
+];
+
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
@@ -40,8 +47,9 @@ export default function Home() {
             </span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[var(--ink-soft)] sm:text-lg">
-            Décrivez votre trajet de groupe, notre assistant le qualifie et vous chiffre
-            un devis clair, sans engagement.
+            <b>Autocar Location</b> met en relation votre groupe avec des autocaristes
+            qualifiés. Décrivez votre trajet à notre assistant : il le qualifie et vous
+            chiffre un devis clair, sans engagement — et sans musique d'attente.
           </p>
 
           {/* Widget de conversation (cœur de l'app) */}
@@ -107,6 +115,27 @@ export default function Home() {
                 <h3 className="mt-4 font-semibold">{t}</h3>
                 <p className="mt-1 text-sm text-[var(--ink-soft)]">{d}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- AVIS (mock) ---------- */}
+      <section className="bg-[var(--bg-muted)] px-6 py-16">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">Ils ont voyagé sereins</h2>
+          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">
+            Avis de démonstration — mais l'enthousiasme, lui, est bien réel.
+          </p>
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            {AVIS.map(([nom, role, texte]) => (
+              <figure key={nom} className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
+                <div className="text-[var(--accent-dark)]">★★★★★</div>
+                <blockquote className="mt-2 text-sm text-[var(--ink)]">{texte}</blockquote>
+                <figcaption className="mt-3 text-sm font-semibold">
+                  {nom} <span className="font-normal text-[var(--ink-soft)]">· {role}</span>
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>
