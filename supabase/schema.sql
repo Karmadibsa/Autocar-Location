@@ -92,6 +92,7 @@ create table if not exists devis (
   prochaine_relance timestamptz,
   nb_relances      integer not null default 0,
   token            uuid not null default gen_random_uuid(), -- lien email "refuser sans compte"
+  raison_refus     text,                                    -- feedback du client en cas de refus
   created_at       timestamptz not null default now()
 );
 create index if not exists devis_demande_idx on devis(demande_id);

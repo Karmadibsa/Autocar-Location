@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function Contact() {
   const [nom, setNom] = useState("");
@@ -37,8 +38,8 @@ export default function Contact() {
       </p>
 
       {etat === "ok" ? (
-        <div className="mt-6 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-4 text-sm text-[var(--brand-dark)]">
-          ✓ Message envoyé, merci ! Nous vous répondrons par email.
+        <div className="mt-6 flex items-center gap-2 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-4 text-sm text-[var(--brand-dark)]">
+          <CheckCircle2 className="h-5 w-5 flex-none" /> Message envoyé, merci ! Nous vous répondrons par email.
         </div>
       ) : (
         <form onSubmit={submit} className="mt-6 space-y-3">

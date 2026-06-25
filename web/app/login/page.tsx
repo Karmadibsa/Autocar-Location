@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/useAuth";
+import { Check } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
@@ -67,16 +68,18 @@ export default function Login() {
       <div className="hidden w-1/2 flex-col justify-center bg-[var(--brand)] p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Autocar Location" className="h-12 w-auto rounded-lg bg-white/90 p-1" />
+          <img src="/logo.png" alt="Autocar Location" width={232} height={162} className="h-12 w-auto rounded-lg bg-white/90 p-1" />
           <h2 className="text-3xl font-bold">Autocar Location</h2>
         </div>
         <p className="mt-3 max-w-sm text-white/80">
           Suivez vos devis et vos échanges, ou pilotez l&apos;activité commerciale.
         </p>
         <ul className="mt-6 space-y-2 text-sm text-white/85">
-          <li>✓ Vos devis en temps réel</li>
-          <li>✓ Historique de vos conversations</li>
-          <li>✓ PDF téléchargeable</li>
+          {["Vos devis en temps réel", "Historique de vos conversations", "PDF téléchargeable"].map((t) => (
+            <li key={t} className="flex items-center gap-2">
+              <Check className="h-4 w-4" /> {t}
+            </li>
+          ))}
         </ul>
       </div>
 

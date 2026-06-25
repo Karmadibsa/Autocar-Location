@@ -1,6 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  Send,
+  MapPin,
+  CalendarDays,
+  Users,
+  Repeat,
+  Plus,
+  AlertTriangle,
+  RotateCcw,
+  Wrench,
+  ChevronDown,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 
 type Ligne = { libelle: string; montant: number };
 type Devis = {
@@ -54,7 +68,7 @@ const OPTION_LABELS: Record<string, string> = {
 const STORE_KEY = "autocar_chat_v1";
 const GREETING: Msg = {
   role: "agent",
-  content: "Bonjour 👋 Dites-moi votre besoin : départ, destination, dates et nombre de passagers.",
+  content: "Bonjour ! Dites-moi votre besoin : départ, destination, dates et nombre de passagers.",
 };
 
 function cleanParams(p: Params | undefined): Params {
@@ -95,19 +109,19 @@ function RecapBar({ p }: { p: Params }) {
   const opts = Array.isArray(p.options)
     ? p.options.map((o) => (typeof o === "string" ? o : o.code)).map((c) => OPTION_LABELS[c] ?? c)
     : [];
-  const chips: string[] = [];
-  if (p.depart || p.destination) chips.push(`📍 ${p.depart ?? "?"} → ${p.destination ?? "?"}`);
-  if (p.date_depart) chips.push(`📅 ${p.date_depart}`);
-  if (p.nb_passagers != null) chips.push(`👥 ${p.nb_passagers} pax`);
-  if (p.aller_retour != null) chips.push(`🔁 ${p.aller_retour ? "Aller-retour" : "Aller simple"}`);
-  if (opts.length) chips.push(`➕ ${opts.join(", ")}`);
+  const chips: { Icon: LucideIcon; text: string }[] = [];
+  if (p.depart || p.destination) chips.push({ Icon: MapPin, text: `${p.depart ?? "?"} → ${p.destination ?? "?"}` });
+  if (p.date_depart) chips.push({ Icon: CalendarDays, text: p.date_depart });
+  if (p.nb_passagers != null) chips.push({ Icon: Users, text: `${p.nb_passagers} pax` });
+  if (p.aller_retour != null) chips.push({ Icon: Repeat, text: p.aller_retour ? "Aller-retour" : "Aller simple" });
+  if (opts.length) chips.push({ Icon: Plus, text: opts.join(", ") });
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-xs">
       <span className="font-semibold text-[var(--ink)]">Votre demande :</span>
       {chips.length ? (
-        chips.map((c) => (
-          <span key={c} className="rounded-full bg-[var(--bg-muted)] px-2.5 py-1 text-[var(--ink)]">
-            {c}
+        chips.map(({ Icon, text }) => (
+          <span key={text} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-muted)] px-2.5 py-1 text-[var(--ink)]">
+            <Icon className="h-3.5 w-3.5 text-[var(--brand)]" /> {text}
           </span>
         ))
       ) : (
@@ -220,8 +234,8 @@ export default function Chat() {
       <div className="rounded-2xl border border-[var(--border)] bg-white p-3 shadow-sm sm:p-4">
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-semibold text-[var(--ink-soft)]">Assistant Autocar Location</span>
-          <button onClick={reset} className="text-xs text-[var(--ink-soft)] underline transition hover:text-[var(--brand)]">
-            Nouvelle conversation
+          <button onClick={reset} className="inline-flex items-center gap-1 text-xs text-[var(--ink-soft)] transition hover:text-[var(--brand)]">
+            <RotateCcw className="h-3.5 w-3.5" /> Nouvelle conversation
           </button>
         </div>
         <div className="max-h-[46vh] min-h-[200px] space-y-3 overflow-y-auto px-1 py-1">
@@ -245,8 +259,9 @@ export default function Chat() {
               >
                 {m.content}
                 {m.escalade && (
-                  <div className="mt-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] px-3 py-2 text-[13px] text-[#8A5A12]">
-                    <b>Cas particulier.</b> {m.escalade} Un conseiller vous recontacte sous 24 h.
+                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] px-3 py-2 text-[13px] text-[#8A5A12]">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
+                    <span><b>Cas particulier.</b> {m.escalade} Un conseiller vous recontacte sous 24 h.</span>
                   </div>
                 )}
                 {m.devis && <DevisCard devis={m.devis} />}
@@ -290,9 +305,9 @@ export default function Chat() {
             type="submit"
             disabled={loading}
             aria-label="Envoyer"
-            className="rounded-xl bg-[var(--accent)] px-4 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)] disabled:opacity-50"
+            className="flex items-center justify-center rounded-xl bg-[var(--accent)] px-4 py-3 text-[var(--ink)] transition hover:bg-[var(--accent-dark)] disabled:opacity-50"
           >
-            ➤
+            <Send className="h-5 w-5" />
           </button>
         </form>
 
@@ -317,8 +332,8 @@ export default function Chat() {
               className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
               aria-expanded={devOpen}
             >
-              <span>⚙ Scénarios de test (dev)</span>
-              <span aria-hidden>{devOpen ? "▾" : "▸"}</span>
+              <span className="inline-flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" /> Scénarios de test (dev)</span>
+              {devOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
             {devOpen && (
               <div className="mt-3 grid gap-2 sm:grid-cols-2">

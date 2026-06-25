@@ -52,7 +52,7 @@ create table devis (
   lignes jsonb not null default '[]'::jsonb, coefficients jsonb not null default '[]'::jsonb,
   statut statut_devis not null default 'brouillon', pdf_url text, date_envoi timestamptz,
   prochaine_relance timestamptz, nb_relances integer not null default 0,
-  token uuid not null default gen_random_uuid(),
+  token uuid not null default gen_random_uuid(), raison_refus text,
   created_at timestamptz not null default now()
 );
 

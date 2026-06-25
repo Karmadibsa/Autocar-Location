@@ -4,7 +4,8 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export async function POST(request: Request) {
-  const { token } = await request.json().catch(() => ({}));
+  const { token, raisons } = await request.json().catch(() => ({}));
+  const raisonRefus = Array.isArray(raisons) ? raisons.filter((r) => typeof r === "string").join(", ") : null;
   const sb = getAdminClient();
   if (!sb || !token) return Response.json({ ok: false, reason: "bad_request" }, { status: 400 });
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   if (d.statut === "refuse") return Response.json({ ok: true, deja: true });
   if (d.statut !== "envoye") return Response.json({ ok: false, reason: "non_modifiable" }, { status: 409 });
 
-  await sb.from("devis").update({ statut: "refuse", prochaine_relance: null }).eq("id", d.id);
+  await sb.from("devis").update({ statut: "refuse", prochaine_relance: null, raison_refus: raisonRefus }).eq("id", d.id);
   await sb.from("demandes").update({ statut: "refuse" }).eq("id", d.demande_id);
   return Response.json({ ok: true });
 }

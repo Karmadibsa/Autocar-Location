@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 import Spinner from "@/app/components/Spinner";
+import { CheckCircle2, Plus } from "lucide-react";
 
 type Devis = {
   id: string;
@@ -28,6 +29,15 @@ type Profil = {
 };
 const PROFIL_VIDE: Profil = { prenom: "", nom: "", telephone: "", adresse: "", code_postal: "", ville: "" };
 
+// Motifs de refus (feedback) — réutilisés sur la page publique de refus.
+export const RAISONS_REFUS = [
+  "Prix trop élevé",
+  "Délai / disponibilité",
+  "Meilleure offre ailleurs",
+  "Projet annulé ou reporté",
+  "Autre",
+];
+
 export default function EspaceClient() {
   const router = useRouter();
   const { loading, email, role, session } = useAuth();
@@ -36,6 +46,8 @@ export default function EspaceClient() {
   const [profil, setProfil] = useState<Profil>(PROFIL_VIDE);
   const [profilMsg, setProfilMsg] = useState("");
   const [manqueAdresse, setManqueAdresse] = useState(false);
+  const [refusId, setRefusId] = useState<string | null>(null);
+  const [raisons, setRaisons] = useState<string[]>([]);
 
   useEffect(() => {
     if (!loading && !email) router.replace("/login");
@@ -58,12 +70,12 @@ export default function EspaceClient() {
     loadData();
   }, [loadData]);
 
-  async function repondre(id: string, reponse: "accepte" | "refuse") {
+  async function repondre(id: string, reponse: "accepte" | "refuse", motifs?: string[]) {
     if (!session) return;
     await fetch("/api/devis-reponse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: session.access_token, id, reponse }),
+      body: JSON.stringify({ token: session.access_token, id, reponse, raisons: motifs }),
     });
     // Pour une facture en bonne et due forme, on invite à compléter l'adresse.
     if (reponse === "accepte" && !profil.adresse) {
@@ -71,6 +83,10 @@ export default function EspaceClient() {
       document.getElementById("mon-compte")?.scrollIntoView({ behavior: "smooth" });
     }
     loadData();
+  }
+
+  function toggleRaison(r: string) {
+    setRaisons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
   }
 
   async function saveProfil(e: React.FormEvent) {
@@ -83,7 +99,7 @@ export default function EspaceClient() {
       body: JSON.stringify({ token: session.access_token, ...profil }),
     });
     const j = await r.json();
-    setProfilMsg(j.ok ? "✓ Coordonnées enregistrées." : "Erreur");
+    setProfilMsg(j.ok ? "Coordonnées enregistrées." : "Erreur");
     if (j.ok && profil.adresse) setManqueAdresse(false);
   }
 
@@ -128,8 +144,8 @@ export default function EspaceClient() {
             Bonjour {profil.prenom || email}, content de vous revoir.
           </p>
         </div>
-        <a href="/" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
-          + Nouveau devis
+        <a href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
+          <Plus className="h-4 w-4" /> Nouveau devis
         </a>
       </div>
 
@@ -188,7 +204,10 @@ export default function EspaceClient() {
                       Accepter le devis
                     </button>
                     <button
-                      onClick={() => repondre(d.id, "refuse")}
+                      onClick={() => {
+                        setRefusId(d.id);
+                        setRaisons([]);
+                      }}
                       className="rounded-full border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--ink-soft)] transition hover:border-[#A12B2B] hover:text-[#A12B2B]"
                     >
                       Refuser
@@ -196,12 +215,49 @@ export default function EspaceClient() {
                   </>
                 )}
                 {d.statut === "accepte" && (
-                  <span className="text-xs font-medium text-[var(--brand)]">✓ Devis accepté — merci !</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--brand)]">
+                    <CheckCircle2 className="h-4 w-4" /> Devis accepté — merci !
+                  </span>
                 )}
                 {d.statut === "refuse" && (
                   <span className="text-xs text-[var(--ink-soft)]">Devis refusé.</span>
                 )}
               </div>
+              {refusId === d.id && (
+                <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3 text-xs">
+                  <p className="font-medium text-[var(--ink)]">Pour nous aider à progresser, pourquoi refusez-vous ?</p>
+                  <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                    {RAISONS_REFUS.map((r) => (
+                      <label key={r} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={raisons.includes(r)}
+                          onChange={() => toggleRaison(r)}
+                          className="h-3.5 w-3.5 accent-[var(--brand)]"
+                        />
+                        {r}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        repondre(d.id, "refuse", raisons);
+                        setRefusId(null);
+                      }}
+                      className="rounded-full bg-[#A12B2B] px-3 py-1.5 font-medium text-white transition hover:opacity-90"
+                    >
+                      Confirmer le refus
+                    </button>
+                    <button
+                      onClick={() => setRefusId(null)}
+                      className="rounded-full border border-[var(--border)] px-3 py-1.5 text-[var(--ink-soft)] transition hover:bg-white"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

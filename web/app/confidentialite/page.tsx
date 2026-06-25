@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+
 export const metadata = { title: "Confidentialité & RGPD — Autocar Location" };
 
 export default function Confidentialite() {
@@ -5,10 +7,13 @@ export default function Confidentialite() {
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
       <h1 className="text-2xl font-bold">Confidentialité &amp; RGPD</h1>
 
-      <div className="mt-3 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)]">
-        ⚠️ <b>Projet étudiant Epitech</b> — application de démonstration. Les données
-        saisies servent uniquement à illustrer le fonctionnement du prototype et ne font
-        l'objet d'aucune exploitation commerciale.
+      <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)]">
+        <Info className="mt-0.5 h-4 w-4 flex-none" />
+        <span>
+          <b>Projet étudiant Epitech</b> — application de démonstration. Les données
+          saisies servent uniquement à illustrer le fonctionnement du prototype et ne font
+          l'objet d'aucune exploitation commerciale.
+        </span>
       </div>
 
       <section className="mt-6 space-y-4 text-sm leading-relaxed text-[var(--ink)]">

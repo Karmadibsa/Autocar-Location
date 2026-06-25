@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+
 export const metadata = { title: "Mentions légales — Autocar Location" };
 
 export default function MentionsLegales() {
@@ -5,10 +7,13 @@ export default function MentionsLegales() {
     <main className="mx-auto w-full max-w-2xl flex-1 p-6">
       <h1 className="text-2xl font-bold">Mentions légales</h1>
 
-      <div className="mt-3 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)]">
-        ⚠️ <b>Projet étudiant Epitech.</b> « Autocar Location » est une application de
-        démonstration réalisée dans un cadre pédagogique (MBA Epitech). Ce n'est <b>pas</b>
-        une société réelle et aucune prestation de transport n'est réellement vendue.
+      <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)]">
+        <Info className="mt-0.5 h-4 w-4 flex-none" />
+        <span>
+          <b>Projet étudiant Epitech.</b> « Autocar Location » est une application de
+          démonstration réalisée dans un cadre pédagogique (MBA Epitech). Ce n'est <b>pas</b>
+          une société réelle et aucune prestation de transport n'est réellement vendue.
+        </span>
       </div>
 
       <section className="mt-6 space-y-4 text-sm leading-relaxed text-[var(--ink)]">

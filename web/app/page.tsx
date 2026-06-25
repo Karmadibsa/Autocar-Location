@@ -1,4 +1,14 @@
 import Chat from "./components/Chat";
+import {
+  Star,
+  BadgeEuro,
+  Zap,
+  Headset,
+  ShieldCheck,
+  Check,
+  ArrowRight,
+  type LucideIcon,
+} from "lucide-react";
 
 const STATS: [string, string][] = [
   ["15 ans", "d'expérience"],
@@ -13,11 +23,11 @@ const STEPS: [string, string, string][] = [
   ["3", "Vous recevez votre devis", "Par email avec le PDF, et vous le suivez dans votre espace client."],
 ];
 
-const FEATURES: [string, string, string][] = [
-  ["💶", "Tarif transparent", "Un prix calculé sur des règles claires (distance, saison, capacité), jamais au hasard."],
-  ["⚡", "Réponse immédiate", "Plus besoin d'attendre un rappel : votre estimation arrive dans la conversation."],
-  ["🧑‍✈️", "Conseiller humain", "Les cas complexes (grands groupes, sur-mesure) sont pris en charge par un expert."],
-  ["🔒", "Données protégées", "Vos informations restent confidentielles (RGPD), utilisées uniquement pour votre devis."],
+const FEATURES: { Icon: LucideIcon; t: string; d: string }[] = [
+  { Icon: BadgeEuro, t: "Tarif transparent", d: "Un prix calculé sur des règles claires (distance, saison, capacité), jamais au hasard." },
+  { Icon: Zap, t: "Réponse immédiate", d: "Plus besoin d'attendre un rappel : votre estimation arrive dans la conversation." },
+  { Icon: Headset, t: "Conseiller humain", d: "Les cas complexes (grands groupes, sur-mesure) sont pris en charge par un expert." },
+  { Icon: ShieldCheck, t: "Données protégées", d: "Vos informations restent confidentielles (RGPD), utilisées uniquement pour votre devis." },
 ];
 
 // Avis fictifs (démonstration) — avec un brin d'humour.
@@ -27,20 +37,26 @@ const AVIS: [string, string, string][] = [
   ["Hélène M.", "Association seniors", "« Clair, poli, et ça ne m'a jamais proposé d'assurance trottinette. Parfait. »"],
 ];
 
+// Présentation "mode discussion" : bulles de conversation (q = client, r = marque).
+const PRESENTATION: { q: string; r: string }[] = [
+  { q: "C'est quoi Autocar Location ?", r: "Un intermédiaire qui connecte votre groupe au meilleur autocariste, sans paperasse." },
+  { q: "Et le prix, c'est fiable ?", r: "Calculé sur des règles claires et affiché en direct. Zéro surprise au moment de payer." },
+  { q: "Mon groupe est énorme…", r: "Au-delà de 85 passagers, un conseiller humain prend le relais pour un devis sur-mesure." },
+];
+
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
       {/* ---------- HERO ---------- */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[var(--brand-soft)] via-white to-white">
-        {/* halos décoratifs */}
         <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/30 blur-3xl" />
         <div className="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-[var(--brand)]/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-12 text-center sm:pt-16">
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand)]/20 bg-white/70 px-4 py-1.5 text-xs font-semibold text-[var(--brand-dark)] backdrop-blur">
-            ★ Spécialiste de l'autocar de groupe · depuis 2010
+            <Star className="h-3.5 w-3.5 fill-current" /> Spécialiste de l'autocar de groupe · depuis 2010
           </span>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
+          <h1 className="animate-fade-up mx-auto mt-5 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
             Votre devis autocar,{" "}
             <span className="bg-gradient-to-r from-[var(--brand)] to-[var(--brand-dark)] bg-clip-text text-transparent">
               en quelques minutes
@@ -52,14 +68,17 @@ export default function Home() {
             chiffre un devis clair, sans engagement — et sans musique d'attente.
           </p>
 
-          {/* Widget de conversation (cœur de l'app) */}
           <div id="devis" className="mt-8 scroll-mt-20">
             <Chat />
           </div>
 
-          <p className="mt-5 text-sm text-[var(--ink-soft)]">
-            ✓ Autocaristes qualifiés &nbsp;·&nbsp; ✓ Devis gratuit &nbsp;·&nbsp; ✓ Conseiller humain pour les cas complexes
-          </p>
+          <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-[var(--ink-soft)]">
+            {["Autocaristes qualifiés", "Devis gratuit", "Conseiller humain pour les cas complexes"].map((t) => (
+              <li key={t} className="inline-flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-[var(--brand)]" /> {t}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -75,18 +94,42 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- PRÉSENTATION "MODE DISCUSSION" ---------- */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">Autocar Location en 30 secondes</h2>
+          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">
+            La présentation, version conversation.
+          </p>
+          <div className="mt-8 space-y-4">
+            {PRESENTATION.map((b, i) => (
+              <div key={b.q} className="animate-fade-up space-y-2" style={{ animationDelay: `${i * 120}ms` }}>
+                <div className="flex justify-end">
+                  <p className="max-w-[80%] rounded-2xl rounded-br-sm bg-[var(--bg-muted)] px-4 py-2 text-[15px]">{b.q}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[var(--border)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo.png" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
+                  </span>
+                  <p className="max-w-[80%] rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-2 text-[15px]">{b.r}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- COMMENT ÇA MARCHE ---------- */}
       <section id="comment" className="bg-[var(--bg-muted)] px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">Comment ça marche</h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">
-            Trois étapes, zéro paperasse.
-          </p>
+          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">Trois étapes, zéro paperasse.</p>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {STEPS.map(([n, t, d]) => (
               <div
                 key={n}
-                className="relative rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-lg font-bold text-white">
                   {n}
@@ -104,13 +147,13 @@ export default function Home() {
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">Pourquoi Autocar Location</h2>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map(([icon, t, d]) => (
+            {FEATURES.map(({ Icon, t, d }) => (
               <div
                 key={t}
-                className="rounded-2xl border border-[var(--border)] bg-white p-6 transition hover:border-[var(--brand)] hover:shadow-sm"
+                className="group rounded-2xl border border-[var(--border)] bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-sm"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-2xl">
-                  {icon}
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)] transition group-hover:scale-110">
+                  <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 font-semibold">{t}</h3>
                 <p className="mt-1 text-sm text-[var(--ink-soft)]">{d}</p>
@@ -129,8 +172,12 @@ export default function Home() {
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             {AVIS.map(([nom, role, texte]) => (
-              <figure key={nom} className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
-                <div className="text-[var(--accent-dark)]">★★★★★</div>
+              <figure key={nom} className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
+                <div className="flex gap-0.5 text-[var(--accent-dark)]">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
                 <blockquote className="mt-2 text-sm text-[var(--ink)]">{texte}</blockquote>
                 <figcaption className="mt-3 text-sm font-semibold">
                   {nom} <span className="font-normal text-[var(--ink-soft)]">· {role}</span>
@@ -151,9 +198,10 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href="#devis"
-              className="rounded-full bg-[var(--accent)] px-6 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]"
+              className="group inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]"
             >
               Composer mon devis
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
             </a>
             <a
               href="/espace-client"

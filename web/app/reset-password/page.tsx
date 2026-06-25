@@ -39,7 +39,7 @@ export default function ResetPassword() {
       <div className="rounded-2xl border border-[var(--border)] bg-white p-8 shadow-sm">
         <h1 className="text-xl font-bold">Nouveau mot de passe</h1>
         {ok ? (
-          <p className="mt-3 text-sm text-[var(--brand)]">✓ Mot de passe mis à jour. Redirection…</p>
+          <p className="mt-3 text-sm text-[var(--brand)]">Mot de passe mis à jour. Redirection…</p>
         ) : !pret ? (
           <p className="mt-3 text-sm text-[var(--ink-soft)]">
             Ouvrez cette page via le lien reçu par email pour réinitialiser votre mot de passe.

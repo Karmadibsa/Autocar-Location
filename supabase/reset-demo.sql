@@ -11,6 +11,7 @@ alter table clients add column if not exists adresse text;
 alter table clients add column if not exists code_postal text;
 alter table clients add column if not exists ville text;
 alter table devis   add column if not exists token uuid not null default gen_random_uuid();
+alter table devis   add column if not exists raison_refus text;
 
 truncate table conversations, relances, devis, demandes, clients restart identity cascade;
 

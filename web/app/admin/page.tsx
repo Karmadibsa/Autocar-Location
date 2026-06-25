@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 import Spinner from "@/app/components/Spinner";
+import { AlertTriangle } from "lucide-react";
 
 type DevisFull = {
   prix_ht: number | null;
@@ -17,6 +18,7 @@ type DevisFull = {
   statut: string;
   nb_relances: number | null;
   prochaine_relance: string | null;
+  raison_refus: string | null;
 };
 type DemandeRow = {
   id: string;
@@ -184,7 +186,7 @@ export default function AdminPage() {
     const j = await r.json();
     if (!j.ok) setRelanceMsg("Erreur lors du traitement.");
     else if ((j.envoyees ?? 0) + (j.cloturees ?? 0) + (j.expirees ?? 0) === 0)
-      setRelanceMsg("Aucune relance à envoyer pour le moment ✓");
+      setRelanceMsg("Aucune relance à envoyer pour le moment.");
     else
       setRelanceMsg(`${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s).`);
     loadData();
@@ -358,7 +360,9 @@ export default function AdminPage() {
                         {/* Cas complexe : motif d'escalade + flux d'étude commerciale */}
                         {d.statut === "cas_complexe" && (
                           <div className="mt-3 rounded-lg border border-[#E08A1E] bg-[#FDF4E6] p-3 text-xs">
-                            <div className="font-semibold text-[#8A5A12]">⚠ Intervention humaine requise</div>
+                            <div className="flex items-center gap-1.5 font-semibold text-[#8A5A12]">
+                              <AlertTriangle className="h-4 w-4" /> Intervention humaine requise
+                            </div>
                             <p className="mt-1 text-[#8A5A12]">
                               {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
                             </p>
@@ -409,6 +413,11 @@ export default function AdminPage() {
                             {dv.coefficients && dv.coefficients.length > 0 && (
                               <div className="mt-2 text-xs text-[var(--ink-soft)]">
                                 Coefficients : {dv.coefficients.map((c) => `${c.libelle} (${c.valeur > 0 ? "+" : ""}${Math.round(c.valeur * 100)}%)`).join(" · ")}
+                              </div>
+                            )}
+                            {dv.raison_refus && (
+                              <div className="mt-2 rounded-lg border border-[#FBE3E3] bg-[#FDF1F1] p-2 text-xs text-[#A12B2B]">
+                                <b>Motif de refus :</b> {dv.raison_refus}
                               </div>
                             )}
                           </>
