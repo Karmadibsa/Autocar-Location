@@ -1,13 +1,11 @@
 "use client";
 
-// Portail client (protégé) : devis, réponses, conversations, gestion du compte.
+// Onglet "Mes devis" : liste des devis (accepter / refuser + motifs) + conversations.
+// La garde d'accès, l'en-tête et les onglets sont gérés par le layout.
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
-import Spinner from "@/app/components/Spinner";
-import { CheckCircle2, Plus } from "lucide-react";
 
 type Devis = {
   id: string;
@@ -20,18 +18,8 @@ type Devis = {
 };
 type Message = { role: string; contenu?: string; content?: string };
 type Conversation = { id: string; messages: Message[] | null; updated_at: string };
-type Profil = {
-  prenom: string;
-  nom: string;
-  telephone: string;
-  adresse: string;
-  code_postal: string;
-  ville: string;
-};
-const PROFIL_VIDE: Profil = { prenom: "", nom: "", telephone: "", adresse: "", code_postal: "", ville: "" };
 
-// Motifs de refus (feedback) — réutilisés sur la page publique de refus.
-export const RAISONS_REFUS = [
+const RAISONS_REFUS = [
   "Prix trop élevé",
   "Délai / disponibilité",
   "Meilleure offre ailleurs",
@@ -39,20 +27,14 @@ export const RAISONS_REFUS = [
   "Autre",
 ];
 
-export default function EspaceClient() {
-  const router = useRouter();
-  const { loading, email, role, session } = useAuth();
+export default function MesDevis() {
+  const { session } = useAuth();
   const [devis, setDevis] = useState<Devis[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [profil, setProfil] = useState<Profil>(PROFIL_VIDE);
-  const [profilMsg, setProfilMsg] = useState("");
-  const [manqueAdresse, setManqueAdresse] = useState(false);
+  const [aAdresse, setAAdresse] = useState(true);
   const [refusId, setRefusId] = useState<string | null>(null);
   const [raisons, setRaisons] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!loading && !email) router.replace("/login");
-  }, [loading, email, router]);
+  const [adresseAlerte, setAdresseAlerte] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!session) return;
@@ -64,7 +46,7 @@ export default function EspaceClient() {
     const d = await r.json();
     setDevis(d.devis ?? []);
     setConversations(d.conversations ?? []);
-    if (d.profil) setProfil({ ...PROFIL_VIDE, ...cleanProfil(d.profil) });
+    setAAdresse(!!d.profil?.adresse);
   }, [session]);
 
   useEffect(() => {
@@ -78,30 +60,12 @@ export default function EspaceClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: session.access_token, id, reponse, raisons: motifs }),
     });
-    // Pour une facture en bonne et due forme, on invite à compléter l'adresse.
-    if (reponse === "accepte" && !profil.adresse) {
-      setManqueAdresse(true);
-      document.getElementById("mon-compte")?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (reponse === "accepte" && !aAdresse) setAdresseAlerte(true);
     loadData();
   }
 
   function toggleRaison(r: string) {
     setRaisons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
-  }
-
-  async function saveProfil(e: React.FormEvent) {
-    e.preventDefault();
-    if (!session) return;
-    setProfilMsg("Enregistrement…");
-    const r = await fetch("/api/profil-update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: session.access_token, ...profil }),
-    });
-    const j = await r.json();
-    setProfilMsg(j.ok ? "Coordonnées enregistrées." : "Erreur");
-    if (j.ok && profil.adresse) setManqueAdresse(false);
   }
 
   async function downloadPdf(id: string) {
@@ -121,45 +85,20 @@ export default function EspaceClient() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading || !email) {
-    return (
-      <main className="mx-auto max-w-md flex-1 p-8">
-        <Spinner />
-      </main>
-    );
-  }
-
-  const champ = (k: keyof Profil) => ({
-    value: profil[k],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setProfil((p) => ({ ...p, [k]: e.target.value })),
-    className:
-      "w-full rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]",
-  });
-
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold">Mon espace</h1>
-          <p className="text-sm text-[var(--ink-soft)]">
-            Bonjour {profil.prenom || email}, content de vous revoir.
-          </p>
-        </div>
-        <Link href="/" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-dark)]">
-          <Plus className="h-4 w-4" /> Nouveau devis
-        </Link>
-      </div>
+    <>
+      <h2 className="text-lg font-semibold">Mes devis</h2>
 
-      {role === "admin" && (
-        <Link
-          href="/admin"
-          className="mt-4 block rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] p-3 text-sm text-[var(--brand-dark)] transition hover:bg-white"
-        >
-          Vous êtes administrateur → accéder au <b>dashboard de pilotage</b>.
-        </Link>
+      {adresseAlerte && (
+        <div className="mt-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] p-3 text-sm text-[#8A5A12]">
+          Merci d&apos;avoir accepté ! Pour une facture en bonne et due forme,{" "}
+          <Link href="/espace-client/compte" className="font-semibold underline">
+            complétez votre adresse
+          </Link>
+          .
+        </div>
       )}
 
-      <h2 className="mt-6 text-lg font-semibold">Mes devis</h2>
       {devis.length === 0 ? (
         <p className="mt-2 text-[var(--ink-soft)]">
           Aucun devis lié à cet email. Cliquez « Nouveau devis » et indiquez cet email.
@@ -216,9 +155,7 @@ export default function EspaceClient() {
                   </>
                 )}
                 {d.statut === "accepte" && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--brand)]">
-                    <CheckCircle2 className="h-4 w-4" /> Devis accepté — merci !
-                  </span>
+                  <span className="text-xs font-medium text-[var(--brand)]">Devis accepté — merci !</span>
                 )}
                 {d.statut === "refuse" && (
                   <span className="text-xs text-[var(--ink-soft)]">Devis refusé.</span>
@@ -264,34 +201,6 @@ export default function EspaceClient() {
         </div>
       )}
 
-      {/* Mon compte */}
-      <h2 id="mon-compte" className="mt-8 scroll-mt-20 text-lg font-semibold">Mon compte</h2>
-      {manqueAdresse && (
-        <div className="mt-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] p-3 text-sm text-[#8A5A12]">
-          Merci d'avoir accepté ! Complétez votre <b>adresse</b> ci-dessous pour une facture en bonne et due forme.
-        </div>
-      )}
-      <form onSubmit={saveProfil} className="mt-2 rounded-xl border border-[var(--border)] bg-white p-4">
-        <p className="text-xs text-[var(--ink-soft)]">Email : {email}</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <input placeholder="Prénom" aria-label="Prénom" {...champ("prenom")} />
-          <input placeholder="Nom" aria-label="Nom" {...champ("nom")} />
-          <input placeholder="Téléphone" aria-label="Téléphone" {...champ("telephone")} />
-          <input placeholder="Adresse" aria-label="Adresse" {...champ("adresse")} />
-          <input placeholder="Code postal" aria-label="Code postal" {...champ("code_postal")} />
-          <input placeholder="Ville" aria-label="Ville" {...champ("ville")} />
-        </div>
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="submit"
-            className="rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]"
-          >
-            Enregistrer
-          </button>
-          {profilMsg && <span className="text-sm text-[var(--ink-soft)]">{profilMsg}</span>}
-        </div>
-      </form>
-
       <h2 className="mt-8 text-lg font-semibold">Mes conversations</h2>
       {conversations.length === 0 ? (
         <p className="mt-2 text-[var(--ink-soft)]">Aucune conversation.</p>
@@ -314,12 +223,6 @@ export default function EspaceClient() {
           ))}
         </div>
       )}
-    </main>
+    </>
   );
-}
-
-function cleanProfil(p: Record<string, unknown>): Partial<Profil> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(p)) if (typeof v === "string") out[k] = v;
-  return out as Partial<Profil>;
 }

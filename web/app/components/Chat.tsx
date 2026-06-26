@@ -15,6 +15,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 type Ligne = { libelle: string; montant: number };
 type Devis = {
@@ -112,7 +113,7 @@ function RecapBar({ p }: { p: Params }) {
   const chips: { Icon: LucideIcon; text: string }[] = [];
   if (p.depart || p.destination) chips.push({ Icon: MapPin, text: `${p.depart ?? "?"} → ${p.destination ?? "?"}` });
   if (p.date_depart) chips.push({ Icon: CalendarDays, text: p.date_depart });
-  if (p.nb_passagers != null) chips.push({ Icon: Users, text: `${p.nb_passagers} pax` });
+  if (p.nb_passagers != null) chips.push({ Icon: Users, text: `${p.nb_passagers} passagers` });
   if (p.aller_retour != null) chips.push({ Icon: Repeat, text: p.aller_retour ? "Aller-retour" : "Aller simple" });
   if (opts.length) chips.push({ Icon: Plus, text: opts.join(", ") });
   return (
@@ -142,7 +143,17 @@ export default function Chat() {
   const lockedDevisRef = useRef<Devis | null>(null); // fige le 1er prix calculé
   const shownDevisRef = useRef(false); // le devis a-t-il déjà été révélé ?
   const hydrated = useRef(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  // Si l'utilisateur est connecté, on connaît son email : on le transmet pour ne
+  // pas le lui redemander et lier/envoyer le devis automatiquement.
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setAuthEmail(data.session?.user.email ?? null));
+    const sub = supabase.auth.onAuthStateChange((_e, s) => setAuthEmail(s?.user.email ?? null));
+    return () => sub.data.subscription.unsubscribe();
+  }, []);
 
   // Restaure la conversation (après hydratation, pour éviter tout mismatch SSR).
   useEffect(() => {
@@ -181,8 +192,10 @@ export default function Chat() {
     shownDevisRef.current = false;
   }
 
+  // Scroll DANS le fil de conversation uniquement (ne déplace pas la page).
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages, loading]);
 
   async function send(text: string) {
@@ -196,7 +209,7 @@ export default function Chat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, history, sessionId }),
+        body: JSON.stringify({ message: content, history, sessionId, clientEmail: authEmail }),
       });
       const data = await res.json();
 
@@ -238,7 +251,7 @@ export default function Chat() {
             <RotateCcw className="h-3.5 w-3.5" /> Nouvelle conversation
           </button>
         </div>
-        <div className="max-h-[46vh] min-h-[200px] space-y-3 overflow-y-auto px-1 py-1">
+        <div ref={messagesRef} className="max-h-[46vh] min-h-[200px] space-y-3 overflow-y-auto px-1 py-1">
           {messages.map((m, i) => (
             <div
               key={i}
@@ -283,7 +296,6 @@ export default function Chat() {
               </div>
             </div>
           )}
-          <div ref={endRef} />
         </div>
 
         {/* Composer */}

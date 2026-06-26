@@ -15,7 +15,7 @@ const SYSTEM = [
   "Tu es deja en conversation : ne te re-presente pas et ne redis pas Bonjour a chaque message ; poursuis l'echange.",
   "Reponds en texte simple : pas de LaTeX ni de symboles comme \\rightarrow ; ecris 'vers' ou une fleche simple.",
   "Quand un devis chiffre est disponible, il est affiche separement au client : ne reecris pas le montant toi-meme, invite simplement le client a le consulter.",
-  "Une fois le devis disponible, demande poliment au client son email (et son nom si possible) pour lui envoyer le devis.",
+  "Une fois le devis disponible : si le contexte commence par un marqueur [Client connecte: ...], le client est deja identifie -> ne redemande NI son nom NI son email, confirme simplement l'envoi et invite a consulter le devis. Sinon, demande poliment son email (et son nom si possible) pour lui envoyer le devis.",
   "IMPORTANT : ne montre JAMAIS ton raisonnement interne, tes notes d'analyse, tes etapes, ni des listes a puces. Reponds UNIQUEMENT par le message final destine au client, en francais, en 1 a 3 phrases.",
   "Ton : chaleureux, clair, rassurant.",
 ].join(" ");
@@ -145,7 +145,7 @@ const workflow = {
 
     { parameters: { jsCode: CODE }, id: "44444444-4444-4444-4444-444444444444", name: "Calculer Devis", type: "n8n-nodes-base.code", typeVersion: 2, position: [320, 0] },
 
-    { parameters: { promptType: "define", text: "={{ " + HISTORY + " }}", options: { systemMessage: SYSTEM } },
+    { parameters: { promptType: "define", text: "={{ ($('Webhook').item.json.body.clientEmail ? '[Client connecte: ' + $('Webhook').item.json.body.clientEmail + ']\\n' : '') + " + HISTORY + " }}", options: { systemMessage: SYSTEM } },
       id: "55555555-5555-5555-5555-555555555555", name: "AI Agent", type: "@n8n/n8n-nodes-langchain.agent", typeVersion: 1.7, position: [600, 0],
       retryOnFail: true, maxTries: 5, waitBetweenTries: 4000 },
     { parameters: geminiParams, id: "66666666-6666-6666-6666-666666666666", name: "Gemini (agent)", type: "@n8n/n8n-nodes-langchain.lmChatGoogleGemini", typeVersion: 1, position: [600, 220], credentials: cred },

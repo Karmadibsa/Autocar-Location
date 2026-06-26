@@ -65,18 +65,18 @@ export function devisEmailHtml(
         <span>TOTAL TTC</span><span>${(devis.prix_ttc ?? 0).toFixed(2)} ${devis.devise ?? "EUR"}</span>
       </div>
 
-      <div style="text-align:center;margin-top:20px">
-        <a href="${base}/espace-client" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:bold;font-size:14px">
-          Créer mon compte / Accepter le devis
+      <div style="text-align:center;margin-top:22px">
+        <a href="${base}/espace-client" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:bold;font-size:14px;margin:4px">
+          Accepter le devis
         </a>
-        <p style="color:#8a958f;font-size:11px;margin-top:8px">Créez un compte (ou connectez-vous) avec cet email pour accepter votre devis.</p>
         ${
           opts.refuseToken
-            ? `<p style="margin-top:14px;font-size:13px">Pas intéressé ?
-                 <a href="${base}/devis/refuser?token=${opts.refuseToken}" style="color:#A12B2B;text-decoration:underline">Refuser ce devis</a>
-                 (sans créer de compte).</p>`
+            ? `<a href="${base}/devis/refuser?token=${opts.refuseToken}" style="display:inline-block;background:#ffffff;color:#A12B2B;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:bold;font-size:14px;border:1px solid #A12B2B;margin:4px">
+                 Refuser le devis
+               </a>`
             : ""
         }
+        <p style="color:#8a958f;font-size:11px;margin-top:10px">« Accepter » ouvre votre espace client. « Refuser » se fait en un clic, sans compte.</p>
       </div>
 
       <p style="color:#8a958f;font-size:11px;margin-top:18px">

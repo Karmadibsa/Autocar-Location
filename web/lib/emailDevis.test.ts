@@ -43,6 +43,6 @@ describe("devisEmailHtml", () => {
     expect(html).not.toContain("/devis/refuser");
     const avecToken = devisEmailHtml(devis, params, { refuseToken: "abc-123" });
     expect(avecToken).toContain("/devis/refuser?token=abc-123");
-    expect(avecToken).toContain("Refuser ce devis");
+    expect(avecToken).toContain("Refuser le devis");
   });
 });

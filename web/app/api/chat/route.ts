@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   const webhook = process.env.N8N_WEBHOOK_URL;
   const sessionId: string | undefined = body?.sessionId;
   const history = body?.history;
+  const clientEmail: string | undefined = body?.clientEmail || undefined; // si connecté
 
   if (!webhook) {
     return Response.json({
@@ -67,6 +68,10 @@ export async function POST(request: Request) {
     console.error("[chat] webhook injoignable:", detail);
     return Response.json({ reply: "Agent injoignable. " + detail, error: true });
   }
+
+  // Client connecté : on connaît déjà son email → on l'injecte pour lier/envoyer
+  // le devis automatiquement (l'agent n'a pas besoin de le redemander).
+  if (clientEmail) data.params = { ...(data.params ?? {}), email: clientEmail };
 
   // --- Distance routière réelle (OSRM) : recalcule le devis si possible ---
   const recalc = await devisAvecOSRM(data.params, data.devis);
