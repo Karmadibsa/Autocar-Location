@@ -1,6 +1,6 @@
 "use client";
 
-// Onglet "Mes devis" : liste des devis (accepter / refuser + motifs) + conversations.
+// Onglet "Mes devis" : liste des devis (télécharger, accepter / refuser + motifs).
 // La garde d'accès, l'en-tête et les onglets sont gérés par le layout.
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
