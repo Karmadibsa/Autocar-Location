@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 import Spinner from "@/app/components/Spinner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 
 type DevisFull = {
   prix_ht: number | null;
@@ -99,7 +99,44 @@ type Data = {
   categories?: { aTraiter: number; enAttente: number; gagnes: number; perdus: number };
   demandes?: DemandeRow[];
   raisonsRefus?: Record<string, number>;
+  parMois?: { mois: string; leads: number; acceptes: number }[];
+  periode?: { from: string | null; to: string | null };
 };
+
+// Courbe (SVG) des leads et devis acceptés par mois.
+function LineChart({ data }: { data: { mois: string; leads: number; acceptes: number }[] }) {
+  if (!data.length) return <p className="text-sm text-[var(--ink-soft)]">Pas de données sur la période.</p>;
+  const W = 640;
+  const H = 200;
+  const P = 30;
+  const max = Math.max(1, ...data.map((d) => Math.max(d.leads, d.acceptes)));
+  const x = (i: number) => P + (i / Math.max(1, data.length - 1)) * (W - 2 * P);
+  const y = (v: number) => H - P - (v / max) * (H - 2 * P);
+  const path = (key: "leads" | "acceptes") =>
+    data.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d[key]).toFixed(1)}`).join(" ");
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Évolution mensuelle des leads et devis acceptés">
+        <line x1={P} y1={H - P} x2={W - P} y2={H - P} stroke="var(--border)" />
+        <path d={path("leads")} fill="none" stroke="var(--brand)" strokeWidth={2.5} />
+        <path d={path("acceptes")} fill="none" stroke="#E08A1E" strokeWidth={2.5} />
+        {data.map((d, i) => (
+          <g key={d.mois}>
+            <circle cx={x(i)} cy={y(d.leads)} r={2.5} fill="var(--brand)" />
+            <circle cx={x(i)} cy={y(d.acceptes)} r={2.5} fill="#E08A1E" />
+            <text x={x(i)} y={H - 10} fontSize={9} textAnchor="middle" fill="var(--ink-soft)">
+              {d.mois.slice(5)}/{d.mois.slice(2, 4)}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="mt-1 flex gap-4 text-xs">
+        <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[var(--brand)]" /> Leads</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#E08A1E" }} /> Devis acceptés</span>
+      </div>
+    </div>
+  );
+}
 
 // Camembert SVG (sans dépendance) pour les motifs de refus.
 const PIE_COLORS = ["#0e7a66", "#c6f24e", "#E08A1E", "#A12B2B", "#5B3FA0", "#1E4E8C"];
@@ -192,6 +229,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string>("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -204,14 +243,32 @@ export default function AdminPage() {
     const r = await fetch("/api/admin-data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: session.access_token }),
+      body: JSON.stringify({ token: session.access_token, from: from || undefined, to: to || undefined }),
     });
     setData(await r.json());
-  }, [session, role]);
+  }, [session, role, from, to]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Export PDF des statistiques de la période
+  async function exporterPdf() {
+    if (!session || !data) return;
+    const r = await fetch("/api/admin-export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, data }),
+    });
+    if (!r.ok) return;
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "statistiques-autocar-location.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   // Devis sur-mesure pour un cas complexe (étude commerciale humaine)
   async function devisManuel(demande_id: string) {
@@ -300,10 +357,35 @@ export default function AdminPage() {
   );
   return (
     <main className="mx-auto max-w-5xl p-6">
-      <h1 className="text-2xl font-bold">Pilotage commercial</h1>
-      <p className="mt-1 text-sm text-[var(--ink-soft)]">
-        Suivi des leads, devis et relances — interventions humaines mises en avant.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Pilotage commercial</h1>
+          <p className="mt-1 text-sm text-[var(--ink-soft)]">
+            Suivi des leads, devis et relances — interventions humaines mises en avant.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-end gap-2 text-sm">
+          <label className="flex flex-col text-xs text-[var(--ink-soft)]">
+            Du
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-lg border border-[var(--border)] px-2 py-1 text-sm" />
+          </label>
+          <label className="flex flex-col text-xs text-[var(--ink-soft)]">
+            Au
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-lg border border-[var(--border)] px-2 py-1 text-sm" />
+          </label>
+          {(from || to) && (
+            <button onClick={() => { setFrom(""); setTo(""); }} className="rounded-full px-2 py-1 text-xs text-[var(--brand)] underline">
+              réinitialiser
+            </button>
+          )}
+          <button
+            onClick={exporterPdf}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)]"
+          >
+            <Download className="h-4 w-4" /> Exporter en PDF
+          </button>
+        </div>
+      </div>
 
       {/* KPIs */}
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -311,6 +393,12 @@ export default function AdminPage() {
         <Kpi label="Devis envoyés" value={data?.envoyes ?? 0} />
         <Kpi label="Devis acceptés" value={data?.acceptes ?? 0} />
         <Kpi label="Taux de conversion" value={`${data?.conversion ?? 0} %`} />
+      </div>
+
+      {/* Évolution mensuelle */}
+      <h2 className="mt-8 text-lg font-semibold">Évolution sur la période</h2>
+      <div className="mt-2 rounded-xl border border-[var(--border)] bg-white p-5">
+        <LineChart data={data?.parMois ?? []} />
       </div>
 
       {/* Vue opérationnelle */}

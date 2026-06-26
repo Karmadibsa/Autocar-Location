@@ -38,13 +38,6 @@ type Params = {
 };
 type Msg = { role: "agent" | "user"; content: string; devis?: Devis; escalade?: string };
 
-const SUGGESTIONS = [
-  "Lyon → Annecy, 50 personnes",
-  "Sortie scolaire",
-  "Séminaire 2 jours",
-  "Aller / retour",
-];
-
 // Encart DEV : messages préécrits couvrant chaque cas de figure des livrables.
 const SCENARIOS: { label: string; message: string }[] = [
   { label: "Trajet court (forfait grille)", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026" },
@@ -220,9 +213,12 @@ export default function Chat() {
       // le présente (évite d'afficher le devis avant d'avoir tout demandé).
       if (data.devis && !lockedDevisRef.current) lockedDevisRef.current = data.devis;
       const reply: string = data.reply || "…";
+      // On révèle le devis quand l'agent le présente. NB : pour un client connecté,
+      // l'email est injecté côté serveur → il ne compte pas comme signal (sinon le
+      // devis s'afficherait trop tôt). Pour un prospect anonyme, donner son email = prêt.
       const presente =
-        /e-?mail|courriel|adresse|disponible|s'affiche|consulter|ci-dessous|ci-dessus|votre devis/i.test(reply) ||
-        !!data.params?.email;
+        /devis (est )?(pr[êe]t|disponible|s'affiche)|consulter|ci-dessous|ci-dessus|je vous l'envoie|envoy[ée]/i.test(reply) ||
+        (!!data.params?.email && !authEmail);
       const showDevis =
         lockedDevisRef.current && presente && !shownDevisRef.current ? lockedDevisRef.current : undefined;
       if (showDevis) shownDevisRef.current = true;
@@ -322,19 +318,6 @@ export default function Chat() {
             <Send className="h-5 w-5" />
           </button>
         </form>
-
-        {/* Suggestions */}
-        <div className="mt-3 flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => send(s)}
-              className="rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1.5 text-[13px] text-[var(--brand-dark)] transition hover:border-[var(--brand)] hover:bg-white"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
 
         {/* Encart DEV : scénarios de test préécrits (masqué en production) */}
         {isDev && (
