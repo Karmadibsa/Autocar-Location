@@ -38,13 +38,6 @@ const AVIS: [string, string, string][] = [
   ["Hélène M.", "Association seniors", "« Clair, poli, et ça ne m'a jamais proposé d'assurance trottinette. Parfait. »"],
 ];
 
-// Présentation "mode discussion" : bulles de conversation (q = client, r = marque).
-const PRESENTATION: { q: string; r: string }[] = [
-  { q: "C'est quoi Autocar Location ?", r: "Un intermédiaire qui connecte votre groupe au meilleur autocariste, sans paperasse." },
-  { q: "Et le prix, c'est fiable ?", r: "Calculé sur des règles claires et affiché en direct. Zéro surprise au moment de payer." },
-  { q: "Mon groupe est énorme…", r: "Au-delà de 85 passagers, un conseiller humain prend le relais pour un devis sur-mesure." },
-];
-
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
@@ -92,32 +85,6 @@ export default function Home() {
               <div className="mt-1 text-sm text-[var(--ink-soft)]">{small}</div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ---------- PRÉSENTATION "MODE DISCUSSION" ---------- */}
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="text-center text-2xl font-bold sm:text-3xl">Autocar Location en 30 secondes</h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">
-            La présentation, version conversation.
-          </p>
-          <div className="mt-8 space-y-4">
-            {PRESENTATION.map((b, i) => (
-              <div key={b.q} className="animate-fade-up space-y-2" style={{ animationDelay: `${i * 120}ms` }}>
-                <div className="flex justify-end">
-                  <p className="max-w-[80%] rounded-2xl rounded-br-sm bg-[var(--bg-muted)] px-4 py-2 text-[15px]">{b.q}</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-[var(--border)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/logo.png" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-                  </span>
-                  <p className="max-w-[80%] rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-2 text-[15px]">{b.r}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
