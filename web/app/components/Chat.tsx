@@ -288,10 +288,10 @@ export default function Chat() {
                 <img src="/logo.png" alt="Autocar Location" className="h-6 w-6 object-contain" />
               </div>
               <div className="rounded-2xl rounded-bl-sm bg-[var(--brand-soft)] px-4 py-3">
-                <span className="flex gap-1">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:-0.2s]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)] [animation-delay:-0.1s]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--brand)]" />
+                <span className="flex gap-1.5">
+                  <span className="dot-typing h-2 w-2 rounded-full bg-[var(--brand)] [animation-delay:-0.32s]" />
+                  <span className="dot-typing h-2 w-2 rounded-full bg-[var(--brand)] [animation-delay:-0.16s]" />
+                  <span className="dot-typing h-2 w-2 rounded-full bg-[var(--brand)]" />
                 </span>
               </div>
             </div>

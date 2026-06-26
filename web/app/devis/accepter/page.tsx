@@ -5,6 +5,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
+import { titleCase } from "@/lib/noms";
 
 export default function AccepterDevis() {
   const router = useRouter();
@@ -29,8 +30,8 @@ export default function AccepterDevis() {
         const q = new URLSearchParams({ email: j.email, next: "/espace-client" });
         if (!j.hasAccount) {
           q.set("mode", "signup");
-          if (j.prenom) q.set("prenom", j.prenom);
-          if (j.nom) q.set("nom", j.nom);
+          if (j.prenom) q.set("prenom", titleCase(j.prenom));
+          if (j.nom) q.set("nom", titleCase(j.nom));
         }
         router.replace("/login?" + q.toString());
       })

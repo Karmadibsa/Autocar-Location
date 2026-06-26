@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const { data: profile } = await sb.from("profiles").select("role").eq("id", uid).maybeSingle();
   if (profile?.role !== "admin") return Response.json({ ok: false, reason: "not_admin" }, { status: 403 });
 
-  const [{ count: leads }, devisRes, recentRes, statutsRes] = await Promise.all([
+  const [{ count: leads }, devisRes, recentRes, statutsRes, refusRes] = await Promise.all([
     sb.from("demandes").select("*", { count: "exact", head: true }),
     sb.from("devis").select("statut"),
     sb
@@ -26,7 +26,16 @@ export async function POST(request: Request) {
       .order("created_at", { ascending: false })
       .limit(20),
     sb.from("demandes").select("statut"),
+    sb.from("devis").select("raison_refus").not("raison_refus", "is", null),
   ]);
+
+  // Agrégation des motifs de refus (un devis peut en cocher plusieurs).
+  const raisonsRefus: Record<string, number> = {};
+  for (const row of (refusRes.data ?? []) as { raison_refus: string | null }[]) {
+    for (const r of (row.raison_refus ?? "").split(",").map((x) => x.trim()).filter(Boolean)) {
+      raisonsRefus[r] = (raisonsRefus[r] ?? 0) + 1;
+    }
+  }
 
   const devis = (devisRes.data ?? []) as { statut: string }[];
   const envoyes = devis.filter((d) => d.statut === "envoye").length;
@@ -49,5 +58,6 @@ export async function POST(request: Request) {
       perdus: has("refuse", "cloture"),
     },
     demandes: recentRes.data ?? [],
+    raisonsRefus,
   });
 }

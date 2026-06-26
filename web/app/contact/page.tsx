@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
+const MOTIFS = [
+  "Demande de devis",
+  "Question sur un devis existant",
+  "Réclamation",
+  "Partenariat / autocariste",
+  "Autre",
+];
+
 export default function Contact() {
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
+  const [motif, setMotif] = useState(MOTIFS[0]);
   const [message, setMessage] = useState("");
   const [etat, setEtat] = useState<"idle" | "envoi" | "ok" | "erreur">("idle");
 
@@ -16,7 +25,7 @@ export default function Contact() {
       const r = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom, email, message }),
+        body: JSON.stringify({ nom, email, motif, message }),
       });
       const j = await r.json();
       if (j.ok) {
@@ -24,6 +33,7 @@ export default function Contact() {
         setNom("");
         setEmail("");
         setMessage("");
+        setMotif(MOTIFS[0]);
       } else setEtat("erreur");
     } catch {
       setEtat("erreur");
@@ -60,6 +70,16 @@ export default function Contact() {
             aria-label="Votre email"
             className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]"
           />
+          <select
+            value={motif}
+            onChange={(e) => setMotif(e.target.value)}
+            aria-label="Motif de votre message"
+            className="w-full rounded-xl border border-[var(--border)] bg-white px-4 py-3 outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]"
+          >
+            {MOTIFS.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
           <textarea
             required
             value={message}

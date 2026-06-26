@@ -15,6 +15,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [ville, setVille] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
@@ -48,7 +52,16 @@ export default function Login() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { prenom: prenom.trim(), nom: nom.trim() } },
+        options: {
+          data: {
+            prenom: prenom.trim(),
+            nom: nom.trim(),
+            telephone: telephone.trim(),
+            adresse: adresse.trim(),
+            code_postal: codePostal.trim(),
+            ville: ville.trim(),
+          },
+        },
       });
       if (error) setError(error.message);
       else setInfo("Compte créé. Vous pouvez vous connecter.");
@@ -124,6 +137,44 @@ export default function Login() {
                   className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
                 />
               </div>
+            )}
+            {mode === "signup" && (
+              <>
+                <input
+                  type="tel"
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                  placeholder="Téléphone"
+                  aria-label="Téléphone"
+                  className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                />
+                <input
+                  type="text"
+                  value={adresse}
+                  onChange={(e) => setAdresse(e.target.value)}
+                  placeholder="Adresse"
+                  aria-label="Adresse"
+                  className="w-full rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                />
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={codePostal}
+                    onChange={(e) => setCodePostal(e.target.value)}
+                    placeholder="Code postal"
+                    aria-label="Code postal"
+                    className="w-1/3 rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                  />
+                  <input
+                    type="text"
+                    value={ville}
+                    onChange={(e) => setVille(e.target.value)}
+                    placeholder="Ville"
+                    aria-label="Ville"
+                    className="w-2/3 rounded-xl border border-[var(--border)] px-4 py-3 outline-none focus:border-[var(--brand)]"
+                  />
+                </div>
+              </>
             )}
             <input
               type="email"

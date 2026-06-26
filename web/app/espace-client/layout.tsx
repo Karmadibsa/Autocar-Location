@@ -11,6 +11,7 @@ import { Plus } from "lucide-react";
 
 const ONGLETS: [string, string][] = [
   ["/espace-client", "Mes devis"],
+  ["/espace-client/conversations", "Mes conversations"],
   ["/espace-client/compte", "Mon compte"],
 ];
 

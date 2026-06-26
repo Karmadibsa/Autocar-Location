@@ -2,7 +2,7 @@
 const DEST = "contact@am-creative.fr";
 
 export async function POST(request: Request) {
-  const { nom, email, message } = await request.json().catch(() => ({}));
+  const { nom, email, motif, message } = await request.json().catch(() => ({}));
   if (!nom || !email || !message) return Response.json({ ok: false, reason: "champs_manquants" }, { status: 400 });
   if (typeof email !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     return Response.json({ ok: false, reason: "email_invalide" }, { status: 400 });
@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       <h2 style="color:#0e7a66">Nouveau message — site Autocar Location</h2>
       <p><b>Nom :</b> ${String(nom).slice(0, 120)}</p>
       <p><b>Email :</b> ${String(email).slice(0, 160)}</p>
+      <p><b>Motif :</b> ${String(motif ?? "—").slice(0, 80)}</p>
       <p><b>Message :</b></p>
       <p style="white-space:pre-wrap">${String(message).slice(0, 4000)}</p>
     </div>`;
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
         from: process.env.EMAIL_FROM || "onboarding@resend.dev",
         to: DEST,
         reply_to: email,
-        subject: `Contact site — ${String(nom).slice(0, 80)}`,
+        subject: `Contact site${motif ? ` [${String(motif).slice(0, 40)}]` : ""} — ${String(nom).slice(0, 60)}`,
         html,
       }),
     });

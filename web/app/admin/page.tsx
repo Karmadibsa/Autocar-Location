@@ -98,7 +98,49 @@ type Data = {
   conversion?: number;
   categories?: { aTraiter: number; enAttente: number; gagnes: number; perdus: number };
   demandes?: DemandeRow[];
+  raisonsRefus?: Record<string, number>;
 };
+
+// Camembert SVG (sans dépendance) pour les motifs de refus.
+const PIE_COLORS = ["#0e7a66", "#c6f24e", "#E08A1E", "#A12B2B", "#5B3FA0", "#1E4E8C"];
+function PieChart({ data }: { data: [string, number][] }) {
+  const total = data.reduce((s, [, n]) => s + n, 0);
+  if (!total) return <p className="text-sm text-[var(--ink-soft)]">Aucun refus pour le moment.</p>;
+  const R = 80;
+  const C = 100;
+  const slices = data.map(([label, n], i) => {
+    const before = data.slice(0, i).reduce((s, [, v]) => s + v, 0);
+    const start = (before / total) * 2 * Math.PI;
+    const end = ((before + n) / total) * 2 * Math.PI;
+    const x1 = C + R * Math.sin(start);
+    const y1 = C - R * Math.cos(start);
+    const x2 = C + R * Math.sin(end);
+    const y2 = C - R * Math.cos(end);
+    const large = end - start > Math.PI ? 1 : 0;
+    const d = `M${C},${C} L${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
+    return { d, color: PIE_COLORS[i % PIE_COLORS.length], label, n };
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-6">
+      <svg viewBox="0 0 200 200" className="h-40 w-40 flex-none" role="img" aria-label="Répartition des motifs de refus">
+        {data.length === 1 ? (
+          <circle cx={C} cy={C} r={R} fill={PIE_COLORS[0]} />
+        ) : (
+          slices.map((s, i) => <path key={i} d={s.d} fill={s.color} />)
+        )}
+      </svg>
+      <ul className="space-y-1.5 text-sm">
+        {slices.map((s, i) => (
+          <li key={i} className="flex items-center gap-2">
+            <span className="h-3 w-3 flex-none rounded-sm" style={{ background: s.color }} />
+            <span>{s.label}</span>
+            <span className="text-[var(--ink-soft)]">— {s.n} ({Math.round((s.n / total) * 100)}%)</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function Kpi({ label, value }: { label: string; value: string | number }) {
   return (
@@ -291,6 +333,13 @@ export default function AdminPage() {
         <Cat label="Perdus" value={cat?.perdus ?? 0} note="Refusés / clôturés" active={filtre === "perdus"} onClick={() => toggleFiltre("perdus")} />
       </div>
 
+      {/* Motifs de refus (camembert) */}
+      <h2 className="mt-8 text-lg font-semibold">Motifs de refus</h2>
+      <p className="text-sm text-[var(--ink-soft)]">Pourquoi les devis sont refusés — pour ajuster l&apos;offre.</p>
+      <div className="mt-3 rounded-xl border border-[var(--border)] bg-white p-5">
+        <PieChart data={Object.entries(data?.raisonsRefus ?? {}).sort((a, b) => b[1] - a[1])} />
+      </div>
+
       {/* Table détaillée */}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -384,30 +433,50 @@ export default function AdminPage() {
                             <p className="mt-1 text-[#8A5A12]">
                               {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
                             </p>
-                            <div className="mt-3 border-t border-[#E8C98A] pt-3">
-                              <div className="font-medium text-[var(--ink)]">Étape 1 — Établir un devis sur-mesure</div>
+                            <div className="mt-3 rounded-lg border border-[var(--border)] bg-white p-3">
+                              <div className="font-semibold text-[var(--ink)]">Établir un devis sur-mesure</div>
                               <p className="mt-0.5 text-[var(--ink-soft)]">
-                                Après étude (capacité, sous-traitance...), saisis le prix HT négocié. Le devis part au client et rejoint le pipeline (relances, acceptation).
+                                Après étude (capacité, sous-traitance…), saisis le prix HT négocié. Le devis part au client et rejoint le pipeline.
                               </p>
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <input
-                                  type="number"
-                                  min="1"
-                                  step="0.01"
-                                  value={prixManuel}
-                                  onChange={(e) => setPrixManuel(e.target.value)}
-                                  placeholder="Prix HT (€)"
-                                  aria-label="Prix HT sur-mesure"
-                                  className="w-32 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs outline-none focus:border-[var(--brand)]"
-                                />
-                                <button
-                                  onClick={() => devisManuel(d.id)}
-                                  className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--brand-dark)]"
-                                >
-                                  Créer et envoyer le devis
-                                </button>
-                                {manuelMsg && <span className="text-[var(--ink-soft)]">{manuelMsg}</span>}
-                              </div>
+                              {(() => {
+                                const ht = Number(prixManuel.replace(",", "."));
+                                const valide = Number.isFinite(ht) && ht > 0;
+                                const tva = valide ? Math.round(ht * 0.1 * 100) / 100 : 0;
+                                const ttc = valide ? Math.round((ht + tva) * 100) / 100 : 0;
+                                return (
+                                  <>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                      <label className="text-[var(--ink-soft)]">Prix HT</label>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        step="0.01"
+                                        value={prixManuel}
+                                        onChange={(e) => setPrixManuel(e.target.value)}
+                                        placeholder="0.00"
+                                        aria-label="Prix HT sur-mesure"
+                                        className="w-28 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs outline-none focus:border-[var(--brand)]"
+                                      />
+                                      <span className="text-[var(--ink-soft)]">€</span>
+                                      {valide && (
+                                        <span className="rounded-full bg-[var(--bg-muted)] px-2.5 py-1 text-[var(--ink)]">
+                                          TVA {tva.toFixed(2)} € · <b>TTC {ttc.toFixed(2)} €</b>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                      <button
+                                        onClick={() => devisManuel(d.id)}
+                                        disabled={!valide}
+                                        className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-50"
+                                      >
+                                        Créer et envoyer le devis
+                                      </button>
+                                      {manuelMsg && <span className="text-[var(--ink-soft)]">{manuelMsg}</span>}
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         )}

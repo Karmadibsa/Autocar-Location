@@ -16,9 +16,6 @@ type Devis = {
   statut: string;
   created_at: string;
 };
-type Message = { role: string; contenu?: string; content?: string };
-type Conversation = { id: string; messages: Message[] | null; updated_at: string };
-
 const RAISONS_REFUS = [
   "Prix trop élevé",
   "Délai / disponibilité",
@@ -30,7 +27,6 @@ const RAISONS_REFUS = [
 export default function MesDevis() {
   const { session } = useAuth();
   const [devis, setDevis] = useState<Devis[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [aAdresse, setAAdresse] = useState(true);
   const [refusId, setRefusId] = useState<string | null>(null);
   const [raisons, setRaisons] = useState<string[]>([]);
@@ -45,7 +41,6 @@ export default function MesDevis() {
     });
     const d = await r.json();
     setDevis(d.devis ?? []);
-    setConversations(d.conversations ?? []);
     setAAdresse(!!d.profil?.adresse);
   }, [session]);
 
@@ -197,29 +192,6 @@ export default function MesDevis() {
                 </div>
               )}
             </div>
-          ))}
-        </div>
-      )}
-
-      <h2 className="mt-8 text-lg font-semibold">Mes conversations</h2>
-      {conversations.length === 0 ? (
-        <p className="mt-2 text-[var(--ink-soft)]">Aucune conversation.</p>
-      ) : (
-        <div className="mt-2 space-y-3">
-          {conversations.map((c) => (
-            <details key={c.id} className="rounded-xl border border-[var(--border)] bg-white p-4">
-              <summary className="cursor-pointer text-sm text-[var(--ink-soft)]">
-                Conversation du {new Date(c.updated_at).toLocaleDateString("fr-FR")}
-              </summary>
-              <div className="mt-2 space-y-1 text-sm">
-                {(c.messages ?? []).map((m, i) => (
-                  <p key={i}>
-                    <span className="font-semibold">{m.role === "user" ? "Vous" : "Autocar Location"} :</span>{" "}
-                    {m.contenu ?? m.content}
-                  </p>
-                ))}
-              </div>
-            </details>
           ))}
         </div>
       )}
