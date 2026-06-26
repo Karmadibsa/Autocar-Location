@@ -66,7 +66,7 @@ export function devisEmailHtml(
       </div>
 
       <div style="text-align:center;margin-top:22px">
-        <a href="${base}/espace-client" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:bold;font-size:14px;margin:4px">
+        <a href="${base}/devis/accepter?token=${opts.refuseToken ?? ""}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:bold;font-size:14px;margin:4px">
           Accepter le devis
         </a>
         ${
@@ -76,7 +76,7 @@ export function devisEmailHtml(
                </a>`
             : ""
         }
-        <p style="color:#8a958f;font-size:11px;margin-top:10px">« Accepter » ouvre votre espace client. « Refuser » se fait en un clic, sans compte.</p>
+        <p style="color:#8a958f;font-size:11px;margin-top:10px">« Accepter » vous connecte (ou crée votre compte). « Refuser » se fait en un clic, sans compte.</p>
       </div>
 
       <p style="color:#8a958f;font-size:11px;margin-top:18px">

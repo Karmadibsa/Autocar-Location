@@ -24,6 +24,18 @@ export default function Login() {
     }
   }, [loading, connected, role, router]);
 
+  // Pré-remplissage depuis l'email "Accepter le devis" (email + nom/prénom + mode).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("email")) setEmail(q.get("email")!);
+    if (q.get("prenom")) setPrenom(q.get("prenom")!);
+    if (q.get("nom")) setNom(q.get("nom")!);
+    if (q.get("mode") === "signup") {
+      setMode("signup");
+      setInfo("Créez votre compte pour accepter votre devis (vos informations sont déjà pré-remplies).");
+    }
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
