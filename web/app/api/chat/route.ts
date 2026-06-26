@@ -69,6 +69,10 @@ export async function POST(request: Request) {
     return Response.json({ reply: "Agent injoignable. " + detail, error: true });
   }
 
+  // Garde-fou : Gemma "fuit" parfois son raisonnement interne (puces *, méta en
+  // anglais). On ne garde que la réponse finale destinée au client.
+  data.reply = nettoyerReply(data.reply);
+
   // Client connecté : on connaît déjà son email → on l'injecte pour lier/envoyer
   // le devis automatiquement (l'agent n'a pas besoin de le redemander).
   if (clientEmail) data.params = { ...(data.params ?? {}), email: clientEmail };
@@ -83,6 +87,28 @@ export async function POST(request: Request) {
   );
 
   return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade, params: data.params });
+}
+
+// Supprime un éventuel raisonnement interne du modèle (Gemma) et ne garde que la
+// réponse destinée au client (puces "*", méta anglaise = signaux de fuite).
+function nettoyerReply(s?: string): string {
+  const txt = (s ?? "").trim();
+  if (!txt) return "";
+  const fuite = /(\bCurrent State\b|\bSystem Status\b|\bAssistant's\b|\bClient's last\b|\bConstraint:|\bGoal:|^\s*\*\s)/im.test(txt);
+  if (!fuite) return txt;
+  const phrases = txt
+    .replace(/\r/g, "")
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((p) => p.replace(/^[*\-\s]+/, "").trim())
+    .filter(Boolean)
+    .filter(
+      (p) =>
+        /vous|votre|devis|bonjour|merci|monsieur|madame|disposition|consulter/i.test(p) &&
+        !/[*{}]/.test(p) &&
+        !/(Current State|System Status|Assistant|Client's|Constraint|Goal|I need to|previous message|The (quote|user|customer|email|system))/i.test(p),
+    );
+  const out = phrases.slice(-2).join(" ").trim();
+  return out || "Votre devis est disponible ci-dessous. Je vous l'ai envoyé par email — je reste à votre disposition.";
 }
 
 // Recalcule le devis avec la distance OSRM réelle. Fallback = le devis de n8n.

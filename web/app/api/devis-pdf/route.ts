@@ -1,6 +1,7 @@
 // Génère et renvoie le PDF d'un devis. Accès : admin OU propriétaire du devis.
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
+import { formatNomComplet } from "@/lib/noms";
 
 export async function POST(request: Request) {
   const { id, token } = await request.json().catch(() => ({}));
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
       .select("prenom, nom, adresse, code_postal, ville")
       .eq("id", devis.client_id)
       .maybeSingle();
-    nom = [c?.prenom, c?.nom].filter(Boolean).join(" ") || null;
+    nom = formatNomComplet(c?.prenom, c?.nom);
     adresse = c?.adresse ?? null;
     code_postal = c?.code_postal ?? null;
     ville = c?.ville ?? null;

@@ -5,6 +5,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { prochaineRelance, estUrgent, typeRelance, estExpire } from "@/lib/relances";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
+import { formatNomComplet } from "@/lib/noms";
 
 type DevisDu = {
   id: string;
@@ -113,7 +114,7 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
       destination: d.demandes?.destination,
       date_depart: d.demandes?.date_depart,
       nb_passagers: d.demandes?.nb_passagers,
-      nom: [d.clients?.prenom, d.clients?.nom].filter(Boolean).join(" ") || null,
+      nom: formatNomComplet(d.clients?.prenom, d.clients?.nom),
     },
     {
       titre: `Votre devis vous attend (relance ${numero}/2)`,

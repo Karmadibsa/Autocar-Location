@@ -5,6 +5,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
 import { estUrgent, prochaineRelance } from "@/lib/relances";
+import { formatNomComplet } from "@/lib/noms";
 
 export async function POST(request: Request) {
   const { token, demande_id, prix_ht } = await request.json().catch(() => ({}));
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         date_depart: demande.date_depart,
         nb_passagers: demande.nb_passagers,
         aller_retour: demande.aller_retour,
-        nom: [c.prenom, c.nom].filter(Boolean).join(" ") || null,
+        nom: formatNomComplet(c.prenom, c.nom),
         ref: refDevis(demande_id),
       };
       const html = devisEmailHtml(devisRow, params, {
