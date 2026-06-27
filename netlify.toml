@@ -1,0 +1,8 @@
+# Déploiement Netlify — l'application Next.js est dans web/.
+# Le plugin officiel gère les routes /api (fonctions serverless) et le rendu Next.
+[build]
+  base = "web"
+  command = "npm run build"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

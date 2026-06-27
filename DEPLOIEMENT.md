@@ -7,7 +7,7 @@ Déployable et **quasi 100 % gratuit**. Seule contrainte : n8n doit tourner quel
 
 | Brique | Hébergement | Coût |
 |--------|-------------|------|
-| Front Next.js | **Vercel** (reco) | Gratuit |
+| Front Next.js | **Netlify** (plugin Next) | Gratuit |
 | Base + Auth | **Supabase** (déjà en cloud) | Gratuit |
 | Emails | **Resend** | Gratuit |
 | Modèle IA | **Google AI Studio (Gemma)** — clé dans n8n | Gratuit |
@@ -54,35 +54,52 @@ git remote add origin https://github.com/<toi>/autocar-location.git
 git push -u origin master
 ```
 
-### 4. Front sur Vercel (~10 min)
-1. **vercel.com** → New Project → importer le repo GitHub.
-2. **Root Directory = `web`** (important : l'app Next est dans `web/`).
-3. **Environment Variables** → ajouter (voir tableau plus bas).
-4. **Deploy** → tu obtiens `https://<ton-app>.vercel.app`.
+### 4. Front sur Netlify (~10 min)
+La config est déjà dans **`netlify.toml`** (base = `web`, plugin Next) → rien à régler côté build.
+1. **app.netlify.com** → Add new site → Import an existing project → choisir le repo GitHub.
+2. Netlify lit `netlify.toml` automatiquement (base `web`, plugin `@netlify/plugin-nextjs`). Laisse les réglages par défaut.
+3. **Environment variables** → les ajouter (voir tableau plus bas). Astuce : **Site configuration → Environment variables → Import from a .env file** (ou `netlify env:import .env` en CLI).
+4. **Deploy** → tu obtiens `https://<ton-site>.netlify.app` (ou ton domaine perso).
 5. Retourne dans Supabase (étape 1.3) renseigner *Site URL* + *Redirect URL* avec cette adresse.
-6. Mets aussi `NEXT_PUBLIC_SITE_URL` = cette adresse, puis **Redeploy**.
+6. Mets `NEXT_PUBLIC_SITE_URL` = cette adresse, puis **Redeploy** (Trigger deploy).
 
-### 5. n8n en ligne
-**Option A — soutenance (le plus simple, gratuit)** : `npx n8n start --tunnel` → n8n donne une URL publique.
-**Option B — permanent** : Fly.io ou Oracle Cloud Free (Docker n8n).
+> Astuce domaine : tu héberges déjà tes sites sur Netlify → tu peux brancher un sous-domaine
+> (ex. `autocar.tondomaine.fr`) dans *Domain management*. Mets alors ce domaine dans
+> `NEXT_PUBLIC_SITE_URL` et dans Supabase (Site URL + Redirect URL).
 
-Dans les deux cas :
-1. **Importer** `n8n/agent-workflow.json` et `n8n/relances-workflow.json`.
+### 5. n8n hébergé (toujours en ligne)
+
+D'abord, deux notions :
+- **Tunnel** (`npx n8n start --tunnel`) = n8n tourne sur **TA machine** et obtient une URL publique temporaire. Ça **s'arrête dès que ton PC est éteint** → pratique seulement pour une démo en direct, **pas pour de la prod**.
+- **Hébergé** = n8n tourne sur un serveur, **accessible 24/7 depuis partout**. C'est ce que tu veux.
+
+**Options hébergées (du plus simple au moins cher)**
+| Solution | Effort | Coût | Toujours allumé |
+|----------|--------|------|-----------------|
+| **n8n Cloud** (n8n.io) | Zéro (managé) | ~20 €/mois (essai 14 j) | ✅ |
+| **Railway** (template n8n) | Faible (quelques clics) | crédit gratuit puis ~5 €/mois | ✅ |
+| **Render** (Docker n8n + disque) | Moyen | gratuit | ⚠️ s'endort (lent au réveil) |
+| **Oracle Cloud Free / VPS Hetzner** | Élevé (Docker, SSH) | gratuit / ~4 €/mois | ✅ |
+
+→ **Reco** : **Railway** (équilibre simplicité/coût/persistance) ou **n8n Cloud** si tu veux zéro administration. Sur Railway : New Project → *Deploy a template* → chercher **n8n** → déployer (il crée le service + le stockage). Tu obtiens une URL `https://...up.railway.app`.
+
+**Ensuite, quel que soit l'hébergeur :**
+1. Ouvrir l'interface n8n → **Importer** `n8n/agent-workflow.json` et `n8n/relances-workflow.json`.
 2. Sur les 2 nœuds **Gemini**, sélectionner ta **credential Google Gemini** (clé AI Studio).
-3. Copier l'URL du **Webhook** → la mettre dans `N8N_WEBHOOK_URL` sur Vercel (+ Redeploy).
-4. Workflow **Relances** → nœud **HTTP Request** → URL = `https://<ton-app>.vercel.app/api/relances`,
-   body JSON `{ "secret": "<CRON_SECRET>" }` (même valeur que sur Vercel).
+3. Copier l'URL du **Webhook** → la mettre dans `N8N_WEBHOOK_URL` sur Netlify (+ Redeploy).
+4. Workflow **Relances** → nœud **HTTP Request** → URL = `https://<ton-site>/api/relances`,
+   body JSON `{ "secret": "<CRON_SECRET>" }` (même valeur que sur Netlify).
 5. **Publier** les 2 workflows.
 
 ### 6. Vérification post-déploiement
-- Ouvrir `https://<ton-app>.vercel.app` → faire un devis dans le chat → email reçu.
+- Ouvrir `https://<ton-site>` → faire un devis dans le chat → email reçu.
 - `/login` (admin) → `/admin` s'affiche (KPIs, courbe).
 - `/docs` → l'explorateur d'API s'affiche.
 - Cliquer « Lancer les relances dues » dans l'admin → réponse OK.
 
 ---
 
-## Variables d'environnement (Vercel → Settings → Environment Variables)
+## Variables d'environnement (Netlify → Site configuration → Environment variables)
 
 | Variable | Valeur | Visibilité |
 |----------|--------|------------|
@@ -93,15 +110,15 @@ Dans les deux cas :
 | `RESEND_API_KEY` | `re_...` | **secret** |
 | `EMAIL_FROM` | `contact@am-creative.fr` | serveur |
 | `CRON_SECRET` | secret partagé avec n8n | **secret** |
-| `NEXT_PUBLIC_SITE_URL` | `https://<ton-app>.vercel.app` | publique |
+| `NEXT_PUBLIC_SITE_URL` | `https://<ton-site>.netlify.app` (ou ton domaine) | publique |
 
-> La clé **Gemma** (Google AI Studio) ne va **pas** sur Vercel : elle reste dans **n8n**.
+> La clé **Gemma** (Google AI Studio) ne va **pas** sur Netlify : elle reste dans **n8n**.
 
 ## Points d'attention
 - `N8N_WEBHOOK_URL` doit être joignable **depuis internet** (pas `localhost`) une fois en ligne.
-- Les emails partent du **front** (routes `/api`), donc `RESEND_API_KEY` + `EMAIL_FROM` sont **obligatoires sur Vercel**.
+- Les emails partent du **front** (routes `/api`), donc `RESEND_API_KEY` + `EMAIL_FROM` sont **obligatoires sur Netlify**.
 - En local+tunnel, n8n (et donc les relances planifiées) ne tournent que **machine allumée** ; le bouton admin « Lancer les relances dues » reste utilisable manuellement.
 - OSRM/Nominatim : services publics gratuits, ok en faible trafic (User-Agent déjà géré).
 
 ## Récap « tout gratuit »
-Front Vercel + Supabase + Resend + Gemma + OSRM = **0 €**. n8n = **0 €** (tunnel ou self-host).
+Front Netlify + Supabase + Resend + Gemma + OSRM = **0 €**. n8n = **0 €** (self-host) ou ~5 €/mois (managé).
