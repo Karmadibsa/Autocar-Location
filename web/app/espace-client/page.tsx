@@ -80,9 +80,26 @@ export default function MesDevis() {
     URL.revokeObjectURL(url);
   }
 
+  const nbEnAttente = devis.filter((d) => d.statut === "envoye").length;
+  const nbAcceptes = devis.filter((d) => d.statut === "accepte").length;
+
   return (
     <>
-      <h2 className="text-lg font-semibold">Mes devis</h2>
+      {/* Résumé client (mini-dashboard) */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          ["Devis", devis.length],
+          ["En attente", nbEnAttente],
+          ["Acceptés", nbAcceptes],
+        ].map(([label, val]) => (
+          <div key={label} className="rounded-xl border border-[var(--border)] bg-white p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--brand)]">{val}</div>
+            <div className="text-xs text-[var(--ink-soft)]">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="mt-6 text-lg font-semibold">Mes devis</h2>
 
       {adresseAlerte && (
         <div className="mt-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] p-3 text-sm text-[#8A5A12]">

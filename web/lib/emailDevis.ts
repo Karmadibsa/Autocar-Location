@@ -14,6 +14,10 @@ type EmailParams = {
 };
 
 const eur = (n?: number | null) => `${(n ?? 0).toFixed(2)} €`;
+const dateFrEmail = (s?: string | null) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s ?? "");
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : (s ?? "—");
+};
 
 function ligneResume(label: string, valeur: string) {
   return `<tr>
@@ -36,10 +40,11 @@ export function devisEmailHtml(
   const trajet = `${params.depart ?? "?"} &rarr; ${params.destination ?? "?"}`;
   const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
   return `
-  <div style="font-family:Arial,Helvetica,sans-serif;color:#14201d;max-width:560px;margin:auto">
-    <div style="background:${BRAND};color:#fff;padding:18px 22px;border-radius:12px 12px 0 0">
-      <div style="font-size:18px;font-weight:bold">Autocar Location</div>
-      <div style="font-size:12px;opacity:.85">Transport de groupe en autocar avec chauffeur</div>
+  <div style="font-family:Arial,Helvetica,sans-serif;color:#14201d;max-width:560px;margin:auto;background:#ffffff">
+    <div style="padding:18px 22px;border:1px solid #e3e8e6;border-bottom:3px solid ${BRAND};border-radius:12px 12px 0 0">
+      <img src="${base}/logo.png" alt="" width="42" height="29" style="vertical-align:middle;margin-right:8px" />
+      <span style="font-size:18px;font-weight:bold;color:${BRAND};vertical-align:middle">Autocar Location</span>
+      <div style="font-size:12px;color:#8a958f;margin-top:6px">Transport de groupe en autocar avec chauffeur</div>
     </div>
     <div style="border:1px solid #e3e8e6;border-top:none;border-radius:0 0 12px 12px;padding:22px">
       <h2 style="margin:0 0 6px;color:${BRAND};font-size:18px">${titre}</h2>
@@ -49,7 +54,7 @@ export function devisEmailHtml(
         <div style="font-weight:bold;font-size:13px;margin-bottom:6px">Résumé de la demande</div>
         <table style="width:100%;border-collapse:collapse">
           ${ligneResume("Trajet", trajet)}
-          ${ligneResume("Date de départ", params.date_depart ?? "—")}
+          ${ligneResume("Date de départ", dateFrEmail(params.date_depart))}
           ${ligneResume("Type", params.aller_retour ? "Aller-retour" : "Aller simple")}
           ${ligneResume("Passagers", String(params.nb_passagers ?? "—"))}
         </table>

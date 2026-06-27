@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Check,
   ArrowRight,
+  Bus,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +38,9 @@ const AVIS: [string, string, string][] = [
   ["Camille R.", "Comité d'entreprise", "« Devis en 2 minutes chrono. J'ai mis plus de temps à choisir le resto du midi. »"],
   ["Karim B.", "Club de foot U17", "« 18 ados, 0 imprévu côté transport. Un record. Le chauffeur, lui, a survécu. »"],
   ["Hélène M.", "Association seniors", "« Clair, poli, et ça ne m'a jamais proposé d'assurance trottinette. Parfait. »"],
+  ["Yann L.", "Mairie — sortie scolaire", "« Le prix ne bouge pas entre le devis et la facture. Ça, ça change la vie. »"],
+  ["Sofia D.", "Agence événementielle", "« 3 cars pour un séminaire, tout calé en une après-midi. Mes nerfs vous disent merci. »"],
+  ["Marc T.", "Club de randonnée", "« Réponse instantanée même un dimanche soir. Je ne savais pas que c'était permis. »"],
 ];
 
 export default function Home() {
@@ -43,8 +48,8 @@ export default function Home() {
     <div className="flex flex-1 flex-col">
       {/* ---------- HERO ---------- */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[var(--brand-soft)] via-white to-white">
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-[var(--brand)]/10 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/30 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-[var(--brand)]/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl px-4 pb-14 pt-12 text-center sm:pt-16">
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand)]/20 bg-white/70 px-4 py-1.5 text-xs font-semibold text-[var(--brand-dark)] backdrop-blur">
@@ -61,6 +66,14 @@ export default function Home() {
             qualifiés. Décrivez votre trajet à notre assistant : il le qualifie et vous
             chiffre un devis clair, sans engagement — et sans musique d'attente.
           </p>
+
+          <div className="mt-6 flex items-center justify-center gap-3 text-[var(--brand)]" aria-hidden>
+            <MapPin className="h-5 w-5" />
+            <span className="inline-block w-10 border-t-2 border-dashed border-[var(--brand)]/40" />
+            <Bus className="h-7 w-7" />
+            <span className="inline-block w-10 border-t-2 border-dashed border-[var(--brand)]/40" />
+            <MapPin className="h-5 w-5" />
+          </div>
 
           <div id="devis" className="mt-8 scroll-mt-20">
             <Chat />
@@ -135,13 +148,20 @@ export default function Home() {
       <section className="bg-[var(--bg-muted)] px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">Ils ont voyagé sereins</h2>
-          <p className="mx-auto mt-2 max-w-md text-center text-[var(--ink-soft)]">
-            Avis de démonstration — mais l'enthousiasme, lui, est bien réel.
-          </p>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <div className="mt-3 flex flex-col items-center gap-1">
+            <div className="flex gap-0.5 text-[var(--accent-dark)]" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-current" />
+              ))}
+            </div>
+            <p className="text-sm text-[var(--ink-soft)]">
+              <b className="text-[var(--ink)]">4,8/5</b> · 312 avis (de démonstration, mais l'enthousiasme est bien réel)
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {AVIS.map(([nom, role, texte]) => (
               <figure key={nom} className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md">
-                <div className="flex gap-0.5 text-[var(--accent-dark)]">
+                <div className="flex gap-0.5 text-[var(--accent-dark)]" aria-hidden>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-current" />
                   ))}
