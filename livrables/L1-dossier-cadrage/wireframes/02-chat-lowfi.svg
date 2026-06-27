@@ -20,7 +20,7 @@
   <rect x="40" y="45" width="840" height="855" rx="6" class="fr"/>
   <rect x="40" y="45" width="840" height="26" rx="6" fill="#EDEDED"/>
   <circle cx="58" cy="58" r="4" fill="#C9C9C9"/><circle cx="72" cy="58" r="4" fill="#C9C9C9"/><circle cx="86" cy="58" r="4" fill="#C9C9C9"/>
-  <rect x="110" y="50" width="320" height="16" rx="8" fill="#fff" stroke="#D5D5D5"/><text x="120" y="62" class="cap">neotravel.fr/chat</text>
+  <rect x="110" y="50" width="320" height="16" rx="8" fill="#fff" stroke="#D5D5D5"/><text x="120" y="62" class="cap">autocar-location.axel-momper.fr/chat</text>
 
   <!-- column separator -->
   <line x1="558" y1="85" x2="558" y2="870" stroke="#E2E2E2" stroke-dasharray="4 4"/>

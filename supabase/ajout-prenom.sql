@@ -15,5 +15,5 @@ update clients set prenom='Lucas', nom='Bernard', adresse='12 rue de la Républi
 update clients set prenom='Emma',  nom='Durand',  adresse='5 avenue des Fleurs',     code_postal='44000', ville='Nantes'  where email='client2@email.fr';
 
 -- Rôle admin (sinon /admin redirige vers l'espace client)
-insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
+insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@autocar-location.fr'
   on conflict (id) do update set role = 'admin';

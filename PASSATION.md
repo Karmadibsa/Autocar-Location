@@ -54,7 +54,7 @@ Vérifs : `cd web && npm run lint` (0) · `npx vitest run` (29) · `npm run buil
 5. **n8n en tunnel** = choix MVP (0 €, PC allumé). Pour la vraie prod 24/7 → n8n hébergé (voir COUTS_ET_PROD.md).
 
 ## Comptes de démo
-- **Admin** : `admin@neotravel.fr` / `123456`
+- **Admin** : `admin@autocar-location.fr` / `123456`
 - **Client** : `client1@email.fr` / `client` · `client2@email.fr` / `client`
 (Recréables via le dashboard Supabase ; rôles/données via `supabase/ajout-prenom.sql` ou `reset-complet.sql`.)
 

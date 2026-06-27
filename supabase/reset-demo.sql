@@ -16,7 +16,7 @@ alter table devis   add column if not exists raison_refus text;
 truncate table conversations, relances, devis, demandes, clients restart identity cascade;
 
 -- Rôle admin (sécurité : sinon /admin redirige)
-insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
+insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@autocar-location.fr'
   on conflict (id) do update set role = 'admin';
 
 -- ---------- Clients (tous avec adresse) ----------

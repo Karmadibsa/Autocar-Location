@@ -230,7 +230,7 @@ export default function Login() {
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
-                onClick={() => quickLogin("admin@neotravel.fr", "123456")}
+                onClick={() => quickLogin("admin@autocar-location.fr", "123456")}
                 className="rounded-full border border-[var(--brand)] px-3 py-1.5 text-sm text-[var(--brand)]"
               >
                 Admin

@@ -100,7 +100,7 @@ create policy conversations_select on conversations for select using (is_admin()
 create policy relances_admin on relances for select using (is_admin());
 
 -- ---------- Rôle admin pour le compte existant ----------
-insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
+insert into profiles (id, role) select id, 'admin' from auth.users where email = 'admin@autocar-location.fr'
   on conflict (id) do update set role = 'admin';
 
 -- ============================================================================

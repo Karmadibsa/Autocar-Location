@@ -3,7 +3,7 @@
 -- Crée 2 comptes clients email/mot de passe :
 --   client1@email.fr / client   (aura un devis)
 --   client2@email.fr / client   (vide)
--- L'admin (admin@neotravel.fr) est créé à part + passé admin (voir bas de fichier).
+-- L'admin (admin@autocar-location.fr) est créé à part + passé admin (voir bas de fichier).
 --
 -- ⚠️ Si cette requête échoue (selon ta version de Supabase), crée les users via
 --    Authentication → Users → Add user (email + mot de passe) : c'est équivalent.
@@ -35,7 +35,7 @@ select creer_user_demo('client1@email.fr', 'client');
 select creer_user_demo('client2@email.fr', 'client');
 
 -- (Optionnel) créer aussi l'admin par SQL puis le passer admin :
--- select creer_user_demo('admin@neotravel.fr', '123456');
+-- select creer_user_demo('admin@autocar-location.fr', '123456');
 -- insert into profiles (id, role)
---   select id, 'admin' from auth.users where email = 'admin@neotravel.fr'
+--   select id, 'admin' from auth.users where email = 'admin@autocar-location.fr'
 --   on conflict (id) do update set role = 'admin';

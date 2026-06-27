@@ -21,7 +21,7 @@
   <rect x="40" y="45" width="840" height="26" rx="6" fill="#EDEDED"/>
   <circle cx="58" cy="58" r="4" fill="#C9C9C9"/><circle cx="72" cy="58" r="4" fill="#C9C9C9"/><circle cx="86" cy="58" r="4" fill="#C9C9C9"/>
   <rect x="110" y="50" width="320" height="16" rx="8" fill="#fff" stroke="#D5D5D5"/>
-  <text x="120" y="62" class="cap">neotravel.fr</text>
+  <text x="120" y="62" class="cap">autocar-location.axel-momper.fr</text>
 
   <!-- header -->
   <rect x="70" y="92" width="120" height="32" rx="4" class="el"/><text x="130" y="112" class="cap" text-anchor="middle">logo</text>

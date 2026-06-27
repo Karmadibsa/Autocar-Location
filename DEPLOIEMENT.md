@@ -19,7 +19,7 @@ Déployable et **quasi 100 % gratuit**. Seule contrainte : n8n doit tourner quel
 ## ✅ Côté Claude — déjà prêt dans le repo
 
 - Code **buildé sans erreur**, lint 0, 29 tests front + 13 tests pricing verts.
-- Toutes les **routes serveur** (`/api/*`) prêtes pour Vercel (runtime Node).
+- Toutes les **routes serveur** (`/api/*`) prêtes pour Netlify (fonctions serverless).
 - **`web/.env.local.example`** à jour (liste exacte des variables).
 - **`n8n/agent-workflow.json`** + **`n8n/relances-workflow.json`** prêts à importer.
 - **`supabase/reset-complet.sql`** (schéma + données propres) et **`supabase/SCHEMA.md`**.
@@ -35,11 +35,11 @@ Rien d'autre à coder. Les étapes ci-dessous sont des **réglages de comptes** 
 1. **SQL Editor** → coller et exécuter **`supabase/reset-complet.sql`**.
 2. **Project Settings → API** → récupérer : `Project URL`, clé `anon`, clé `service_role`.
 3. **Authentication → URL Configuration** :
-   - *Site URL* = (à remplir après l'étape Vercel) `https://<ton-app>.vercel.app`
-   - *Redirect URLs* → ajouter `https://<ton-app>.vercel.app/reset-password`
+   - *Site URL* = `https://autocar-location.axel-momper.fr`
+   - *Redirect URLs* → ajouter `https://autocar-location.axel-momper.fr/reset-password`
    - (En local, ajoute aussi `http://localhost:3000/reset-password`.)
 4. Crée les comptes de démo si besoin (dashboard → Authentication → Add user) :
-   `admin@neotravel.fr` / `123456`, `client1@email.fr` / `client`, `client2@email.fr` / `client`,
+   `admin@autocar-location.fr` / `123456`, `client1@email.fr` / `client`, `client2@email.fr` / `client`,
    puis rejoue **`supabase/ajout-prenom.sql`** (rôle admin + prénoms/adresses).
 
 ### 2. Resend (~3 min)
