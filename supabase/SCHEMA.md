@@ -10,7 +10,7 @@ flowchart TB
     profiles["profiles — id, role (client/admin)"]
     clients["clients — email, prenom, nom, adresse, code_postal, ville, telephone"]
     demandes["demandes — depart, destination, date, pax, distance, statut, commentaire"]
-    devis["devis — prix_ht, tva, prix_ttc, lignes, coefficients, statut, prochaine_relance, token"]
+    devis["devis — prix_ht, tva, prix_ttc, lignes, coefficients, statut, prochaine_relance, token, raison_refus"]
     relances["relances — type (J2/J3/J7), date_planifiee, date_envoi, cle_idempotence"]
     conversations["conversations — messages (jsonb)"]
     pricing_config["pricing_config — bareme (jsonb pilotable)"]
@@ -30,7 +30,7 @@ flowchart TB
 - **profiles** — relie un compte Auth à un rôle (`client` ou `admin`). Clé = `id` (= `auth.users.id`). Sert aux gardes de route et au filtrage RLS via la fonction `is_admin()`.
 - **clients** — fiche client (coordonnées + **adresse de facturation** : `adresse`, `code_postal`, `ville`). Reliée à un compte Auth par `auth_user_id` (peut être nul : un lead existe avant d'avoir un compte). Email unique (insensible à la casse).
 - **demandes** — une demande de transport : `depart`, `destination`, `date_depart`, `aller_retour`, `nb_passagers`, `distance_km`, `options`, `statut` (cycle de vie), `commentaire` (motif d'escalade pour les cas complexes).
-- **devis** — devis chiffré rattaché à une demande : montants (`prix_ht`/`tva`/`prix_ttc`), `lignes` + `coefficients` (détail interne), `statut`, suivi des relances (`prochaine_relance`, `nb_relances`) et `token` (lien email « refuser sans compte »).
+- **devis** — devis chiffré rattaché à une demande : montants (`prix_ht`/`tva`/`prix_ttc`), `lignes` + `coefficients` (détail interne), `statut`, suivi des relances (`prochaine_relance`, `nb_relances`), `token` (lien email « refuser sans compte ») et `raison_refus` (feedback du client en cas de refus).
 - **relances** — trace des relances envoyées (`type` J2/J3/J7, dates). `cle_idempotence` unique → empêche les doublons.
 - **conversations** — historique du chat (`messages` en JSON), relié au client et éventuellement à la demande.
 - **pricing_config** — barème de calcul (grille forfait, saison, capacité, marge, TVA) **pilotable** sans toucher au code (1 seule ligne).
