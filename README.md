@@ -6,6 +6,8 @@ relances automatiques → dashboard de pilotage.
 
 Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOUAMI.
 
+> 🧭 **Tu reprends le projet ?** Commence par **[PASSATION.md](PASSATION.md)** (orientation en 5 min).
+
 > ⭐ **Règle d'or** : l'IA qualifie et oriente ; le **prix vient toujours du code
 > déterministe** (`calculerDevis`), **jamais** du modèle de langage.
 
@@ -42,6 +44,8 @@ npm run dev                        # http://localhost:3000
 
 | Document | Contenu |
 |----------|---------|
+| **[PASSATION.md](PASSATION.md)** | 🧭 **Point d'entrée** : orientation, ordre de lecture, 5 choses à savoir. |
+| **[DIAGRAMMES.md](DIAGRAMMES.md)** | Tous les schémas (archi, parcours prospect/client/admin, statuts, BDD). |
 | **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, install, « où modifier quoi », flux. |
 | **API interactive (Swagger)** | Lancer le front → **http://localhost:3000/docs** (explorateur de toutes les routes). |
 | **Référence du code (TypeDoc)** | `cd web && npm run doc` → ouvrir `web/docs/index.html` (style Javadoc). |
