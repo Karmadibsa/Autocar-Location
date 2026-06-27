@@ -5,7 +5,7 @@ title Autocar Location - n8n + ngrok
 REM ====================================================================
 REM  >>> A REMPLIR UNE FOIS : ton domaine statique ngrok
 REM      (cree-le sur https://dashboard.ngrok.com  ->  Domains)
-set NGROK_DOMAIN=xxxx.ngrok-free.app
+set NGROK_DOMAIN=tummy-sheet-valiant.ngrok-free.dev
 REM ====================================================================
 
 echo ============================================================
