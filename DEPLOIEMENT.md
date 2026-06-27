@@ -1,57 +1,107 @@
 # Autocar Location — Déploiement en ligne
 
-> Oui, c'est déployable et **quasi 100 % gratuit**. Le seul point délicat est n8n (toujours en ligne + gratuit).
-> Rappel : héberger la stack en prod = **bonus** au barème. Pour la soutenance, **n8n local + tunnel est accepté**.
+Déployable et **quasi 100 % gratuit**. Seule contrainte : n8n doit tourner quelque part.
+> Rappel barème : héberger en prod = **bonus**. Pour la soutenance, **n8n local + tunnel suffit**.
 
 ## Vue d'ensemble
 
-| Brique | Où | Coût | Note |
-|--------|----|----|------|
-| **Front Next.js** | **Vercel** (reco) ou Netlify | **Gratuit** | Vercel = natif Next 16, zéro config. Netlify marche aussi (plugin Next) mais peut traîner sur Next très récent. |
-| **Base + Auth** | **Supabase** | **Gratuit** | Déjà en cloud → rien à changer, on réutilise les mêmes clés. |
-| **Emails** | **Resend** | **Gratuit** | Domaine déjà vérifié → fonctionne en prod. |
-| **Modèle IA** | **Google AI Studio (Gemma)** | **Gratuit** | Clé dans n8n. |
-| **Distance** | OSRM + Nominatim | **Gratuit** | Appels serveur, sans clé. |
-| **Agent n8n** | local+tunnel **ou** hébergé | **Gratuit\*** | Voir ci-dessous. |
+| Brique | Hébergement | Coût |
+|--------|-------------|------|
+| Front Next.js | **Vercel** (reco) | Gratuit |
+| Base + Auth | **Supabase** (déjà en cloud) | Gratuit |
+| Emails | **Resend** | Gratuit |
+| Modèle IA | **Google AI Studio (Gemma)** — clé dans n8n | Gratuit |
+| Distance | OSRM + Nominatim (sans clé) | Gratuit |
+| Agent n8n | local+tunnel **ou** Fly.io / Oracle Cloud | Gratuit |
 
-→ **Coût total : 0 €** possible. n8n est la seule contrainte.
+---
 
-## 1. Front sur Vercel (gratuit, ~10 min)
-1. Pousser le repo sur GitHub.
-2. **vercel.com** → New Project → importer le repo → **Root Directory = `web`**.
-3. **Environment Variables** (Settings → Environment Variables) :
-   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public)
-   - `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` (secrets)
-   - `EMAIL_FROM`
-   - `N8N_WEBHOOK_URL` = l'URL **publique** de n8n (tunnel ou hébergé) + `/webhook/neotravel`
-   - `CRON_SECRET` = secret partagé pour `/api/relances` (mettre la même valeur côté n8n)
-4. Deploy → tu obtiens une URL `https://...vercel.app`.
-5. Supabase → **Authentication → URL Configuration → Site URL** = l'URL Vercel.
+## ✅ Côté Claude — déjà prêt dans le repo
 
-> Netlify : équivalent (Base directory `web`, mêmes variables). Si souci de build avec Next 16, bascule sur Vercel.
+- Code **buildé sans erreur**, lint 0, 29 tests front + 13 tests pricing verts.
+- Toutes les **routes serveur** (`/api/*`) prêtes pour Vercel (runtime Node).
+- **`web/.env.local.example`** à jour (liste exacte des variables).
+- **`n8n/agent-workflow.json`** + **`n8n/relances-workflow.json`** prêts à importer.
+- **`supabase/reset-complet.sql`** (schéma + données propres) et **`supabase/SCHEMA.md`**.
+- Aucun secret committé (`.gitignore`).
 
-## 2. n8n en ligne — les options
-- **Le plus simple (et accepté en soutenance)** : n8n **local + tunnel** → `npx n8n start --tunnel`. n8n donne une URL publique `https://...hooks.n8n.cloud/...`. Mets-la dans `N8N_WEBHOOK_URL` sur Vercel. **Gratuit.** Limite : ta machine doit tourner pendant la démo.
-- **Hébergé gratuit (pour un vrai "toujours en ligne")** :
-  - **Render** (free web service) : gratuit mais **se met en veille** après 15 min d'inactivité (cold start au réveil) ; prévoir un Postgres (Render free) pour persister les workflows.
-  - **Fly.io** : allocation gratuite, pas de veille agressive ; un peu plus de config.
-  - **Oracle Cloud Free** (VPS always-free) : 100 % gratuit et permanent, mais installation manuelle (Docker n8n).
-- **n8n Cloud** : essai ~14 jours puis **payant** → pas retenu pour le gratuit.
+Rien d'autre à coder. Les étapes ci-dessous sont des **réglages de comptes** (les tiens).
 
-**Reco** : pour la soutenance, **local + tunnel** (gratuit, accepté). Pour une démo publique permanente, **Fly.io** ou **Oracle Cloud Free**.
+---
 
-## 3. Relances automatiques en production
-Le workflow **Relances** (Schedule) doit appeler le **front déployé**, pas `localhost` :
-1. Dans n8n → workflow Relances → nœud **HTTP Request** → URL = `https://<ton-front>.vercel.app/api/relances`.
-2. Body JSON = `{ "secret": "<CRON_SECRET>" }` (même valeur que la variable Vercel).
-3. Garder le workflow **publié** ; en hébergé (Fly.io/Oracle) il tourne 24/7. En local+tunnel, il ne tourne que quand ta machine est allumée (suffisant pour la démo, déclenchable aussi via le bouton admin « Lancer les relances dues »).
+## 👉 Côté toi — à faire, dans l'ordre
 
-## 4. Points d'attention
-- **Secrets** : `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` → variables **serveur** (jamais `NEXT_PUBLIC_`). La clé **Gemma** reste dans n8n.
-- **N8N_WEBHOOK_URL** : doit pointer vers une URL **joignable depuis internet** (pas `localhost`) une fois le front déployé.
-- **Supabase Auth** : Site URL = domaine de prod.
-- **OSRM/Nominatim** : services publics gratuits — ok en faible trafic (politique Nominatim : 1 req/s + User-Agent, déjà gérés).
+### 1. Supabase (~5 min)
+1. **SQL Editor** → coller et exécuter **`supabase/reset-complet.sql`**.
+2. **Project Settings → API** → récupérer : `Project URL`, clé `anon`, clé `service_role`.
+3. **Authentication → URL Configuration** :
+   - *Site URL* = (à remplir après l'étape Vercel) `https://<ton-app>.vercel.app`
+   - *Redirect URLs* → ajouter `https://<ton-app>.vercel.app/reset-password`
+   - (En local, ajoute aussi `http://localhost:3000/reset-password`.)
+4. Crée les comptes de démo si besoin (dashboard → Authentication → Add user) :
+   `admin@neotravel.fr` / `123456`, `client1@email.fr` / `client`, `client2@email.fr` / `client`,
+   puis rejoue **`supabase/ajout-prenom.sql`** (rôle admin + prénoms/adresses).
 
-## Récap "tout gratuit"
-Front Vercel + Supabase + Resend + Gemma + OSRM = **0 €**.
-n8n = **0 €** en local+tunnel (démo) ou self-host free (Fly.io / Oracle).
+### 2. Resend (~3 min)
+1. Vérifier ton **domaine** sur resend.com (déjà fait : `am-creative.fr`).
+2. Récupérer la **clé API** (`re_...`).
+3. L'expéditeur (`EMAIL_FROM`) doit être une adresse de ce domaine.
+
+### 3. Pousser le code sur GitHub (~2 min)
+```bash
+# créer un repo vide sur github.com, puis :
+git remote add origin https://github.com/<toi>/autocar-location.git
+git push -u origin master
+```
+
+### 4. Front sur Vercel (~10 min)
+1. **vercel.com** → New Project → importer le repo GitHub.
+2. **Root Directory = `web`** (important : l'app Next est dans `web/`).
+3. **Environment Variables** → ajouter (voir tableau plus bas).
+4. **Deploy** → tu obtiens `https://<ton-app>.vercel.app`.
+5. Retourne dans Supabase (étape 1.3) renseigner *Site URL* + *Redirect URL* avec cette adresse.
+6. Mets aussi `NEXT_PUBLIC_SITE_URL` = cette adresse, puis **Redeploy**.
+
+### 5. n8n en ligne
+**Option A — soutenance (le plus simple, gratuit)** : `npx n8n start --tunnel` → n8n donne une URL publique.
+**Option B — permanent** : Fly.io ou Oracle Cloud Free (Docker n8n).
+
+Dans les deux cas :
+1. **Importer** `n8n/agent-workflow.json` et `n8n/relances-workflow.json`.
+2. Sur les 2 nœuds **Gemini**, sélectionner ta **credential Google Gemini** (clé AI Studio).
+3. Copier l'URL du **Webhook** → la mettre dans `N8N_WEBHOOK_URL` sur Vercel (+ Redeploy).
+4. Workflow **Relances** → nœud **HTTP Request** → URL = `https://<ton-app>.vercel.app/api/relances`,
+   body JSON `{ "secret": "<CRON_SECRET>" }` (même valeur que sur Vercel).
+5. **Publier** les 2 workflows.
+
+### 6. Vérification post-déploiement
+- Ouvrir `https://<ton-app>.vercel.app` → faire un devis dans le chat → email reçu.
+- `/login` (admin) → `/admin` s'affiche (KPIs, courbe).
+- `/docs` → l'explorateur d'API s'affiche.
+- Cliquer « Lancer les relances dues » dans l'admin → réponse OK.
+
+---
+
+## Variables d'environnement (Vercel → Settings → Environment Variables)
+
+| Variable | Valeur | Visibilité |
+|----------|--------|------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase | publique |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé anon | publique |
+| `SUPABASE_SERVICE_ROLE_KEY` | clé service_role | **secret** |
+| `N8N_WEBHOOK_URL` | `https://<n8n public>/webhook/neotravel` | serveur |
+| `RESEND_API_KEY` | `re_...` | **secret** |
+| `EMAIL_FROM` | `contact@am-creative.fr` | serveur |
+| `CRON_SECRET` | secret partagé avec n8n | **secret** |
+| `NEXT_PUBLIC_SITE_URL` | `https://<ton-app>.vercel.app` | publique |
+
+> La clé **Gemma** (Google AI Studio) ne va **pas** sur Vercel : elle reste dans **n8n**.
+
+## Points d'attention
+- `N8N_WEBHOOK_URL` doit être joignable **depuis internet** (pas `localhost`) une fois en ligne.
+- Les emails partent du **front** (routes `/api`), donc `RESEND_API_KEY` + `EMAIL_FROM` sont **obligatoires sur Vercel**.
+- En local+tunnel, n8n (et donc les relances planifiées) ne tournent que **machine allumée** ; le bouton admin « Lancer les relances dues » reste utilisable manuellement.
+- OSRM/Nominatim : services publics gratuits, ok en faible trafic (User-Agent déjà géré).
+
+## Récap « tout gratuit »
+Front Vercel + Supabase + Resend + Gemma + OSRM = **0 €**. n8n = **0 €** (tunnel ou self-host).
