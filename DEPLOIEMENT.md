@@ -83,6 +83,12 @@ D'abord, deux notions :
 
 → **Reco** : **Railway** (équilibre simplicité/coût/persistance) ou **n8n Cloud** si tu veux zéro administration. Sur Railway : New Project → *Deploy a template* → chercher **n8n** → déployer (il crée le service + le stockage). Tu obtiens une URL `https://...up.railway.app`.
 
+**Choix retenu pour ce projet (0 €) : n8n local derrière un tunnel à URL fixe** — voir
+**`n8n/TUNNEL_CLOUDFLARE.md`** (Cloudflare Tunnel, ou ngrok). À présenter en soutenance
+comme un choix assumé : gratuit et suffisant pour la démo, mais dépend du PC allumé ;
+**pour une vraie prod 24/7**, basculer vers un n8n hébergé (Oracle Cloud Free gratuit,
+Railway ou n8n Cloud).
+
 **Ensuite, quel que soit l'hébergeur :**
 1. Ouvrir l'interface n8n → **Importer** `n8n/agent-workflow.json` et `n8n/relances-workflow.json`.
 2. Sur les 2 nœuds **Gemini**, sélectionner ta **credential Google Gemini** (clé AI Studio).
