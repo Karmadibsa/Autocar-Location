@@ -46,7 +46,8 @@ export async function POST(request: Request) {
   try {
     const res = await fetch(webhook, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      // ngrok-skip-browser-warning : évite la page interstitielle d'ngrok (tunnel gratuit)
+      headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
       body: JSON.stringify(body),
     });
     const text = await res.text();
