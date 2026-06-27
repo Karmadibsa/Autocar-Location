@@ -12,10 +12,10 @@ Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOU
 ## Stack (Option A hybride)
 
 - **Front** : Next.js 16 (App Router, TypeScript, Tailwind v4) — `web/`
-- **Agent IA** : n8n + Gemma (`gemma-4-31b-it`, gratuit) — `n8n/`
+- **Agent IA** : n8n + Gemma (`gemma-4-31b-it`, gratuit) — **1 seul appel LLM** (extraction) ; la réponse et le prix sont **déterministes** (nœud Code) — `n8n/`
 - **Données** : Supabase (PostgreSQL + Auth + RLS) — `supabase/`
 - **Pricing** : moteur `calculerDevis` testé — `pricing/` + `web/lib/`
-- **Emails** : Resend · **Distance** : OSRM/Nominatim · **Déploiement** : Vercel
+- **Emails** : Resend · **Distance** : OSRM/Nominatim · **Déploiement** : **Netlify** (front) + **tunnel** pour n8n
 
 ## Démarrage rapide
 
@@ -45,7 +45,8 @@ npm run dev                        # http://localhost:3000
 | **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, install, « où modifier quoi », flux. |
 | **API interactive (Swagger)** | Lancer le front → **http://localhost:3000/docs** (explorateur de toutes les routes). |
 | **Référence du code (TypeDoc)** | `cd web && npm run doc` → ouvrir `web/docs/index.html` (style Javadoc). |
-| [DEPLOIEMENT.md](DEPLOIEMENT.md) | Mise en ligne (Vercel + n8n) |
+| [DEPLOIEMENT.md](DEPLOIEMENT.md) | Mise en ligne (Netlify + n8n tunnel) |
+| [COUTS_ET_PROD.md](COUTS_ET_PROD.md) | Choix MVP (tunnel) + coûts détaillés d'une vraie prod |
 | [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
 | [n8n/README.md](n8n/README.md) · [pricing/README.md](pricing/README.md) | Montage de l'agent · moteur de prix |
 | `livrables/` | Dossier de cadrage, argumentaire, wireframes |

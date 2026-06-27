@@ -1,96 +1,69 @@
-# À faire demain — SQL, test end-to-end & vérif doc
+# Check-list de test — Autocar Location (app déployée)
 
-Checklist à dérouler dans l'ordre. Coche au fur et à mesure ; en cas de blocage,
-note l'étape + le message d'erreur.
-
----
-
-## 0. Préparation (SQL + env + lancement)
-
-### 0.a — Base de données (Supabase → SQL Editor)
-- [ ] Lancer **`supabase/reset-complet.sql`** (recrée le schéma À JOUR : adresse client,
-      token devis, `raison_refus` + jeu de données propre, chaque demande liée à un client).
-  - Variante si tu ne veux pas tout recréer : **`supabase/ajout-prenom.sql`** (migration
-    non destructive) puis **`supabase/reset-demo.sql`** (réinjecte les données démo).
-- [ ] Auth → **URL Configuration** → ajouter aux *Redirect URLs* :
-      `http://localhost:3000/reset-password` (pour le mot de passe oublié).
-
-### 0.b — Variables d'environnement (`web/.env.local`)
-- [ ] `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
-- [ ] `CRON_SECRET=...` (présent)
-- [ ] Supabase URL + anon + service role, `RESEND_API_KEY`, `EMAIL_FROM`, `N8N_WEBHOOK_URL` (présents)
-
-### 0.c — Lancement
-- [ ] **`start.bat`** (front + n8n) — vérifier dans les logs : pas d'erreur rouge.
-- [ ] n8n : les **2 workflows publiés** (Agent = webhook, Relances = schedule).
-- [ ] Ouvrir `http://localhost:3000`.
+À dérouler dans l'ordre. ✅ = OK, sinon note l'étape + l'erreur.
+Site : **https://autocar-location.axel-momper.fr** · Admin n8n : **https://tummy-sheet-valiant.ngrok-free.dev**
 
 ---
 
-## 1. Parcours PROSPECT (le cœur)
+## 0. Prérequis (avant de tester)
+- [ ] **`lancer-n8n-tunnel.bat`** lancé → 2 fenêtres (n8n + ngrok) ouvertes.
+- [ ] n8n : workflow **« Autocar Location - Agent (1 LLM) »** **actif/publié** + credential Gemini OK ; workflow **Relances** publié.
+- [ ] Netlify : `N8N_WEBHOOK_URL` = `https://tummy-sheet-valiant.ngrok-free.dev/webhook/neotravel` + déploiement vert.
+- [ ] Supabase : `reset-complet.sql` joué (schéma + données démo propres).
+
+---
+
+## 1. Prospect → devis (le cœur)
 - [ ] Chat : *« Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026 »*.
-- [ ] La **barre récap** se remplit (icônes Lucide : trajet, date, pax…).
-- [ ] Le devis **n'apparaît qu'au moment** où l'agent demande l'email (pas avant).
-- [ ] Donner **ton vrai email** → email reçu : facture propre + logo + réf `DV-…`,
-      **bouton « Créer mon compte / Accepter »** + lien **« Refuser ce devis »**.
-- [ ] Encart dev (en bas du chat, visible en local) → tester **« CAS COMPLEXE >85 pax »**
-      → bannière avec la **raison** affichée.
+- [ ] L'agent répond **vite** (≈ 3-6 s), demande les infos manquantes au besoin.
+- [ ] La **barre « Votre demande »** se remplit (trajet, **date au format 12/07/2026**, passagers…).
+- [ ] Le devis ne s'affiche **qu'au moment** où l'agent dit « votre devis est prêt » + demande l'email.
+- [ ] Donner un **vrai email** → **carte devis** affichée + **email reçu** (vérifier Resend + boîte mail).
+- [ ] Email : en-tête soigné, **résumé**, HT/TVA/TTC, **2 boutons** (Accepter / Refuser), PDF joint.
+- [ ] **Cas complexe** : *« Marseille vers Lille, 120 personnes… »* → message d'escalade avec la raison.
 
-## 2. Parcours CLIENT
-- [ ] `/login` (boutons démo visibles en local) → **Client 1** → header **« Bonjour, Lucas »**.
-- [ ] `/espace-client` → **Refuser** un devis → cocher des motifs → **Confirmer**.
-- [ ] **Accepter** un autre devis → invitation à **compléter l'adresse** (section *Mon compte*) →
-      enregistrer → re-télécharger le PDF : l'**adresse** apparaît sur la facture.
-- [ ] **Mot de passe oublié** depuis `/login` → recevoir l'email → `/reset-password` → changer.
-- [ ] Garde de route : en client, taper `/admin` dans l'URL → **redirigé**.
+## 2. Email → Accepter / Refuser
+- [ ] **Refuser** (lien email) → page de confirmation + **motifs (checkboxes)** → confirmé.
+- [ ] **Accepter** avec un email **sans compte** → arrive sur **inscription pré-remplie** (prénom/nom/email).
+- [ ] **Accepter** avec un email **ayant un compte** → arrive sur **connexion** (email pré-rempli).
 
-## 3. Parcours ADMIN
-- [ ] `/login` → **Admin** → `/admin` (si ça redirige vers l'espace client : relancer
-      `ajout-prenom.sql` qui réassigne le rôle admin).
-- [ ] KPIs remplis ; **trier** une colonne (clic en-tête) ; **rechercher** un client ;
-      cliquer une **catégorie** pour filtrer.
-- [ ] Cas complexe → déplier → **Devis sur-mesure** (saisir un prix HT → « Créer et envoyer »)
-      → la demande passe en *devis envoyé* et rejoint le pipeline.
-- [ ] Ouvrir un devis **refusé** → voir le **motif de refus**.
-- [ ] **Lancer les relances dues** → message clair (X relances / clôturées / expirées).
+## 3. Espace client (connecté)
+- [ ] `/login` → connexion → header **« Bonjour {prénom} »**.
+- [ ] Onglet **Mes devis** : liste + **Télécharger PDF** + **Accepter / Refuser (motifs)**.
+- [ ] À l'acceptation sans adresse → invitation à compléter → onglet **Mon compte**.
+- [ ] Onglet **Mon compte** : modifier téléphone/adresse → **Enregistrer** → rechargé OK.
+- [ ] Onglet **Mes conversations** : historique visible.
+- [ ] **Mot de passe oublié** depuis `/login` → email reçu → `/reset-password` → changé.
+- [ ] Garde de route : en client, taper `/admin` → redirigé.
 
-## 4. Divers / finitions
-- [ ] **Widget chat flottant** (bas-droite) sur une page interne → reprend la **même
-      conversation** que la landing (persistance).
-- [ ] **/contact** → envoyer un message → reçu sur **contact@am-creative.fr**.
+## 4. Admin (dashboard)
+- [ ] `/login` (admin) → `/admin`.
+- [ ] **KPIs** + **courbe** (leads/acceptés) + **camembert motifs de refus**.
+- [ ] **Plage de dates** (Du/Au) → tout se recalcule ; **Export PDF** télécharge un PDF lisible.
+- [ ] Table : **tri** (colonnes), **recherche** (client/ville), **filtre** par catégorie.
+- [ ] **Cas complexe** → déplier → **devis sur-mesure** (prix HT → aperçu TVA/TTC → envoyer) → la demande rejoint le pipeline + email au client.
+- [ ] Devis refusé → **motif de refus** visible dans le détail.
+- [ ] **Lancer les relances dues** → message clair.
+
+## 5. Divers
+- [ ] **Widget chat flottant** (bas-droite, pages internes) → reprend la même conversation.
+- [ ] **/contact** : formulaire + **motif (déroulant)** → email reçu sur contact@am-creative.fr.
 - [ ] **/mentions-legales** et **/confidentialite** s'affichent.
-- [ ] **404** : aller sur une URL bidon → page 404 stylée.
-- [ ] Responsive : réduire la fenêtre / mobile → chat, dashboard, landing restent lisibles.
+- [ ] **404** : URL bidon → page « trompé d'arrêt » 🚌.
+- [ ] **Responsive** : mobile → chat, landing, dashboard restent lisibles.
 
----
-
-## 5. Vérifier la DOCUMENTATION
-- [ ] **API interactive (Swagger)** → `http://localhost:3000/docs` :
-      toutes les routes listées, dépliables (corps + réponses + autorisations).
-- [ ] **Référence du code (TypeDoc)** → `cd web && npm run doc` puis ouvrir
-      `web/docs/index.html` : les modules `lib/` documentés (calculerDevis, relances…).
-- [ ] **DOC_TECHNIQUE.md** se lit bien ; l'antisèche « où modifier quoi » est juste.
-- [ ] **supabase/SCHEMA.md** : le diagramme mermaid s'affiche (GitHub/éditeur mermaid).
-
-## 6. Vérifs techniques (terminal)
+## 6. Vérifs techniques (local, terminal)
 ```bash
-# moteur de prix (racine)
-npm test                 # 13/13
-
-# front (web/)
-cd web
-npm run lint             # 0 erreur
-npx vitest run           # 26/26
-npm run build            # Compiled successfully
+npm test                       # 13/13 (moteur de prix)
+cd web && npm run lint         # 0 erreur
+npx vitest run                 # 29/29
+npm run build                  # Compiled successfully
 ```
 
 ---
 
-## Si quelque chose coince
-- Pas de devis dans le chat → logs n8n (extraction JSON / modèle Gemma), souvent un 500
-  transitoire : renvoyer le message.
-- Devis OK mais rien en base / pas d'email → logs du front (`/api/chat`), vérifier les clés
-  Supabase service role + `RESEND_API_KEY`.
-- `/admin` redirige → rôle admin manquant : relancer `ajout-prenom.sql`.
-- Email non reçu → vérifier que tu as mis une **vraie** adresse (les comptes démo
-  `client1@email.fr` n'ont pas de boîte réelle).
+## Si ça coince
+- **Pas de devis dans le chat** → fenêtre n8n (exécution rouge ?) ; sinon Netlify → Logs → Functions → `chat`.
+- **Pas d'email** → Netlify Logs `chat` (cherche `[chat] persistance échouée`) ; souvent colonne `token` manquante (SQL pas joué) ou `RESEND_API_KEY` absente sur Netlify.
+- **/admin redirige** → rôle admin manquant : rejouer `ajout-prenom.sql`.
+- **Lenteur / 503** → Gemma saturé (réessayer) ; le tunnel doit tourner.

@@ -14,18 +14,23 @@ et l'envoi des relances sont faits par les routes Next.js (`web/app/api/*`).
 > (qui contient les prompts et le nœud de calcul). Après import, ouvre chaque nœud
 > **Gemini** et sélectionne ta credential.
 
-## Workflow 1 — Agent (`agent-workflow.json`)
+## Workflow 1 — Agent (`agent-workflow.json`) — « Autocar Location - Agent (1 LLM) »
 
 ```
 Webhook (POST /webhook/neotravel)
-  → Extraction params  (Gemini)  : extrait un JSON {depart, destination, date, pax, ...}
-  → Calculer Devis     (Code)    : calcul DÉTERMINISTE (miroir de pricing/) ou escalade
-  → AI Agent           (Gemini)  : rédige la réponse naturelle au client
+  → Extraction params  (Gemini)  : UN SEUL appel LLM -> JSON {depart, destination, date, pax, ...}
+  → Calculer Devis     (Code)    : calcul DÉTERMINISTE (miroir de pricing/) ET génère la
+                                   réponse texte au client (questions / devis prêt / escalade)
   → Respond to Webhook           : renvoie { reply, devis, escalade, params } au front
 ```
 
+- **Un seul appel LLM** (l'extraction) : la réponse et le prix sont produits par le nœud
+  Code, de façon déterministe. → rapide (tient dans le timeout serverless 30 s), pas de
+  fuite de raisonnement, moins d'erreurs 503.
 - Copier l'URL du **Webhook** → variable `N8N_WEBHOOK_URL` du front.
 - Le nœud **Calculer Devis** est le seul à produire un prix (règle d'or).
+- ⚠️ Avant d'importer la nouvelle version : **supprimer l'ancien workflow** qui utilise le
+  même chemin `/webhook/neotravel` (sinon conflit de webhook à l'activation).
 
 ## Workflow 2 — Relances (`relances-workflow.json`)
 

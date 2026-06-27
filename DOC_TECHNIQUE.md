@@ -51,7 +51,7 @@ flowchart TB
 ```
 
 - **Front Next.js** (`web/`) : pages publiques + chat, espace client, dashboard admin, et **toutes les routes serveur** (`/api/*`) qui contiennent la logique métier.
-- **n8n** (`n8n/`) : l'agent IA conversationnel. Reçoit la conversation, **extrait** les paramètres (JSON), **calcule le devis** dans un nœud Code (miroir du moteur), rédige une réponse naturelle.
+- **n8n** (`n8n/`) : l'agent IA. **Un seul appel LLM** (Gemma) qui **extrait** les paramètres (JSON) ; ensuite un nœud **Code** (miroir du moteur) **calcule le devis** ET **génère la réponse** au client de façon **déterministe**. Choix volontaire : plus rapide (tient dans le timeout serverless), pas de « fuite de raisonnement », moins d'appels = moins d'erreurs 503.
 - **Supabase** : PostgreSQL + Auth (email/mot de passe) + RLS (cloisonnement par utilisateur).
 - **Services gratuits** : Gemma (LLM, via Google AI Studio), Resend (emails), OSRM/Nominatim (distance routière réelle).
 
@@ -129,7 +129,7 @@ flowchart TB
 
 1. Le prospect écrit dans le **chat** (`components/Chat.tsx`).
 2. Le front appelle **`/api/chat`**, qui relaie la conversation à **n8n**.
-3. n8n **extrait** les paramètres (départ, destination, date, passagers…) et **calcule** un premier devis.
+3. n8n **extrait** les paramètres (1 appel LLM) ; le nœud **Code** calcule le devis **et** rédige la réponse (déterministe).
 4. De retour dans `/api/chat`, on **recalcule** avec la **distance routière réelle** (OSRM) — le 1ᵉʳ prix est ensuite **figé**.
 5. On **persiste** conversation + demande + devis dans Supabase, et on **envoie l'email** (PDF joint) si l'email est connu.
 6. Si **> 85 passagers** → pas de devis automatique : la demande devient **`cas_complexe`** (un conseiller la chiffre à la main via le dashboard).
@@ -227,7 +227,7 @@ npm run build && npx vitest run    # build + 26 tests
 | Changer un **tarif** / la TVA / la marge | `pricing/matrices.js` + table `pricing_config` (+ `web/lib/calculerDevis.ts` qui en est le miroir) |
 | Changer la **règle d'escalade** (85 pax) | `seuil_escalade_passagers` dans les matrices |
 | Changer la **cadence des relances** | `web/lib/relances.ts` |
-| Modifier le **prompt** de l'agent | `n8n/build-workflow.js` (puis régénérer) ou directement le nœud AI Agent |
+| Modifier l'**extraction** ou la **réponse** de l'agent | `n8n/build-workflow.js` (prompt d'extraction + texte de réponse du nœud Code) puis régénérer |
 | Changer le **design** / les couleurs | `web/app/globals.css` (variables CSS) |
 | Ajouter une **page** | `web/app/<nom>/page.tsx` |
 | Ajouter une **règle métier serveur** | `web/app/api/<nom>/route.ts` |
