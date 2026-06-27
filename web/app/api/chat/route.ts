@@ -82,10 +82,15 @@ export async function POST(request: Request) {
   const recalc = await devisAvecOSRM(data.params, data.devis);
   if (recalc) data.devis = recalc;
 
-  // --- Persistance + email (best-effort) ---
-  persist(sessionId, history, data).catch((e) =>
-    console.error("[chat] persistance échouée:", e),
-  );
+  // --- Persistance + email ---
+  // IMPORTANT : on AWAIT (en serverless, le travail non attendu après la réponse
+  // n'est pas garanti de s'exécuter → l'email ne partirait jamais). On a le budget
+  // de temps depuis qu'il n'y a qu'un seul appel LLM.
+  try {
+    await persist(sessionId, history, data);
+  } catch (e) {
+    console.error("[chat] persistance échouée:", e);
+  }
 
   return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade, params: data.params });
 }

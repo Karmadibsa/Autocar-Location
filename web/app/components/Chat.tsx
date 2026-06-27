@@ -65,6 +65,12 @@ const GREETING: Msg = {
   content: "Bonjour ! Dites-moi votre besoin : départ, destination, dates et nombre de passagers.",
 };
 
+// "2026-07-12" -> "12/07/2026" (sinon renvoie tel quel)
+function dateFr(s: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+}
+
 function cleanParams(p: Params | undefined): Params {
   const out: Params = {};
   if (!p) return out;
@@ -105,7 +111,7 @@ function RecapBar({ p }: { p: Params }) {
     : [];
   const chips: { Icon: LucideIcon; text: string }[] = [];
   if (p.depart || p.destination) chips.push({ Icon: MapPin, text: `${p.depart ?? "?"} → ${p.destination ?? "?"}` });
-  if (p.date_depart) chips.push({ Icon: CalendarDays, text: p.date_depart });
+  if (p.date_depart) chips.push({ Icon: CalendarDays, text: dateFr(p.date_depart) });
   if (p.nb_passagers != null) chips.push({ Icon: Users, text: `${p.nb_passagers} passagers` });
   if (p.aller_retour != null) chips.push({ Icon: Repeat, text: p.aller_retour ? "Aller-retour" : "Aller simple" });
   if (opts.length) chips.push({ Icon: Plus, text: opts.join(", ") });
