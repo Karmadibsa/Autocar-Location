@@ -127,40 +127,56 @@ if(p && Number.isFinite(nb) && nb>0 && dateOk && Number.isFinite(dist) && dist>0
 } else {
   debug='params incomplets -> nb='+nb+', date='+(p&&p.date_depart)+', dist='+dist+', raw='+(raw.slice(0,200));
 }
-return [{ json: { devis, escalade, params: p, debug } }];
+// 4) Reponse texte DETERMINISTE (genere ici => un seul appel LLM, l'extraction)
+let clientEmail = "";
+try { clientEmail = $('Webhook').item.json.body.clientEmail || ""; } catch (e) {}
+let reply;
+if (escalade) {
+  reply = escalade + " Un conseiller vous recontactera sous 24 h.";
+} else {
+  const manque = [];
+  if (!p || !p.depart) manque.push("la ville de départ");
+  if (!p || !p.destination) manque.push("la destination");
+  if (!p || !p.date_depart) manque.push("la date du voyage");
+  if (!p || !(Number(p.nb_passagers) > 0)) manque.push("le nombre de passagers");
+  if (manque.length) {
+    reply = "Avec plaisir ! Pour vous établir un devis, pouvez-vous me préciser " + manque.join(", ") + " ?";
+  } else if (devis) {
+    const email = clientEmail || (p && p.email);
+    reply = email
+      ? "Votre devis est prêt ! Je vous l'envoie à " + email + " — vous pouvez le consulter ci-dessous."
+      : "Votre devis est prêt et s'affiche ci-dessous. Pour le recevoir, indiquez-moi votre email (et votre nom).";
+  } else {
+    reply = "Merci ! Pouvez-vous confirmer le trajet, la date et le nombre de passagers ?";
+  }
+}
+return [{ json: { reply, devis, escalade, params: p, debug } }];
 `.trim();
 
 const cred = { googlePalmApi: { id: "REMPLACE_PAR_TA_CREDENTIAL", name: "Google Gemini" } };
 const geminiParams = { modelName: "models/gemma-4-31b-it", options: {} };
 
 const workflow = {
-  name: "NeoTravel - Agent + Devis",
+  name: "Autocar Location - Agent (1 LLM)",
   nodes: [
     { parameters: { httpMethod: "POST", path: "neotravel", responseMode: "responseNode", options: {} },
       id: "11111111-1111-1111-1111-111111111111", name: "Webhook", type: "n8n-nodes-base.webhook", typeVersion: 2, position: [-220, 0], webhookId: "neotravel" },
 
     { parameters: { promptType: "define", text: EXTRACTION_PROMPT, options: { systemMessage: EXTRACTION_SYSTEM } },
       id: "22222222-2222-2222-2222-222222222222", name: "Extraction params", type: "@n8n/n8n-nodes-langchain.agent", typeVersion: 1.7, position: [40, 0],
-      retryOnFail: true, maxTries: 5, waitBetweenTries: 4000 },
+      retryOnFail: true, maxTries: 3, waitBetweenTries: 2000 },
     { parameters: geminiParams, id: "33333333-3333-3333-3333-333333333333", name: "Gemini (extraction)", type: "@n8n/n8n-nodes-langchain.lmChatGoogleGemini", typeVersion: 1, position: [40, 220], credentials: cred },
 
     { parameters: { jsCode: CODE }, id: "44444444-4444-4444-4444-444444444444", name: "Calculer Devis", type: "n8n-nodes-base.code", typeVersion: 2, position: [320, 0] },
 
-    { parameters: { promptType: "define", text: "={{ ($('Webhook').item.json.body.clientEmail ? '[Client connecte: ' + $('Webhook').item.json.body.clientEmail + ']\\n' : '') + " + HISTORY + " }}", options: { systemMessage: SYSTEM } },
-      id: "55555555-5555-5555-5555-555555555555", name: "AI Agent", type: "@n8n/n8n-nodes-langchain.agent", typeVersion: 1.7, position: [600, 0],
-      retryOnFail: true, maxTries: 5, waitBetweenTries: 4000 },
-    { parameters: geminiParams, id: "66666666-6666-6666-6666-666666666666", name: "Gemini (agent)", type: "@n8n/n8n-nodes-langchain.lmChatGoogleGemini", typeVersion: 1, position: [600, 220], credentials: cred },
-
-    { parameters: { respondWith: "json", responseBody: "={{ { \"reply\": $json.output, \"devis\": $('Calculer Devis').item.json.devis, \"escalade\": $('Calculer Devis').item.json.escalade, \"params\": $('Calculer Devis').item.json.params } }}", options: {} },
-      id: "77777777-7777-7777-7777-777777777777", name: "Respond to Webhook", type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1, position: [880, 0] },
+    { parameters: { respondWith: "json", responseBody: "={{ $('Calculer Devis').item.json }}", options: {} },
+      id: "77777777-7777-7777-7777-777777777777", name: "Respond to Webhook", type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1, position: [600, 0] },
   ],
   connections: {
     "Webhook": { main: [[{ node: "Extraction params", type: "main", index: 0 }]] },
     "Extraction params": { main: [[{ node: "Calculer Devis", type: "main", index: 0 }]] },
-    "Calculer Devis": { main: [[{ node: "AI Agent", type: "main", index: 0 }]] },
-    "AI Agent": { main: [[{ node: "Respond to Webhook", type: "main", index: 0 }]] },
+    "Calculer Devis": { main: [[{ node: "Respond to Webhook", type: "main", index: 0 }]] },
     "Gemini (extraction)": { ai_languageModel: [[{ node: "Extraction params", type: "ai_languageModel", index: 0 }]] },
-    "Gemini (agent)": { ai_languageModel: [[{ node: "AI Agent", type: "ai_languageModel", index: 0 }]] },
   },
   active: false,
   settings: { executionOrder: "v1" },
