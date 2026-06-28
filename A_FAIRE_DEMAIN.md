@@ -5,6 +5,37 @@ Site : **https://autocar-location.axel-momper.fr** · Admin n8n : **https://tumm
 
 ---
 
+## 🤝 Recette finale en équipe (à faire ensemble, sur le site en ligne)
+
+> Objectif : **valider en groupe** que tout tourne avant la soutenance. Quelqu'un doit
+> avoir lancé **`lancer-n8n-tunnel.bat`** (sinon le chat ne génère pas de devis).
+> Chacun ouvre **https://autocar-location.axel-momper.fr** sur **son** téléphone/PC.
+
+**Répartition suggérée**
+- **Personne A** (prospect) : fait un devis dans le chat avec **sa vraie adresse mail**.
+- **Personne B** (client) : reçoit/teste les boutons de l'email + l'espace client.
+- **Personne C** (admin) : vérifie le dashboard pendant que A et B agissent.
+
+**Chemin critique (doit marcher) — cocher OK / KO**
+- [ ] A : chat *« Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026 »* → réponse rapide + **devis affiché**.
+- [ ] A : reçoit l'**email** (devis + PDF + 2 boutons).
+- [ ] B : **Refuser** depuis l'email → page + motifs → confirmé.
+- [ ] B : **Accepter** (email sans compte) → **inscription pré-remplie** → crée le compte → **espace client**.
+- [ ] B : dans l'espace, **accepter** un devis, **télécharger le PDF**, compléter **l'adresse**.
+- [ ] C : sur **/admin**, voit la **nouvelle demande** de A apparaître, les **KPIs**, la **courbe**, le **camembert**.
+- [ ] C : traite un **cas complexe** (devis sur-mesure) → le client le reçoit.
+- [ ] C : **Lancer les relances dues** → message OK.
+- [ ] Tous : tester sur **mobile** (responsive) + la page **/contact**.
+
+**Verdict d'équipe** : tout coché ⇒ ✅ prêt pour la soutenance.
+Nom + date du test : ____________________
+
+---
+
+## Détail complet (référence)
+
+---
+
 ## 0. Prérequis (avant de tester)
 - [ ] **`lancer-n8n-tunnel.bat`** lancé → 2 fenêtres (n8n + ngrok) ouvertes.
 - [ ] n8n : workflow **« Autocar Location - Agent (1 LLM) »** **actif/publié** + credential Gemini OK ; workflow **Relances** publié.
