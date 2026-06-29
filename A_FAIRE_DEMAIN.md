@@ -40,7 +40,8 @@ Nom + date du test : ____________________
 - [ ] **`lancer-n8n-tunnel.bat`** lancé → 2 fenêtres (n8n + ngrok) ouvertes.
 - [ ] n8n : workflow **« Autocar Location - Agent (1 LLM) »** **actif/publié** + credential Gemini OK ; workflow **Relances** publié.
 - [ ] Netlify : `N8N_WEBHOOK_URL` = `https://tummy-sheet-valiant.ngrok-free.dev/webhook/neotravel` + déploiement vert.
-- [ ] Supabase : `reset-complet.sql` joué (schéma + données démo propres).
+- [ ] Supabase, dans l'ordre : `reset-complet.sql` (schéma) → `comptes-demo.sql` (comptes, 1 fois) → `seed-demo-volume.sql` (gros volume démo, ~500 devis).
+  - Les clients fictifs sont sur `@demo.autocar-location.fr` → **aucun email réel** n'est envoyé (garde-fou `lib/emailGuard.ts`). Pour tester un vrai email, utiliser un compte sur un autre domaine (ex. `v.conter@live.fr`).
 
 ---
 

@@ -25,8 +25,10 @@ Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOU
 # 1. Moteur de prix (aucune clé requise)
 npm install && npm test            # tests du moteur de devis
 
-# 2. Base de données
-#    → exécuter supabase/reset-complet.sql dans Supabase (SQL Editor)
+# 2. Base de données  (SQL Editor Supabase, dans l'ordre)
+#    a) supabase/reset-complet.sql     → schéma propre (base vierge)
+#    b) supabase/comptes-demo.sql      → comptes de connexion (admin + clients), 1 fois
+#    c) supabase/seed-demo-volume.sql  → jeu de démo volumineux (~500 devis) [optionnel]
 
 # 3. Front
 cd web
@@ -39,6 +41,12 @@ npm run dev                        # http://localhost:3000
 ```
 
 > Sous Windows, **`start.bat`** lance le front + n8n en un clic (avec logs).
+
+### Jeux de données de démo
+
+- **Petit jeu curé** : `supabase/reset-demo.sql` (quelques cas couvrant tous les statuts, client `client1@email.fr` relié — idéal démo côté client).
+- **Gros volume** : `supabase/seed-demo-volume.sql` (~500 devis sur 12 mois → courbes, camembert, KPIs). Régénérable : `python supabase/generer-seed-demo.py --devis 500`.
+- **Emails de démo** : les clients fictifs sont sur `@demo.autocar-location.fr`. Le front ([lib/emailGuard.ts](web/lib/emailGuard.ts)) **n'envoie aucun email réel** à ce domaine (relances/devis traités, mais pas d'envoi Resend). Configurable via `EMAIL_DEMO_DOMAINS`.
 
 ## Documentation
 
@@ -63,4 +71,4 @@ Les secrets ne sont **jamais** committés (`.gitignore`). La clé du LLM reste *
 ## Tests
 
 - Moteur de prix : `npm test` (racine)
-- Front : `cd web && npx vitest run` (26 tests : pricing, distance, PDF, email, relances)
+- Front : `cd web && npx vitest run` (29 tests : pricing, distance, PDF, email, relances, noms)

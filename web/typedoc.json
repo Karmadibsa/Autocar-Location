@@ -6,7 +6,10 @@
     "lib/distance.ts",
     "lib/relances.ts",
     "lib/devisPdf.ts",
+    "lib/statsPdf.ts",
     "lib/emailDevis.ts",
+    "lib/emailGuard.ts",
+    "lib/noms.ts",
     "lib/useAuth.ts",
     "lib/supabaseClient.ts",
     "lib/supabaseAdmin.ts"

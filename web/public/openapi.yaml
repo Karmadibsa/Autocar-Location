@@ -150,7 +150,10 @@ paths:
     post:
       tags: [Admin]
       summary: Traite les relances dues + expire les devis de plus de 30 jours
-      description: Appelable par le planificateur n8n (`secret`) ou par un admin (`token`).
+      description: >
+        Appelable par le planificateur n8n (`secret`) ou par un admin (`token`).
+        Les relances dues sont traitées par lots (max 30 par appel) pour rester sous
+        le timeout serverless ; `restantes` indique combien restent à traiter.
       requestBody:
         content:
           application/json:
@@ -168,9 +171,10 @@ paths:
                 type: object
                 properties:
                   ok: { type: boolean }
-                  envoyees: { type: integer }
-                  cloturees: { type: integer }
-                  expirees: { type: integer }
+                  envoyees: { type: integer, description: "relances envoyées dans ce lot" }
+                  cloturees: { type: integer, description: "devis clôturés (2e relance atteinte)" }
+                  expirees: { type: integer, description: "devis expirés (> 30 jours)" }
+                  restantes: { type: integer, description: "relances encore dues après ce lot" }
         "403": { description: Ni secret valide ni admin }
 
   /api/admin-data:
