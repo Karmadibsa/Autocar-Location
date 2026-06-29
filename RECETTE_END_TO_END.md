@@ -65,6 +65,7 @@ Nom + date du test : ____________________
 - [ ] À l'acceptation sans adresse → invitation à compléter → onglet **Mon compte**.
 - [ ] Onglet **Mon compte** : modifier téléphone/adresse → **Enregistrer** → rechargé OK.
 - [ ] Onglet **Mes conversations** : historique visible.
+- [ ] **Messagerie devis** : sur une carte devis → **Messages / précisions** → écrire un message → il apparaît dans le fil. (Connecté en `v.conter@live.fr`, un fil de démo existe déjà.)
 - [ ] **Mot de passe oublié** depuis `/login` → email reçu → `/reset-password` → changé.
 - [ ] Garde de route : en client, taper `/admin` → redirigé.
 
@@ -75,6 +76,7 @@ Nom + date du test : ____________________
 - [ ] Table : **tri** (colonnes), **recherche** (client/ville), **filtre** par catégorie.
 - [ ] **Cas complexe** → déplier → **devis sur-mesure** (prix HT → aperçu TVA/TTC → envoyer) → la demande rejoint le pipeline + email au client.
 - [ ] Devis refusé → **motif de refus** visible dans le détail.
+- [ ] **Messagerie HITL** : un client poste un message → badge **« X nouveau(x) message(s) »** + point rouge sur la ligne → ouvrir le détail → **Voir / répondre** → la réponse arrive côté client.
 - [ ] **Lancer les relances dues** → message clair.
 
 ## 5. Divers

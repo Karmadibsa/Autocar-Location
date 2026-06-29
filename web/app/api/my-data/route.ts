@@ -20,7 +20,11 @@ export async function POST(request: Request) {
   if (!client) return Response.json({ devis: [], conversations: [], email, profil: null });
 
   const [{ data: devis }, { data: conversations }] = await Promise.all([
-    sb.from("devis").select("*").eq("client_id", client.id).order("created_at", { ascending: false }),
+    sb
+      .from("devis")
+      .select("*, demandes(msg_non_lu_client)")
+      .eq("client_id", client.id)
+      .order("created_at", { ascending: false }),
     sb.from("conversations").select("*").eq("client_id", client.id).order("updated_at", { ascending: false }),
   ]);
 

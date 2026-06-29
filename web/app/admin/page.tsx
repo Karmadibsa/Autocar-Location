@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 import Spinner from "@/app/components/Spinner";
-import { AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle, Download, MessageCircle } from "lucide-react";
 
 type DevisFull = {
   prix_ht: number | null;
@@ -32,6 +32,8 @@ type DemandeRow = {
   commentaire: string | null;
   statut: string;
   created_at: string;
+  msg_non_lu_admin: boolean | null;
+  msg_non_lu_client: boolean | null;
   clients: { email: string | null; prenom: string | null; nom: string | null; telephone: string | null } | null;
   devis: DevisFull[];
 };
@@ -90,6 +92,7 @@ function SortTh({
     </th>
   );
 }
+type Message = { role: string; content: string; ts?: string };
 type Data = {
   ok: boolean;
   leads?: number;
@@ -100,6 +103,7 @@ type Data = {
   demandes?: DemandeRow[];
   raisonsRefus?: Record<string, number>;
   parMois?: { mois: string; leads: number; acceptes: number }[];
+  messagesNonLus?: number;
   periode?: { from: string | null; to: string | null };
 };
 
@@ -231,6 +235,9 @@ export default function AdminPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [msgThread, setMsgThread] = useState<Message[]>([]);
+  const [msgOpenId, setMsgOpenId] = useState<string | null>(null);
+  const [msgInput, setMsgInput] = useState("");
 
   useEffect(() => {
     if (loading) return;
@@ -301,6 +308,38 @@ export default function AdminPage() {
     loadData();
   }
 
+  // Conversation HITL : charge le fil d'une demande (et retire le badge "non lu").
+  async function ouvrirMessages(demandeId: string) {
+    if (!session) return;
+    if (msgOpenId === demandeId) {
+      setMsgOpenId(null);
+      return;
+    }
+    setMsgOpenId(demandeId);
+    setMsgThread([]);
+    setMsgInput("");
+    const r = await fetch("/api/admin-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, demandeId }),
+    });
+    const j = await r.json();
+    setMsgThread(j.messages ?? []);
+    loadData(); // le drapeau "non lu admin" a été remis à zéro
+  }
+
+  async function repondreMessage(demandeId: string) {
+    if (!session || !msgInput.trim()) return;
+    const r = await fetch("/api/admin-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, demandeId, message: msgInput.trim() }),
+    });
+    const j = await r.json();
+    setMsgThread(j.messages ?? []);
+    setMsgInput("");
+  }
+
   async function lancerRelances() {
     if (!session) return;
     setRelanceMsg("Traitement…");
@@ -333,7 +372,9 @@ export default function AdminPage() {
   const toggleFiltre = (k: string) => setFiltre((f) => (f === k ? null : k));
   const q = search.trim().toLowerCase();
   const demandes = [...toutes]
-    .filter((d) => !filtre || GROUPES[filtre]?.includes(d.statut))
+    .filter((d) =>
+      !filtre ? true : filtre === "messages" ? !!d.msg_non_lu_admin : GROUPES[filtre]?.includes(d.statut),
+    )
     .filter((d) => {
       if (!q) return true;
       const hay = [d.depart, d.destination, d.clients?.prenom, d.clients?.nom, d.clients?.email]
@@ -435,6 +476,20 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">Demandes</h2>
           <span className="text-xs text-[var(--ink-soft)]">{demandes.length} résultat(s)</span>
+          {(data?.messagesNonLus ?? 0) > 0 && (
+            <button
+              onClick={() => toggleFiltre("messages")}
+              aria-pressed={filtre === "messages"}
+              className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                filtre === "messages"
+                  ? "border-[#A12B2B] bg-[#FDECEC] text-[#A12B2B]"
+                  : "border-[#A12B2B] text-[#A12B2B] hover:bg-[#FDECEC]"
+              }`}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              {data?.messagesNonLus} nouveau(x) message(s)
+            </button>
+          )}
           {filtre && (
             <button onClick={() => setFiltre(null)} className="text-xs text-[var(--brand)] underline hover:text-[var(--brand-dark)]">
               Filtre actif — tout afficher
@@ -492,12 +547,22 @@ export default function AdminPage() {
                       {new Date(d.created_at).toLocaleDateString("fr-FR")}
                     </td>
                     <td className="px-3 py-2">
-                      <button
-                        onClick={() => setOpen(open === d.id ? null : d.id)}
-                        className="rounded-full px-2 py-1 text-xs font-medium text-[var(--brand)] underline transition hover:bg-[var(--brand-soft)] hover:no-underline"
-                      >
-                        {open === d.id ? "Masquer" : "Détail"}
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {d.msg_non_lu_admin && (
+                          <span
+                            className="flex items-center gap-0.5 rounded-full bg-[#FDECEC] px-1.5 py-0.5 text-[10px] font-semibold text-[#A12B2B]"
+                            title="Nouveau message du client"
+                          >
+                            <MessageCircle className="h-3 w-3" />
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setOpen(open === d.id ? null : d.id)}
+                          className="rounded-full px-2 py-1 text-xs font-medium text-[var(--brand)] underline transition hover:bg-[var(--brand-soft)] hover:no-underline"
+                        >
+                          {open === d.id ? "Masquer" : "Détail"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {open === d.id && (
@@ -512,6 +577,63 @@ export default function AdminPage() {
                           <span>Passagers : {d.nb_passagers ?? "—"}</span>
                           <span>Distance : {d.distance_km != null ? `${d.distance_km} km` : "—"}</span>
                           <span>Urgence : {d.urgence ?? "—"}</span>
+                        </div>
+
+                        {/* Conversation HITL : voir / répondre au client */}
+                        <div className="mt-3">
+                          <button
+                            onClick={() => ouvrirMessages(d.id)}
+                            className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand)] transition hover:text-[var(--brand-dark)]"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            {msgOpenId === d.id ? "Masquer la conversation" : "Voir / répondre la conversation"}
+                            {d.msg_non_lu_admin && <span className="inline-block h-2 w-2 rounded-full bg-[#A12B2B]" />}
+                          </button>
+                          {msgOpenId === d.id && (
+                            <div className="mt-2 rounded-lg border border-[var(--border)] bg-white p-3">
+                              {msgThread.length === 0 ? (
+                                <p className="text-xs text-[var(--ink-soft)]">Aucun message pour cette demande.</p>
+                              ) : (
+                                <ul className="space-y-1.5">
+                                  {msgThread.map((m, i) => {
+                                    const staff = m.role === "admin" || m.role === "agent";
+                                    return (
+                                      <li key={i} className={`flex ${staff ? "justify-end" : "justify-start"}`}>
+                                        <span
+                                          className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-xs ${
+                                            staff
+                                              ? "bg-[var(--brand)] text-white"
+                                              : "border border-[var(--border)] bg-[var(--bg-muted)] text-[var(--ink)]"
+                                          }`}
+                                        >
+                                          {!staff && (
+                                            <span className="mb-0.5 block text-[10px] font-semibold opacity-70">Client</span>
+                                          )}
+                                          {m.content}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
+                              <div className="mt-2 flex gap-2">
+                                <input
+                                  value={msgInput}
+                                  onChange={(e) => setMsgInput(e.target.value)}
+                                  onKeyDown={(e) => e.key === "Enter" && repondreMessage(d.id)}
+                                  placeholder="Répondre au client…"
+                                  className="flex-1 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs outline-none focus:border-[var(--brand)]"
+                                />
+                                <button
+                                  onClick={() => repondreMessage(d.id)}
+                                  disabled={!msgInput.trim()}
+                                  className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-40"
+                                >
+                                  Envoyer
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Cas complexe : motif d'escalade + flux d'étude commerciale */}

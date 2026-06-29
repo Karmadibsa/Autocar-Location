@@ -29,10 +29,10 @@ flowchart TB
 
 - **profiles** — relie un compte Auth à un rôle (`client` ou `admin`). Clé = `id` (= `auth.users.id`). Sert aux gardes de route et au filtrage RLS via la fonction `is_admin()`.
 - **clients** — fiche client (coordonnées + **adresse de facturation** : `adresse`, `code_postal`, `ville`). Reliée à un compte Auth par `auth_user_id` (peut être nul : un lead existe avant d'avoir un compte). Email unique (insensible à la casse).
-- **demandes** — une demande de transport : `depart`, `destination`, `date_depart`, `aller_retour`, `nb_passagers`, `distance_km`, `options`, `statut` (cycle de vie), `commentaire` (motif d'escalade pour les cas complexes).
+- **demandes** — une demande de transport : `depart`, `destination`, `date_depart`, `aller_retour`, `nb_passagers`, `distance_km`, `options`, `statut` (cycle de vie), `commentaire` (motif d'escalade pour les cas complexes), `msg_non_lu_admin` / `msg_non_lu_client` (drapeaux de la messagerie HITL bidirectionnelle).
 - **devis** — devis chiffré rattaché à une demande : montants (`prix_ht`/`tva`/`prix_ttc`), `lignes` + `coefficients` (détail interne), `statut`, suivi des relances (`prochaine_relance`, `nb_relances`), `token` (lien email « refuser sans compte ») et `raison_refus` (feedback du client en cas de refus).
 - **relances** — trace des relances envoyées (`type` J2/J3/J7, dates). `cle_idempotence` unique → empêche les doublons.
-- **conversations** — historique du chat (`messages` en JSON), relié au client et éventuellement à la demande.
+- **conversations** — historique du chat **et** fil de messagerie HITL (`messages` en JSON : `role` = user / admin / agent), relié au client et à la demande.
 - **pricing_config** — barème de calcul (grille forfait, saison, capacité, marge, TVA) **pilotable** sans toucher au code (1 seule ligne).
 
 ## Relations

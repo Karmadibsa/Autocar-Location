@@ -70,7 +70,10 @@ create table if not exists demandes (
   statut         statut_demande not null default 'nouveau_lead',
   score_completude integer,                     -- 0..100
   commentaire    text,
-  created_at     timestamptz not null default now()
+  created_at     timestamptz not null default now(),
+  -- Messagerie HITL (thread par demande dans `conversations`) : drapeaux « non lu ».
+  msg_non_lu_admin  boolean not null default false,
+  msg_non_lu_client boolean not null default false
 );
 create index if not exists demandes_client_idx on demandes(client_id);
 create index if not exists demandes_statut_idx on demandes(statut);

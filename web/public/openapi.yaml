@@ -281,6 +281,68 @@ paths:
                   email: { type: string }
                   profil: { $ref: "#/components/schemas/Profil" }
 
+  /api/devis-messages:
+    post:
+      tags: [Client]
+      summary: Messagerie HITL — consulter / ajouter un message sur le fil d'un devis
+      description: >
+        Le client (token) consulte le fil du devis (`id`) ou y ajoute un `message`.
+        Un envoi marque le fil « non lu » pour l'admin ; une consultation marque les
+        réponses comme lues côté client. Vérifie que le devis appartient au client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, id]
+              properties:
+                token: { type: string }
+                id: { type: string, description: "id du devis" }
+                message: { type: string, description: "absent = simple consultation" }
+      responses:
+        "200":
+          description: Fil de discussion à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  messages: { type: array, items: { $ref: "#/components/schemas/Message" } }
+        "403": { description: Devis non possédé par le client }
+
+  /api/admin-messages:
+    post:
+      tags: [Admin]
+      summary: Messagerie HITL — consulter / répondre sur le fil d'une demande
+      description: >
+        L'admin (token) consulte le fil d'une demande (`demandeId`) ou y répond via
+        `message`. Une réponse marque le fil « non lu » pour le client ; une
+        consultation retire le badge côté admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, demandeId]
+              properties:
+                token: { type: string }
+                demandeId: { type: string }
+                message: { type: string, description: "absent = simple consultation" }
+      responses:
+        "200":
+          description: Fil de discussion à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  messages: { type: array, items: { $ref: "#/components/schemas/Message" } }
+        "403": { description: Non admin }
+
   /api/me:
     post:
       tags: [Client]
@@ -353,6 +415,13 @@ components:
       properties:
         role: { type: string, enum: [user, agent] }
         content: { type: string }
+    Message:
+      type: object
+      description: Message d'un fil HITL (user = client, admin = conseiller, agent = bot)
+      properties:
+        role: { type: string, enum: [user, admin, agent] }
+        content: { type: string }
+        ts: { type: string, format: date-time }
     Params:
       type: object
       properties:

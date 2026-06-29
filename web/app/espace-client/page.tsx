@@ -4,9 +4,11 @@
 // La garde d'accès, l'en-tête et les onglets sont gérés par le layout.
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 
+type Message = { role: string; content: string; ts?: string };
 type Devis = {
   id: string;
   prix_ht: number | null;
@@ -15,6 +17,7 @@ type Devis = {
   devise: string | null;
   statut: string;
   created_at: string;
+  demandes?: { msg_non_lu_client?: boolean } | null;
 };
 const RAISONS_REFUS = [
   "Prix trop élevé",
@@ -31,6 +34,10 @@ export default function MesDevis() {
   const [refusId, setRefusId] = useState<string | null>(null);
   const [raisons, setRaisons] = useState<string[]>([]);
   const [adresseAlerte, setAdresseAlerte] = useState(false);
+  const [msgOpen, setMsgOpen] = useState<string | null>(null);
+  const [thread, setThread] = useState<Message[]>([]);
+  const [msgInput, setMsgInput] = useState("");
+  const [msgLoading, setMsgLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!session) return;
@@ -61,6 +68,42 @@ export default function MesDevis() {
 
   function toggleRaison(r: string) {
     setRaisons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
+  }
+
+  const openMessages = useCallback(
+    async (id: string) => {
+      if (!session) return;
+      if (msgOpen === id) {
+        setMsgOpen(null);
+        return;
+      }
+      setMsgOpen(id);
+      setThread([]);
+      setMsgInput("");
+      setMsgLoading(true);
+      const r = await fetch("/api/devis-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: session.access_token, id }),
+      });
+      const j = await r.json();
+      setThread(j.messages ?? []);
+      setMsgLoading(false);
+      loadData(); // le drapeau "non lu" a été remis à zéro côté serveur
+    },
+    [session, msgOpen, loadData],
+  );
+
+  async function sendMessage(id: string) {
+    if (!session || !msgInput.trim()) return;
+    const r = await fetch("/api/devis-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, id, message: msgInput.trim() }),
+    });
+    const j = await r.json();
+    setThread(j.messages ?? []);
+    setMsgInput("");
   }
 
   async function downloadPdf(id: string) {
@@ -208,6 +251,74 @@ export default function MesDevis() {
                   </div>
                 </div>
               )}
+
+              {/* Messagerie HITL : fil de discussion par devis (client <-> conseiller) */}
+              <div className="mt-3 border-t border-[var(--border)] pt-2">
+                <button
+                  onClick={() => openMessages(d.id)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[var(--brand)] transition hover:text-[var(--brand-dark)]"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {msgOpen === d.id ? "Masquer les messages" : "Messages / précisions"}
+                  {d.demandes?.msg_non_lu_client && (
+                    <span
+                      className="ml-1 inline-block h-2 w-2 rounded-full bg-[#A12B2B]"
+                      aria-label="Nouvelle réponse du conseiller"
+                    />
+                  )}
+                </button>
+                {msgOpen === d.id && (
+                  <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
+                    {msgLoading ? (
+                      <p className="text-xs text-[var(--ink-soft)]">Chargement…</p>
+                    ) : thread.length === 0 ? (
+                      <p className="text-xs text-[var(--ink-soft)]">
+                        Aucun message. Posez une question ou ajoutez une précision sur ce devis.
+                      </p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {thread.map((m, i) => {
+                          const moi = m.role === "user";
+                          return (
+                            <li key={i} className={`flex ${moi ? "justify-end" : "justify-start"}`}>
+                              <span
+                                className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-xs ${
+                                  moi
+                                    ? "bg-[var(--brand)] text-white"
+                                    : "border border-[var(--border)] bg-white text-[var(--ink)]"
+                                }`}
+                              >
+                                {!moi && (
+                                  <span className="mb-0.5 block text-[10px] font-semibold opacity-70">
+                                    {m.role === "admin" ? "Conseiller" : "Assistant"}
+                                  </span>
+                                )}
+                                {m.content}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={msgInput}
+                        onChange={(e) => setMsgInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendMessage(d.id)}
+                        placeholder="Votre message…"
+                        className="flex-1 rounded-full border border-[var(--border)] bg-white px-3 py-1.5 text-xs outline-none focus:border-[var(--brand)]"
+                      />
+                      <button
+                        onClick={() => sendMessage(d.id)}
+                        disabled={!msgInput.trim()}
+                        className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-40"
+                      >
+                        Envoyer
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

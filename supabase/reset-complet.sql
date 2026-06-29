@@ -41,7 +41,10 @@ create table demandes (
   aller_retour boolean not null default false, nb_passagers integer, type_trajet text,
   urgence text, distance_km numeric, options jsonb not null default '[]'::jsonb,
   statut statut_demande not null default 'nouveau_lead', score_completude integer,
-  commentaire text, created_at timestamptz not null default now()
+  commentaire text, created_at timestamptz not null default now(),
+  -- Messagerie HITL (thread par demande dans `conversations`) : drapeaux "non lu".
+  msg_non_lu_admin boolean not null default false,
+  msg_non_lu_client boolean not null default false
 );
 
 create table devis (

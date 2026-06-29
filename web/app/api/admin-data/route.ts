@@ -26,14 +26,14 @@ export async function POST(request: Request) {
     return r;
   };
 
-  const [demStatutsRes, devisRes, recentRes, refusRes] = await Promise.all([
+  const [demStatutsRes, devisRes, recentRes, refusRes, msgRes] = await Promise.all([
     range(sb.from("demandes").select("statut, created_at")),
     range(sb.from("devis").select("statut, created_at")),
     range(
       sb
         .from("demandes")
         .select(
-          "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, clients(email, prenom, nom, telephone), devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance, raison_refus)",
+          "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, msg_non_lu_admin, msg_non_lu_client, clients(email, prenom, nom, telephone), devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance, raison_refus)",
         ),
     )
       .order("created_at", { ascending: false })
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       // et une prod modeste ; au-delà il faudrait paginer côté serveur.
       .limit(2000),
     range(sb.from("devis").select("raison_refus, created_at").not("raison_refus", "is", null)),
+    range(sb.from("demandes").select("id", { count: "exact", head: true }).eq("msg_non_lu_admin", true)),
   ]);
 
   const demStatuts = (demStatutsRes.data ?? []) as { statut: string; created_at: string }[];
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
     demandes: recentRes.data ?? [],
     raisonsRefus,
     parMois,
+    messagesNonLus: msgRes.count ?? 0,
     periode: { from: from ?? null, to: to ?? null },
   });
 }

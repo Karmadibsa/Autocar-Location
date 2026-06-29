@@ -354,11 +354,12 @@ def main():
 
         urgence = "urgent" if anticip <= 29 else "normal"
         did, eid, token = ruuid(), ruuid(), ruuid()
+        hitl = bool(forced.get("hitl"))  # message client en attente (badge admin)
 
         demande_rows.append([
             sql_str(did), sql_str(cid), sql_str(depart), sql_str(destination), sql_date(date_depart),
             sql_bool(aller_retour), str(nb_pax), str(dist), sql_str(urgence), sql_str(dem_statut),
-            sql_ts(created),
+            sql_ts(created), sql_bool(hitl),
         ])
 
         # prochaine_relance : pertinente pour les "en attente"
@@ -380,12 +381,15 @@ def main():
             sql_ts(created),
         ])
 
-        if random.random() < 0.30:
+        if random.random() < 0.30 or hitl:
             msgs = [
                 {"role": "agent", "content": "Bonjour ! Quel est votre projet de déplacement ?"},
                 {"role": "user", "content": f"{depart} vers {destination}, {nb_pax} personnes"},
                 {"role": "agent", "content": "Votre devis est disponible, je vous l'envoie par email."},
             ]
+            if hitl:
+                # Message client en attente de réponse -> badge "non lu" côté admin.
+                msgs.append({"role": "user", "content": "Bonjour, peut-on ajouter un arrêt en chemin ? Et avez-vous un tarif si on décale d'une semaine ?"})
             conv_rows.append([
                 sql_str(ruuid()), sql_str(cid), sql_str(did), sql_json(msgs), sql_ts(created),
             ])
@@ -393,7 +397,7 @@ def main():
     # Devis vedette (v.conter@live.fr) : varies et RECENTS -> visibles dans la table admin.
     SHOWCASE_DEVIS = [
         {"statut": "accepte", "trajet": ("Strasbourg", "Colmar", 75), "pax": 45, "ar": True},
-        {"statut": "envoye", "trajet": ("Strasbourg", "Metz", 160), "pax": 30, "ar": False},
+        {"statut": "envoye", "trajet": ("Strasbourg", "Metz", 160), "pax": 30, "ar": False, "hitl": True},
         {"statut": "refuse", "trajet": ("Strasbourg", "Mulhouse", 115), "pax": 55, "ar": True},
         {"statut": "relance_1", "trajet": ("Lyon", "Annecy", 139), "pax": 40, "ar": True},
     ]
@@ -413,7 +417,7 @@ def main():
     out.append(f"-- {len(devis_rows)} devis chiffres (+ demandes associees)\n")
     batched_insert(out, "demandes",
                    ["id", "client_id", "depart", "destination", "date_depart", "aller_retour",
-                    "nb_passagers", "distance_km", "urgence", "statut", "created_at"],
+                    "nb_passagers", "distance_km", "urgence", "statut", "created_at", "msg_non_lu_admin"],
                    demande_rows)
     out.append("\n")
     batched_insert(out, "devis",
