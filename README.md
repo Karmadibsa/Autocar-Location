@@ -26,9 +26,11 @@ Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOU
 npm install && npm test            # tests du moteur de devis
 
 # 2. Base de données  (SQL Editor Supabase, dans l'ordre)
-#    a) supabase/reset-complet.sql     → schéma propre (base vierge)
+#    a) supabase/reset-complet.sql     → schéma propre (base vierge, déjà à jour)
 #    b) supabase/comptes-demo.sql      → comptes de connexion (admin + clients), 1 fois
 #    c) supabase/seed-demo-volume.sql  → jeu de démo volumineux (~500 devis) [optionnel]
+#    Sur une base DÉJÀ créée, appliquer les migrations idempotentes au besoin :
+#    supabase/ajout-messagerie.sql · ajout-signature.sql · ajout-autocaristes.sql
 
 # 3. Front
 cd web

@@ -226,7 +226,7 @@ async function persist(
     if (clientId) await sb.from("conversations").update({ client_id: clientId }).eq("id", sessionId);
   }
 
-  // 3) Cas complexe (escalade > 85 pax / atypique) : pas de devis auto, mais on
+  // 3) Cas complexe (escalade > 55 pax / atypique / hors France) : pas de devis auto, mais on
   // enregistre la demande pour le suivi humain (HITL) → visible dans "À traiter".
   if (!devis) {
     if (data.escalade && (params.depart || params.destination || params.nb_passagers)) {

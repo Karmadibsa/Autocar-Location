@@ -164,7 +164,7 @@ body.push(makeTable(
   [
     ['1. Captation', 'Landing conversationnelle : le prospect exprime son besoin en langage naturel', 'Bascule vers un conseiller si le prospect le demande'],
     ['2. Qualification', 'L’agent structure la demande et détecte les champs manquants', 'Revue humaine des demandes ambiguës ou atypiques'],
-    ['3. Tarification', 'Tool déterministe calculer_devis() — prix exact et auditable', 'Validation des devis hors seuils (montant élevé, trajet atypique, > 85 pax)'],
+    ['3. Tarification', 'Tool déterministe calculer_devis() — prix exact et auditable', 'Validation des devis hors seuils (montant élevé, trajet atypique, > 55 pax)'],
     ['4. Devis', 'Génération automatique d’un PDF formaté', 'Relecture avant envoi pour les cas sensibles'],
     ['5. Envoi', 'Envoi (ou simulation) par email pour les devis standard', 'Validé par un commercial pour les offres engageantes'],
     ['6. Relances', 'Séquences automatiques : J+2 / J+3 / J+7, max 2', 'Le commercial reprend la main sur les leads chauds (relation, négociation)'],

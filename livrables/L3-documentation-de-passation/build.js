@@ -95,7 +95,7 @@ body.push(makeTable(
     ['Agent IA / chatbot', 'L’assistant qui discute avec le prospect et comprend son besoin. Il oriente, il ne fixe pas les prix.'],
     ['Devis déterministe', 'Le prix est calculé par des règles fixes (le « moteur »), pas par l’IA. Il est donc toujours juste et explicable.'],
     ['Qualification', 'Vérifier qu’une demande est complète (trajet, dates, passagers) avant de chiffrer.'],
-    ['Cas complexe / escalade', 'Une demande trop grosse (> 85 passagers) ou atypique : l’outil passe la main à un commercial.'],
+    ['Cas complexe / escalade', 'Une demande trop grosse (> 55 passagers) ou atypique : l’outil passe la main à un commercial.'],
     ['HITL (humain dans la boucle)', 'Les décisions sensibles restent validées par un humain.'],
     ['Relance', 'Email de rappel automatique si le client ne répond pas (J+2, J+3, J+7, max 2).'],
     ['Pipeline', 'La liste des demandes et leur état d’avancement (nouveau, devis envoyé, accepté…).'],
@@ -147,7 +147,7 @@ body.push(H2('C.1 Modifier le pricing'));
 [
   'Tarifs / TVA / marge / coefficients : pricing/matrices.js (source de vérité) + table pricing_config en base.',
   'Reporter la même valeur dans le miroir TS web/lib/calculerDevis.ts ET dans le nœud Code n8n (pricing/n8n-code-node.js).',
-  'Seuil d’escalade (85 pax) : seuil_escalade_passagers dans les matrices.',
+  'Seuil d’escalade (55 pax) : seuil_escalade_passagers dans les matrices.',
   'Toujours relancer npm test après modification (anti-régression).',
 ].forEach((t) => body.push(bullet(t)));
 body.push(callout('Important :', 'le barème est pilotable sans toucher à l’algorithme. Ne jamais déplacer le calcul du prix vers le LLM.'));

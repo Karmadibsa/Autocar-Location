@@ -138,13 +138,22 @@ flowchart TB
 
 ## 6. Modules `web/lib/` (le cœur réutilisable)
 
+Ces modules concentrent la logique partagée entre les routes serveur et l'interface.
+Ils sont autonomes et, pour les plus critiques (prix, relances, messagerie, noms),
+couverts par des tests.
+
 | Fichier | Rôle |
 |---------|------|
 | `calculerDevis.ts` | **Moteur de prix déterministe** (port TS de `pricing/`). Le prix officiel. Testé. |
 | `distance.ts` | Distance routière réelle via Nominatim (géocodage) + OSRM (itinéraire). |
-| `devisPdf.ts` | Génère le **PDF de devis/facture** (pdf-lib) : logo, réf. stable, adresse, totaux. |
-| `emailDevis.ts` | **Gabarit HTML** de l'email (vue client : prix HT/TVA/TTC, boutons accepter/refuser). |
+| `devisPdf.ts` | Génère le **PDF de devis/facture** (pdf-lib) : logo, réf. stable, adresse, totaux, **signature électronique** apposée. |
+| `emailDevis.ts` | **Gabarits HTML** des emails (devis + **email de courtoisie au refus**). |
+| `mailer.ts` | Envoi transactionnel (Resend), best-effort, respecte le garde-fou démo. |
+| `emailGuard.ts` | Domaines de **démo** : aucun email réel envoyé (ex. `@demo.autocar-location.fr`). |
 | `relances.ts` | Logique de **relances** (J+2/J+3/J+7, max 2) et d'**expiration** (30 j). Testé. |
+| `conversation.ts` | Fil de **messagerie HITL** par demande (récupère/crée, ajoute un message). Testé. |
+| `noms.ts` | Formatage des noms (NOM en majuscules). Testé. |
+| `statsPdf.ts` | Génère le **PDF des statistiques** du dashboard (export admin). |
 | `supabaseClient.ts` | Client Supabase **navigateur** (clé anon, soumis à la RLS). |
 | `supabaseAdmin.ts` | Client Supabase **serveur** (service role, contourne la RLS — jamais exposé au navigateur). |
 | `useAuth.ts` | Hook React : session courante + rôle (client/admin). |
@@ -152,6 +161,10 @@ flowchart TB
 ---
 
 ## 7. Routes serveur `web/app/api/` (toute la logique métier)
+
+Toute la logique sensible (prix, persistance, emails, changements de statut) vit dans
+ces routes serveur, jamais côté navigateur. Chaque route vérifie l'autorisation (token
+et rôle) avant d'agir.
 
 | Route | Rôle | Qui peut l'appeler |
 |-------|------|--------------------|
@@ -161,10 +174,14 @@ flowchart TB
 | `my-data` | Devis + conversations + profil du client connecté | Client (token) |
 | `me` | Profil léger (email/rôle/nom) ; crée la fiche à la 1ʳᵉ connexion | Utilisateur (token) |
 | `devis-pdf` | Renvoie le PDF d'un devis | Admin **ou** propriétaire |
-| `devis-reponse` | Accepter / refuser son devis (+ motif de refus) | Propriétaire (token) |
-| `devis-refuser-public` | Refuser **sans compte** via le token reçu par email | Token (capability) |
+| `devis-reponse` | Accepter (**signature + CGV**) / refuser (+ motif & **email de courtoisie**) | Propriétaire (token) |
+| `devis-refuser-public` | Refuser **sans compte** via le token reçu par email (+ courtoisie) | Token (capability) |
+| `devis-messages` | Messagerie HITL **côté client** (consulter / écrire sur un devis) | Propriétaire (token) |
+| `admin-messages` | Messagerie HITL **côté admin** (consulter / répondre) | Admin |
+| `autocaristes` | Annuaire des transporteurs partenaires | Admin |
 | `demande-statut` | Marquer gagné / perdu / pris en charge | Admin |
 | `devis-manuel` | Devis sur-mesure pour un cas complexe (rejoint le pipeline) | Admin |
+| `devis-acces` | Vérifie si un email a déjà un compte (orientation accepter) | Public |
 | `profil-update` | Met à jour les coordonnées (adresse de facturation) | Client (token) |
 | `contact` | Envoie le message du formulaire à `contact@am-creative.fr` | Public |
 
