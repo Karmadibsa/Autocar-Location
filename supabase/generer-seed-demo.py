@@ -164,6 +164,15 @@ TRAJETS = [
 ]
 RAISONS = ["Prix trop élevé", "Délai / disponibilité", "Meilleure offre ailleurs", "Projet annulé ou reporté", "Autre"]
 
+# Messages clients "en attente" (messagerie HITL) -> font apparaître le badge admin.
+MESSAGES_CLIENT = [
+    "Bonjour, peut-on ajouter un arrêt en chemin ? Et un tarif si on décale d'une semaine ?",
+    "Est-il possible d'avoir une facture au nom de l'association ?",
+    "Le chauffeur peut-il rester sur place pendant l'événement ?",
+    "On sera peut-être 5 personnes de plus, ça change quoi sur le prix ?",
+    "Avez-vous des véhicules accessibles PMR pour ce trajet ?",
+]
+
 # Domaine fictif des clients de demo. Doit correspondre a un domaine "demo" cote
 # front (lib/emailGuard.ts / env EMAIL_DEMO_DOMAINS) pour qu'AUCUN email reel ne parte.
 DEMO_DOMAINE = "demo.autocar-location.fr"
@@ -354,12 +363,16 @@ def main():
 
         urgence = "urgent" if anticip <= 29 else "normal"
         did, eid, token = ruuid(), ruuid(), ruuid()
-        hitl = bool(forced.get("hitl"))  # message client en attente (badge admin)
+        # Conversation + message client en attente (badge admin "non lu").
+        hitl = bool(forced.get("hitl"))
+        age_j = (today - created).days
+        create_conv = random.random() < 0.30 or hitl
+        pending = hitl or (create_conv and age_j <= 30 and random.random() < 0.20)
 
         demande_rows.append([
             sql_str(did), sql_str(cid), sql_str(depart), sql_str(destination), sql_date(date_depart),
             sql_bool(aller_retour), str(nb_pax), str(dist), sql_str(urgence), sql_str(dem_statut),
-            sql_ts(created), sql_bool(hitl),
+            sql_ts(created), sql_bool(pending),
         ])
 
         # prochaine_relance : pertinente pour les "en attente"
@@ -381,15 +394,15 @@ def main():
             sql_ts(created),
         ])
 
-        if random.random() < 0.30 or hitl:
+        if create_conv:
             msgs = [
                 {"role": "agent", "content": "Bonjour ! Quel est votre projet de déplacement ?"},
                 {"role": "user", "content": f"{depart} vers {destination}, {nb_pax} personnes"},
                 {"role": "agent", "content": "Votre devis est disponible, je vous l'envoie par email."},
             ]
-            if hitl:
+            if pending:
                 # Message client en attente de réponse -> badge "non lu" côté admin.
-                msgs.append({"role": "user", "content": "Bonjour, peut-on ajouter un arrêt en chemin ? Et avez-vous un tarif si on décale d'une semaine ?"})
+                msgs.append({"role": "user", "content": random.choice(MESSAGES_CLIENT)})
             conv_rows.append([
                 sql_str(ruuid()), sql_str(cid), sql_str(did), sql_json(msgs), sql_ts(created),
             ])

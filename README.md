@@ -71,4 +71,4 @@ Les secrets ne sont **jamais** committés (`.gitignore`). La clé du LLM reste *
 ## Tests
 
 - Moteur de prix : `npm test` (racine)
-- Front : `cd web && npx vitest run` (29 tests : pricing, distance, PDF, email, relances, noms)
+- Front : `cd web && npx vitest run` (34 tests : pricing, distance, PDF, email, relances, noms, messagerie)
