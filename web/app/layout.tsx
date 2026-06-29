@@ -22,8 +22,17 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        {/* Accessibilité : lien d'évitement vers le contenu principal (clavier/lecteur d'écran) */}
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-[var(--brand)] focus:px-4 focus:py-2 focus:font-semibold focus:text-white"
+        >
+          Aller au contenu
+        </a>
         <Header />
-        {children}
+        <div id="contenu" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+          {children}
+        </div>
         <Footer />
         <ChatWidget />
       </body>

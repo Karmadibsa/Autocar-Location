@@ -66,12 +66,11 @@ const MATRICES = {
   pondation_capacite: [
     { max: 19, coef: -0.05 },
     { max: 53, coef: 0 },
-    { max: 63, coef: 0.15 },
-    { max: 67, coef: 0.20 },
-    { max: 85, coef: 0.40 },
+    { max: 55, coef: 0.15 },
   ],
-  // Au-delà de ce seuil : pas de devis auto -> escalade commercial (flux manuel).
-  seuil_escalade_passagers: 85,
+  // Au-delà d'un autocar standard (~55 places) : pas de devis auto -> escalade
+  // commercial (plusieurs véhicules / étude sur-mesure).
+  seuil_escalade_passagers: 55,
 
   // Options / suppléments.
   options: {

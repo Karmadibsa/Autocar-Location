@@ -7,6 +7,7 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} Autocar Location — Transport de groupe en autocar</span>
         <nav className="flex flex-wrap gap-x-4 gap-y-1">
           <Link href="/mentions-legales" className="transition hover:text-white">Mentions légales</Link>
+          <Link href="/cgv" className="transition hover:text-white">CGV</Link>
           <Link href="/confidentialite" className="transition hover:text-white">Confidentialité · RGPD</Link>
           <Link href="/contact" className="transition hover:text-white">Contact</Link>
         </nav>

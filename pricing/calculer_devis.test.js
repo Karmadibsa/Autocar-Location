@@ -59,8 +59,8 @@ test('date incohérente (départ avant la demande) — erreur', () => {
   assert.equal(d.champ, 'date_depart');
 });
 
-test('gros volume (> 85 passagers) — escalade flux manuel', () => {
-  const d = calculer_devis({ ...baseSimple, nb_passagers: 90 });
+test('gros volume (> 55 passagers, au-delà d\'un autocar standard) — escalade flux manuel', () => {
+  const d = calculer_devis({ ...baseSimple, nb_passagers: 60 });
   assert.equal(d.escalade, true);
   assert.match(d.raison, /commercial/);
   assert.equal(d.prix_ttc, undefined);
@@ -79,8 +79,8 @@ test('aller/retour — base transport doublée', () => {
   assert.equal(d.prix_ht, 764.75);
 });
 
-test('capacité 54-63 passagers — coefficient +15%', () => {
-  const d = calculer_devis({ ...baseSimple, nb_passagers: 60 });
+test('capacité 54-55 passagers (autocar plein) — coefficient +15%', () => {
+  const d = calculer_devis({ ...baseSimple, nb_passagers: 55 });
   assert.ok(d.coefficients.some((c) => c.valeur === 0.15));
 });
 

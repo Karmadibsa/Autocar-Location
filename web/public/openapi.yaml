@@ -53,7 +53,11 @@ paths:
   /api/devis-reponse:
     post:
       tags: [Devis]
-      summary: Le client accepte / refuse son devis
+      summary: Le client accepte (signature électronique) / refuse son devis
+      description: >
+        À l'acceptation, signature électronique simple OBLIGATOIRE : nom du signataire
+        (`signePar`), tracé (`signature`, data URL PNG) et acceptation des CGV (`cgv`).
+        Le tout est horodaté et stocké sur le devis (apposé sur le PDF).
       requestBody:
         required: true
         content:
@@ -66,8 +70,12 @@ paths:
                 id: { type: string, format: uuid, description: id du devis }
                 reponse: { type: string, enum: [accepte, refuse] }
                 raisons: { type: array, items: { type: string }, description: "motifs de refus (si reponse=refuse)" }
+                signePar: { type: string, description: "nom du signataire (si reponse=accepte)" }
+                signature: { type: string, description: "data URL PNG du tracé (si reponse=accepte)" }
+                cgv: { type: boolean, description: "acceptation des CGV (si reponse=accepte)" }
       responses:
         "200": { description: OK, content: { application/json: { schema: { type: object, properties: { ok: {type: boolean}, statut: {type: string} } } } } }
+        "400": { description: "Acceptation sans signature/nom/CGV (signature_requise)" }
         "403": { description: Le devis n'appartient pas au client }
         "409": { description: Devis déjà traité }
 
@@ -162,6 +170,7 @@ paths:
               properties:
                 secret: { type: string, description: "CRON_SECRET (planificateur)" }
                 token: { type: string, description: "access_token admin (alternative)" }
+                devisId: { type: string, description: "si fourni : relance immédiate d'un seul devis (bouton admin), même non due" }
       responses:
         "200":
           description: Bilan du traitement
@@ -341,6 +350,27 @@ paths:
                 properties:
                   ok: { type: boolean }
                   messages: { type: array, items: { $ref: "#/components/schemas/Message" } }
+        "403": { description: Non admin }
+
+  /api/autocaristes:
+    post:
+      tags: [Admin]
+      summary: Annuaire des autocaristes partenaires (mock) — réservé admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token], properties: { token: { type: string } } }
+      responses:
+        "200":
+          description: Liste des autocaristes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  autocaristes: { type: array, items: { type: object } }
         "403": { description: Non admin }
 
   /api/me:

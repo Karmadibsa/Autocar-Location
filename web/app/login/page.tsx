@@ -3,6 +3,7 @@
 // Page de connexion unique. Après connexion -> redirection selon le rôle.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/useAuth";
 import { Check } from "lucide-react";
@@ -92,8 +93,7 @@ export default function Login() {
       {/* Panneau marque (desktop) */}
       <div className="hidden w-1/2 flex-col justify-center bg-[var(--brand)] p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Autocar Location" width={232} height={162} className="h-12 w-auto rounded-lg bg-white/90 p-1" />
+          <Image src="/logo.png" alt="Autocar Location" width={232} height={162} className="h-12 w-auto rounded-lg bg-white/90 p-1" />
           <h2 className="text-3xl font-bold">Autocar Location</h2>
         </div>
         <p className="mt-3 max-w-sm text-white/80">

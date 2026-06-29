@@ -3,6 +3,7 @@
 // En-tête commun : affiche les liens selon l'état de connexion + le rôle.
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Header() {
@@ -49,8 +50,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-white/90 px-6 py-3 backdrop-blur">
       <Link href="/" className="flex items-center gap-2 transition hover:opacity-80">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="Autocar Location" width={232} height={162} className="h-8 w-auto" />
+        <Image src="/logo.png" alt="Autocar Location" width={232} height={162} priority className="h-8 w-auto" />
         <span className="text-lg font-bold text-[var(--brand)]">Autocar Location</span>
       </Link>
       <div className="flex items-center gap-1">

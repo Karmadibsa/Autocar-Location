@@ -4,12 +4,19 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export async function POST(request: Request) {
-  const { token, id, reponse, raisons } = await request.json().catch(() => ({}));
+  const { token, id, reponse, raisons, signature, signePar, cgv } = await request.json().catch(() => ({}));
   const raisonRefus = Array.isArray(raisons) ? raisons.filter((r) => typeof r === "string").join(", ") : null;
   const sb = getAdminClient();
   if (!sb || !token || !id) return Response.json({ ok: false, reason: "bad_request" }, { status: 401 });
   if (reponse !== "accepte" && reponse !== "refuse")
     return Response.json({ ok: false, reason: "bad_reponse" }, { status: 400 });
+
+  // Acceptation = signature électronique simple : nom + tracé + CGV obligatoires.
+  const sig = typeof signature === "string" && signature.startsWith("data:image") ? signature : null;
+  const nomSignataire = typeof signePar === "string" ? signePar.trim() : "";
+  if (reponse === "accepte" && (!cgv || !sig || !nomSignataire)) {
+    return Response.json({ ok: false, reason: "signature_requise" }, { status: 400 });
+  }
 
   const { data: u } = await sb.auth.getUser(token);
   const email = u?.user?.email;
@@ -29,7 +36,14 @@ export async function POST(request: Request) {
 
   await sb
     .from("devis")
-    .update({ statut: reponse, prochaine_relance: null, ...(reponse === "refuse" ? { raison_refus: raisonRefus } : {}) })
+    .update({
+      statut: reponse,
+      prochaine_relance: null,
+      ...(reponse === "refuse" ? { raison_refus: raisonRefus } : {}),
+      ...(reponse === "accepte"
+        ? { signature_image: sig, signe_par: nomSignataire, signe_le: new Date().toISOString(), cgv_acceptees: true }
+        : {}),
+    })
     .eq("id", id);
   await sb.from("demandes").update({ statut: reponse }).eq("id", d.demande_id);
   return Response.json({ ok: true, statut: reponse });

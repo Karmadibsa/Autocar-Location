@@ -45,7 +45,7 @@ const AVIS: [string, string, string][] = [
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col">
+    <main className="flex flex-1 flex-col">
       {/* ---------- HERO ---------- */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[var(--brand-soft)] via-white to-white">
         <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/30 blur-3xl" />
@@ -200,6 +200,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

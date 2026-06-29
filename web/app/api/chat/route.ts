@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { calculerDevis } from "@/lib/calculerDevis";
-import { distanceKm } from "@/lib/distance";
+import { analyserTrajet } from "@/lib/distance";
 import { estUrgent, prochaineRelance } from "@/lib/relances";
 import { devisEmailHtml } from "@/lib/emailDevis";
 import { estEmailDemo } from "@/lib/emailGuard";
@@ -79,9 +79,27 @@ export async function POST(request: Request) {
   // le devis automatiquement (l'agent n'a pas besoin de le redemander).
   if (clientEmail) data.params = { ...(data.params ?? {}), email: clientEmail };
 
-  // --- Distance routière réelle (OSRM) : recalcule le devis si possible ---
-  const recalc = await devisAvecOSRM(data.params, data.devis);
-  if (recalc) data.devis = recalc;
+  // --- Vérifs géographiques + distance routière réelle ---
+  // hors France -> cas complexe (transfrontalier) ; ville ambiguë -> on demande le CP.
+  const p = data.params ?? {};
+  if (p.depart && p.destination) {
+    const geo = await analyserTrajet(p.depart, p.destination);
+    if (geo.horsFrance) {
+      data.escalade = data.escalade ?? `Trajet hors France (${p.depart} -> ${p.destination}) : etude sur-mesure transfrontaliere.`;
+      data.devis = null;
+    } else if (geo.villesAmbigues.length) {
+      // Pas encore de prix : on lève l'ambiguïté avant de chiffrer.
+      return Response.json({
+        reply: `Plusieurs communes portent ce nom (${geo.villesAmbigues.join(", ")}). Pouvez-vous m'indiquer le code postal pour que je cible la bonne ville ?`,
+        devis: null,
+        escalade: null,
+        params: data.params,
+      });
+    } else if (geo.km) {
+      const recalc = await devisAvecOSRM(data.params, data.devis, geo.km);
+      if (recalc) data.devis = recalc;
+    }
+  }
 
   // --- Persistance + email ---
   // IMPORTANT : on AWAIT (en serverless, le travail non attendu après la réponse
@@ -134,12 +152,11 @@ function nettoyerReply(s?: string): string {
 async function devisAvecOSRM(
   params: Params | undefined,
   fallback: Devis | null | undefined,
+  km: number,
 ): Promise<Devis | null | undefined> {
   if (!params?.depart || !params?.destination || !params?.date_depart) return fallback;
   const nb = Number(params.nb_passagers);
   if (!Number.isFinite(nb) || nb <= 0) return fallback;
-
-  const km = await distanceKm(params.depart, params.destination);
   if (!km) return fallback;
 
   // Corrige une éventuelle année passée (extraction LLM)

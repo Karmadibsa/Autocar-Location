@@ -46,6 +46,7 @@ npm run dev                        # http://localhost:3000
 
 - **Petit jeu curé** : `supabase/reset-demo.sql` (quelques cas couvrant tous les statuts, client `client1@email.fr` relié — idéal démo côté client).
 - **Gros volume** : `supabase/seed-demo-volume.sql` (~500 devis sur 12 mois → courbes, camembert, KPIs). Régénérable : `python supabase/generer-seed-demo.py --devis 500`.
+- **Autocaristes partenaires** : `supabase/seed-autocaristes.sql` (annuaire mock, visible sur `/admin/autocaristes`).
 - **Emails de démo** : les clients fictifs sont sur `@demo.autocar-location.fr`. Le front ([lib/emailGuard.ts](web/lib/emailGuard.ts)) **n'envoie aucun email réel** à ce domaine (relances/devis traités, mais pas d'envoi Resend). Configurable via `EMAIL_DEMO_DOMAINS`.
 
 ## Documentation
@@ -71,4 +72,4 @@ Les secrets ne sont **jamais** committés (`.gitignore`). La clé du LLM reste *
 ## Tests
 
 - Moteur de prix : `npm test` (racine)
-- Front : `cd web && npx vitest run` (34 tests : pricing, distance, PDF, email, relances, noms, messagerie)
+- Front : `cd web && npx vitest run` (35 tests : pricing, distance, PDF, email, relances, noms, messagerie)

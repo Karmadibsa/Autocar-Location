@@ -40,9 +40,15 @@ describe("calculerDevis (port TS du moteur déterministe)", () => {
     expect("erreur" in d && d.erreur).toBe(true);
   });
 
-  it("> 85 passagers — escalade", () => {
-    const d = calculerDevis({ ...base, nb_passagers: 90 });
+  it("> 55 passagers (au-delà d'un autocar standard) — escalade", () => {
+    const d = calculerDevis({ ...base, nb_passagers: 60 });
     expect("escalade" in d && d.escalade).toBe(true);
+  });
+
+  it("55 passagers (un autocar standard) — devis normal, pas d'escalade", () => {
+    const d = calculerDevis({ ...base, nb_passagers: 55 });
+    expect("escalade" in d).toBe(false);
+    expect("prix_ht" in d).toBe(true);
   });
 
   it("option nuit chauffeur — augmente le prix", () => {

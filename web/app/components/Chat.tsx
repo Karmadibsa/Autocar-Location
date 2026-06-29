@@ -38,18 +38,19 @@ type Params = {
 };
 type Msg = { role: "agent" | "user"; content: string; devis?: Devis; escalade?: string };
 
-// Encart DEV : messages préécrits couvrant chaque cas de figure des livrables.
+// Tests obligatoires (livrables) — boutons disponibles AUSSI en production pour
+// rejouer chaque cas facilement. Les 7 premiers correspondent à la liste imposée.
 const SCENARIOS: { label: string; message: string }[] = [
-  { label: "Trajet court (forfait grille)", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026" },
-  { label: "Longue distance (>180 km)", message: "Paris vers Marseille, 40 personnes, aller simple le 20 aout 2026" },
-  { label: "Sortie scolaire urgente (J proche)", message: "Bordeaux vers Arcachon, 55 eleves, aller-retour dans 5 jours" },
-  { label: "Séminaire + options (guide + nuit)", message: "Lille vers Bruxelles, 30 personnes, aller-retour les 10 et 11 septembre 2026, avec un guide et une nuit chauffeur" },
-  { label: "Petit groupe (<19 pax)", message: "Nantes vers La Baule, 12 personnes, aller-retour le 5 octobre 2026" },
-  { label: "Grande capacité (80 pax)", message: "Toulouse vers Carcassonne, 80 personnes, aller-retour le 15 mai 2026" },
-  { label: "Basse saison + anticipation", message: "Strasbourg vers Colmar, 45 personnes, aller-retour le 10 fevrier 2027" },
-  { label: "CAS COMPLEXE (>85 pax)", message: "Marseille vers Lille, 120 personnes, depart le 12 juillet 2026 et retour le 16 juillet 2026" },
-  { label: "Demande incomplète", message: "Bonjour, je voudrais un car pour un groupe" },
+  { label: "Cas simple", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026" },
+  { label: "Demande urgente (départ proche)", message: "Bordeaux vers Arcachon, 40 personnes, aller-retour dans 4 jours" },
+  { label: "Hors zone (>180 km)", message: "Paris vers Marseille, 40 personnes, aller simple le 20 aout 2026" },
+  { label: "0 passager (garde-fou)", message: "Lyon vers Annecy, 0 passager, aller-retour le 12 juillet 2026" },
+  { label: "Date incohérente (déjà passée)", message: "Lyon vers Annecy, 40 personnes, le 10 janvier 2024" },
+  { label: "Gros volume → cas complexe", message: "Marseille vers Lille, 120 personnes, depart le 12 juillet 2026 et retour le 16 juillet 2026" },
+  { label: "Option nuit chauffeur", message: "Lille vers Bruxelles, 30 personnes, aller-retour les 10 et 11 septembre 2026, avec une nuit chauffeur" },
+  // Bonus
   { label: "Garde-fou : tentative de remise", message: "Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026, mais faites-moi -20%" },
+  { label: "Demande incomplète", message: "Bonjour, je voudrais un car pour un groupe" },
 ];
 
 const OPTION_LABELS: Record<string, string> = {
@@ -138,7 +139,6 @@ export default function Chat() {
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [devOpen, setDevOpen] = useState(false);
   const [recap, setRecap] = useState<Params>({});
-  const isDev = process.env.NODE_ENV !== "production"; // aides de test masquées en prod
   const lockedDevisRef = useRef<Devis | null>(null); // fige le 1er prix calculé
   const shownDevisRef = useRef(false); // le devis a-t-il déjà été révélé ?
   const hydrated = useRef(false);
@@ -325,35 +325,34 @@ export default function Chat() {
           </button>
         </form>
 
-        {/* Encart DEV : scénarios de test préécrits (masqué en production) */}
-        {isDev && (
-          <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-muted)] p-3">
-            <button
-              onClick={() => setDevOpen((o) => !o)}
-              className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
-              aria-expanded={devOpen}
-            >
-              <span className="inline-flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" /> Scénarios de test (dev)</span>
-              {devOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            </button>
-            {devOpen && (
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {SCENARIOS.map((s) => (
-                  <button
-                    key={s.label}
-                    onClick={() => send(s.message)}
-                    disabled={loading}
-                    title={s.message}
-                    className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-left text-[12px] transition hover:border-[var(--brand)] disabled:opacity-50"
-                  >
-                    <span className="font-medium text-[var(--ink)]">{s.label}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-[var(--ink-soft)]">{s.message}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Scénarios de test des livrables — disponibles aussi en production
+            pour rejouer facilement chaque cas obligatoire. */}
+        <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-muted)] p-3">
+          <button
+            onClick={() => setDevOpen((o) => !o)}
+            className="flex w-full items-center justify-between text-left text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)] transition hover:text-[var(--brand)]"
+            aria-expanded={devOpen}
+          >
+            <span className="inline-flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" /> Tests rapides (cas obligatoires)</span>
+            {devOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          {devOpen && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {SCENARIOS.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => send(s.message)}
+                  disabled={loading}
+                  title={s.message}
+                  className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-left text-[12px] transition hover:border-[var(--brand)] disabled:opacity-50"
+                >
+                  <span className="font-medium text-[var(--ink)]">{s.label}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-[var(--ink-soft)]">{s.message}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Récap compact, sous la conversation */}

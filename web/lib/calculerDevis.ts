@@ -52,10 +52,11 @@ export const MATRICES = {
     { max_jours: Infinity, code: "DD_3MOISETPLUS", coef: -0.1 },
   ],
   pondation_capacite: [
-    { max: 19, coef: -0.05 }, { max: 53, coef: 0 }, { max: 63, coef: 0.15 },
-    { max: 67, coef: 0.2 }, { max: 85, coef: 0.4 },
+    { max: 19, coef: -0.05 }, { max: 53, coef: 0 }, { max: 55, coef: 0.15 },
   ],
-  seuil_escalade_passagers: 85,
+  // Au-delà d'un autocar standard (~55 places), il faut plusieurs véhicules /
+  // une étude commerciale → escalade en cas complexe.
+  seuil_escalade_passagers: 55,
   options: { guide: 80, nuit_chauffeur: 120, peages: 0 } as Record<string, number>,
   marge: 0.15,
   tva: 0.1,

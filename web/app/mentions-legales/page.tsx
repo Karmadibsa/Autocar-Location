@@ -28,7 +28,7 @@ export default function MentionsLegales() {
         <div>
           <h2 className="font-semibold">Hébergement</h2>
           <p className="text-[var(--ink-soft)]">
-            Front hébergé sur Vercel ; base de données et authentification sur Supabase.
+            Front hébergé sur Netlify ; base de données et authentification sur Supabase.
             Données stockées dans l'Union européenne.
           </p>
         </div>

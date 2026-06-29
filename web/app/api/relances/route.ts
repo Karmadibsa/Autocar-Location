@@ -2,6 +2,7 @@
 // et nb_relances < 2. Envoie l'email, met à jour les statuts, planifie la suivante
 // ou clôture. Appelable par : un admin (token) OU un planificateur (secret n8n).
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { prochaineRelance, estUrgent, typeRelance, VALIDITE_JOURS } from "@/lib/relances";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
@@ -28,8 +29,11 @@ type DevisDu = {
   clients: { email: string | null; prenom: string | null; nom: string | null } | null;
 };
 
+const SELECT_DU =
+  "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, token, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, prenom, nom)";
+
 export async function POST(request: Request) {
-  const { token, secret } = await request.json().catch(() => ({}));
+  const { token, secret, devisId } = await request.json().catch(() => ({}));
   const sb = getAdminClient();
   if (!sb) return Response.json({ ok: false, reason: "no_config" }, { status: 500 });
 
@@ -46,6 +50,18 @@ export async function POST(request: Request) {
   if (!allowed) return Response.json({ ok: false, reason: "forbidden" }, { status: 403 });
 
   const now = new Date().toISOString();
+
+  // Relance INDIVIDUELLE (déclenchée par l'admin sur une ligne) : on force l'envoi
+  // immédiat pour ce devis, même si la prochaine relance n'est pas encore due.
+  if (devisId) {
+    const { data: d } = await sb.from("devis").select(SELECT_DU).eq("id", devisId).maybeSingle();
+    const dv = d as unknown as DevisDu | null;
+    if (!dv) return Response.json({ ok: false, reason: "not_found" }, { status: 404 });
+    if ((dv.nb_relances ?? 0) >= 2)
+      return Response.json({ ok: false, reason: "max_atteint" }, { status: 409 });
+    const { cloture } = await appliquerRelance(sb, dv, now);
+    return Response.json({ ok: true, envoyees: 1, cloturees: cloture ? 1 : 0, expirees: 0, restantes: 0 });
+  }
 
   // 0) Expiration EN MASSE : un devis envoyé depuis plus de 30 jours expire (demande
   // clôturée). On le fait en 2 requêtes (pas une boucle) pour rester rapide même
@@ -69,9 +85,7 @@ export async function POST(request: Request) {
   const BATCH = 30;
   const { data: dus } = await sb
     .from("devis")
-    .select(
-      "id, demande_id, prix_ht, tva, prix_ttc, devise, lignes, nb_relances, token, demandes(depart, destination, date_depart, nb_passagers, urgence), clients(email, prenom, nom)",
-    )
+    .select(SELECT_DU)
     .eq("statut", "envoye")
     .lte("prochaine_relance", now)
     .lt("nb_relances", 2)
@@ -81,35 +95,9 @@ export async function POST(request: Request) {
   let envoyees = 0;
   let cloturees = 0;
   for (const d of (dus ?? []) as unknown as DevisDu[]) {
-    const dem = d.demandes;
-    const urgent =
-      dem?.urgence === "urgent" || dem?.urgence === "prioritaire" || estUrgent(dem?.date_depart);
-    const nb = (d.nb_relances ?? 0) + 1;
-    const next = prochaineRelance(urgent, nb);
-
-    if (d.clients?.email) await sendRelanceEmail(d.clients.email, d, nb);
-
-    await sb
-      .from("devis")
-      .update({ nb_relances: nb, prochaine_relance: next, statut: next ? "envoye" : "expire" })
-      .eq("id", d.id);
-    await sb
-      .from("demandes")
-      .update({ statut: next ? (nb === 1 ? "relance_1" : "relance_2") : "cloture" })
-      .eq("id", d.demande_id);
-
-    // Trace + idempotence (best-effort : un doublon de clé est simplement ignoré)
-    await sb.from("relances").insert({
-      devis_id: d.id,
-      type: typeRelance(urgent, nb),
-      date_planifiee: now,
-      statut: "envoyee",
-      date_envoi: now,
-      cle_idempotence: `${d.id}-relance-${nb}`,
-    });
-
+    const { cloture } = await appliquerRelance(sb, d, now);
     envoyees++;
-    if (!next) cloturees++;
+    if (cloture) cloturees++;
   }
 
   // Combien de relances restent dues après ce lot (pour informer l'admin) ?
@@ -121,6 +109,38 @@ export async function POST(request: Request) {
     .lt("nb_relances", 2);
 
   return Response.json({ ok: true, envoyees, cloturees, expirees, restantes: restantes ?? 0 });
+}
+
+// Applique une relance à un devis : envoie l'email, met à jour devis + demande,
+// programme la suivante ou clôture. Renvoie `cloture` (2e relance atteinte).
+async function appliquerRelance(sb: SupabaseClient, d: DevisDu, now: string): Promise<{ cloture: boolean }> {
+  const dem = d.demandes;
+  const urgent = dem?.urgence === "urgent" || dem?.urgence === "prioritaire" || estUrgent(dem?.date_depart);
+  const nb = (d.nb_relances ?? 0) + 1;
+  const next = prochaineRelance(urgent, nb);
+
+  if (d.clients?.email) await sendRelanceEmail(d.clients.email, d, nb);
+
+  await sb
+    .from("devis")
+    .update({ nb_relances: nb, prochaine_relance: next, statut: next ? "envoye" : "expire" })
+    .eq("id", d.id);
+  await sb
+    .from("demandes")
+    .update({ statut: next ? (nb === 1 ? "relance_1" : "relance_2") : "cloture" })
+    .eq("id", d.demande_id);
+
+  // Trace + idempotence (best-effort : un doublon de clé est simplement ignoré)
+  await sb.from("relances").insert({
+    devis_id: d.id,
+    type: typeRelance(urgent, nb),
+    date_planifiee: now,
+    statut: "envoyee",
+    date_envoi: now,
+    cle_idempotence: `${d.id}-relance-${nb}`,
+  });
+
+  return { cloture: !next };
 }
 
 async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {

@@ -53,6 +53,9 @@ export async function POST(request: Request) {
       code_postal,
       ville,
       ref: refDevis(devis.id),
+      signature_image: devis.signature_image,
+      signe_par: devis.signe_par,
+      signe_le: devis.signe_le,
     },
   );
 

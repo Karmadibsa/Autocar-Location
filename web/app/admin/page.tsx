@@ -4,10 +4,11 @@
 // gagnés / perdus) + table avec le détail COMPLET du devis (vue pro).
 import { useEffect, useState, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 import Spinner from "@/app/components/Spinner";
-import { AlertTriangle, Download, MessageCircle } from "lucide-react";
+import { AlertTriangle, Download, MessageCircle, Bus } from "lucide-react";
 
 type DevisFull = {
   prix_ht: number | null;
@@ -19,6 +20,8 @@ type DevisFull = {
   nb_relances: number | null;
   prochaine_relance: string | null;
   raison_refus: string | null;
+  signe_par: string | null;
+  signe_le: string | null;
 };
 type DemandeRow = {
   id: string;
@@ -340,6 +343,20 @@ export default function AdminPage() {
     setMsgInput("");
   }
 
+  // Relance individuelle (bouton sur une ligne) : envoi immédiat pour ce devis.
+  async function relancerUn(demandeId: string) {
+    if (!session) return;
+    setRelanceMsg("Relance en cours…");
+    const r = await fetch("/api/relances", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: session.access_token, devisId: demandeId }),
+    });
+    const j = await r.json();
+    setRelanceMsg(j.ok ? "Relance envoyée à ce client." : "Relance impossible (déjà au maximum ?).");
+    loadData();
+  }
+
   async function lancerRelances() {
     if (!session) return;
     setRelanceMsg("Traitement…");
@@ -406,6 +423,12 @@ export default function AdminPage() {
           <p className="mt-1 text-sm text-[var(--ink-soft)]">
             Suivi des leads, devis et relances — interventions humaines mises en avant.
           </p>
+          <Link
+            href="/admin/autocaristes"
+            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand)] hover:text-[var(--brand-dark)]"
+          >
+            <Bus className="h-4 w-4" /> Annuaire des autocaristes partenaires
+          </Link>
         </div>
         <div className="flex flex-wrap items-end gap-2 text-sm">
           <label className="flex flex-col text-xs text-[var(--ink-soft)]">
@@ -730,6 +753,12 @@ export default function AdminPage() {
                                 <b>Motif de refus :</b> {dv.raison_refus}
                               </div>
                             )}
+                            {dv.signe_par && (
+                              <div className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--brand-soft)] p-2 text-xs text-[var(--brand-dark)]">
+                                <b>Signé électroniquement</b> par {dv.signe_par}
+                                {dv.signe_le ? ` le ${new Date(dv.signe_le).toLocaleString("fr-FR")}` : ""} · CGV acceptées.
+                              </div>
+                            )}
                           </>
                         )}
 
@@ -753,6 +782,15 @@ export default function AdminPage() {
                             <button onClick={() => agir(d.id, "refuse")} className="rounded-full border border-[var(--border)] px-3 py-1 text-xs transition hover:border-[#A12B2B] hover:text-[#A12B2B]">
                               Perdu
                             </button>
+                            {["devis_envoye", "relance_1", "relance_2"].includes(d.statut) && (dv?.nb_relances ?? 0) < 2 && (
+                              <button
+                                onClick={() => relancerUn(d.id)}
+                                title="Envoyer une relance immédiatement à ce client"
+                                className="rounded-full border border-[var(--brand)] px-3 py-1 text-xs font-medium text-[var(--brand)] transition hover:bg-[var(--brand)] hover:text-white"
+                              >
+                                Relancer maintenant
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>

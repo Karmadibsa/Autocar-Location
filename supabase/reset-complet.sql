@@ -4,7 +4,7 @@
 -- données clair couvrant tous les statuts. Ne touche PAS aux comptes auth.users.
 -- =============================================================================
 
-drop table if exists conversations, relances, devis, demandes, clients, pricing_config, profiles cascade;
+drop table if exists conversations, relances, devis, demandes, clients, pricing_config, autocaristes, profiles cascade;
 drop type  if exists statut_demande, statut_devis, type_relance cascade;
 drop function if exists is_admin cascade;
 
@@ -56,6 +56,9 @@ create table devis (
   statut statut_devis not null default 'brouillon', pdf_url text, date_envoi timestamptz,
   prochaine_relance timestamptz, nb_relances integer not null default 0,
   token uuid not null default gen_random_uuid(), raison_refus text,
+  -- Signature électronique simple (à l'acceptation)
+  signature_image text, signe_par text, signe_le timestamptz,
+  cgv_acceptees boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -76,6 +79,17 @@ create table conversations (
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 
+-- Annuaire des autocaristes partenaires (avec qui on travaille) — données mock.
+create table autocaristes (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null, ville text, departement text,
+  nb_vehicules integer, capacite_max integer,
+  contact_email text, contact_tel text,
+  note numeric, specialites text,
+  actif boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 create table pricing_config (id integer primary key default 1 check (id = 1), data jsonb not null, updated_at timestamptz not null default now());
 insert into pricing_config (id, data) values (1, '{
   "devise":"EUR",
@@ -83,8 +97,8 @@ insert into pricing_config (id, data) values (1, '{
   "longue_distance":{"seuil_km":180,"multiplicateur_distance":2,"prix_km":2.5},
   "saison_par_mois":{"1":{"niveau":"basse","coef":-0.07},"2":{"niveau":"basse","coef":-0.07},"8":{"niveau":"basse","coef":-0.07},"11":{"niveau":"basse","coef":-0.07},"9":{"niveau":"moyenne","coef":0},"10":{"niveau":"moyenne","coef":0},"12":{"niveau":"moyenne","coef":0},"3":{"niveau":"haute","coef":0.10},"4":{"niveau":"haute","coef":0.10},"7":{"niveau":"haute","coef":0.10},"5":{"niveau":"tres_haute","coef":0.15},"6":{"niveau":"tres_haute","coef":0.15}},
   "pondation_date":[{"max_jours":6,"code":"DD_PRIORITAIRE","coef":0.10},{"max_jours":29,"code":"DD_URGENT","coef":0.05},{"max_jours":89,"code":"DD_NORMAL","coef":-0.05},{"max_jours":100000,"code":"DD_3MOISETPLUS","coef":-0.10}],
-  "pondation_capacite":[{"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":63,"coef":0.15},{"max":67,"coef":0.20},{"max":85,"coef":0.40}],
-  "seuil_escalade_passagers":85,"options":{"guide":80,"nuit_chauffeur":120,"peages":0},"marge":0.15,"tva":0.10
+  "pondation_capacite":[{"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":55,"coef":0.15}],
+  "seuil_escalade_passagers":55,"options":{"guide":80,"nuit_chauffeur":120,"peages":0},"marge":0.15,"tva":0.10
 }'::jsonb);
 
 -- ---------- RLS ----------
@@ -94,7 +108,9 @@ alter table demandes enable row level security;
 alter table devis enable row level security;
 alter table relances enable row level security;
 alter table conversations enable row level security;
+alter table autocaristes enable row level security;
 create policy profiles_self on profiles for select using (id = auth.uid() or is_admin());
+create policy autocaristes_admin on autocaristes for select using (is_admin());
 create policy clients_select on clients for select using (auth_user_id = auth.uid() or is_admin());
 create policy clients_update on clients for update using (auth_user_id = auth.uid() or is_admin());
 create policy demandes_select on demandes for select using (is_admin() or client_id in (select id from clients where auth_user_id = auth.uid()));
@@ -138,19 +154,19 @@ insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, li
 
 -- 3) Paul Martin — PERDU (refusé)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,60,100,'normal','refuse', now() - interval '5 days');
+ ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,55,100,'normal','refuse', now() - interval '5 days');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
  ('e0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004',1240.00,124.00,1364.00,'EUR',
   '[{"libelle":"Forfait transfert 100 km","montant":580},{"libelle":"Aller/retour (x2)","montant":580},{"libelle":"Coefficients (x1.15)","montant":174},{"libelle":"Marge +15%","montant":143.40}]'::jsonb,
-  '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
+  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
 
 -- 4) Sophie Leroy — À TRAITER (cas complexe > 85)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 85 : transfert a un commercial.', now() - interval '3 days');
+ ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 55 : transfert a un commercial.', now() - interval '3 days');
 
 -- 5) Thomas Moreau — À TRAITER (cas complexe, urgent)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 85 : transfert a un commercial.', now() - interval '4 hours');
+ ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 55 : transfert a un commercial.', now() - interval '4 hours');
 
 -- 6) Marie Dubois — EN ATTENTE (relance 1)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
@@ -181,3 +197,20 @@ insert into demandes (id, client_id, depart, destination, date_depart, aller_ret
  ('d0000000-0000-0000-0000-000000000009','c6000000-0000-0000-0000-000000000006','Rennes','Saint-Malo','2026-08-15',true,25,70,'normal','nouveau_lead', now() - interval '2 hours'),
  ('d0000000-0000-0000-0000-000000000010','c3000000-0000-0000-0000-000000000003','Paris','Deauville','2026-08-20',false,35,200,'normal','qualifiee', now() - interval '2 days'),
  ('d0000000-0000-0000-0000-000000000011','c4000000-0000-0000-0000-000000000004','Strasbourg','Colmar',null,false,null,null,'normal','incomplete', now() - interval '1 day');
+
+-- ---------- Annuaire autocaristes partenaires (mock) ----------
+insert into autocaristes (nom, ville, departement, nb_vehicules, capacite_max, contact_email, contact_tel, note, specialites, actif) values
+ ('Cars Rhône Évasion',      'Lyon',        'Rhône (69)',          18, 63, 'contact@rhone-evasion.fr',     '0472100100', 4.6, 'Tourisme, scolaire, longue distance', true),
+ ('Alpes Autocars',          'Grenoble',    'Isère (38)',          12, 59, 'resa@alpes-autocars.fr',       '0476200200', 4.4, 'Montagne, navettes ski', true),
+ ('Atlantique Voyages',      'Nantes',      'Loire-Atlantique (44)',22, 71, 'info@atlantique-voyages.fr',  '0240300300', 4.7, 'Grands groupes, événementiel', true),
+ ('Gironde Cars',            'Bordeaux',    'Gironde (33)',        15, 63, 'contact@gironde-cars.fr',      '0556400400', 4.3, 'Vignobles, oenotourisme', true),
+ ('Nord Évasion',            'Lille',       'Nord (59)',           20, 71, 'resa@nord-evasion.fr',         '0320500500', 4.5, 'Transfrontalier (Belgique)', true),
+ ('Occitanie Bus',           'Toulouse',    'Haute-Garonne (31)',  16, 67, 'contact@occitanie-bus.fr',     '0561600600', 4.2, 'Pèlerinages, scolaire', true),
+ ('Méditerranée Autocars',   'Marseille',   'Bouches-du-Rhône (13)',24, 71, 'info@medi-autocars.fr',       '0491700700', 4.1, 'Croisières, aéroport', true),
+ ('Côte d''Azur Lignes',     'Nice',        'Alpes-Maritimes (06)',10, 53, 'resa@cotedazur-lignes.fr',     '0493800800', 4.8, 'Haut de gamme, séminaires', true),
+ ('Alsace Cars',             'Strasbourg',  'Bas-Rhin (67)',       14, 63, 'contact@alsace-cars.fr',       '0388900900', 4.5, 'Marchés de Noël, Europe', true),
+ ('Bretagne Mobilités',      'Rennes',      'Ille-et-Vilaine (35)',13, 59, 'info@bretagne-mobilites.fr',   '0299010101', 4.4, 'Littoral, scolaire', true),
+ ('Bourgogne Tourisme Cars', 'Dijon',       'Côte-d''Or (21)',      9, 53, 'resa@bourgogne-cars.fr',       '0380020202', 4.0, 'Oenotourisme, petits groupes', true),
+ ('Capitale Autocars',       'Paris',       'Paris (75)',          30, 71, 'contact@capitale-autocars.fr', '0140030303', 4.6, 'Grands événements, international', true),
+ ('Loire Évasion',           'Angers',      'Maine-et-Loire (49)',  8, 53, 'info@loire-evasion.fr',        '0241040404', 3.9, 'Châteaux, scolaire', false),
+ ('Champagne Cars',          'Reims',       'Marne (51)',          11, 59, 'resa@champagne-cars.fr',       '0326050505', 4.3, 'Oenotourisme, séminaires', true);

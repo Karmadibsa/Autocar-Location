@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       sb
         .from("demandes")
         .select(
-          "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, msg_non_lu_admin, msg_non_lu_client, clients(email, prenom, nom, telephone), devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance, raison_refus)",
+          "id, depart, destination, date_depart, aller_retour, distance_km, nb_passagers, urgence, commentaire, statut, created_at, msg_non_lu_admin, msg_non_lu_client, clients(email, prenom, nom, telephone), devis(prix_ht, tva, prix_ttc, lignes, coefficients, statut, nb_relances, prochaine_relance, raison_refus, signe_par, signe_le)",
         ),
     )
       .order("created_at", { ascending: false })

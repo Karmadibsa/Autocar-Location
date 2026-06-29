@@ -23,6 +23,9 @@ export type ParamsPdf = {
   code_postal?: string | null;
   ville?: string | null;
   ref?: string | null; // référence stable du devis (dérivée de l'id)
+  signature_image?: string | null; // data URL PNG du tracé (devis accepté)
+  signe_par?: string | null;
+  signe_le?: string | null;
 };
 
 /** Référence lisible et **stable** dérivée de l'id du devis (même devis ⇒ même réf.). */
@@ -104,19 +107,19 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   }
 
   // --- Résumé de la demande (encadré) ---
-  const boxH = 78;
+  const boxH = 84;
   page.drawRectangle({ x: M, y: y - boxH, width: W - 2 * M, height: boxH, color: LIGHT });
-  text("RESUME DE LA DEMANDE", M + 12, y - 18, 9, bold, BRAND);
+  text("RESUME DE LA DEMANDE", M + 12, y - 16, 9, bold, BRAND);
   const col1 = M + 12;
   const col2 = M + 270;
   const resume = (label: string, val: string, x: number, yy: number) => {
     text(label, x, yy, 8, font, GREY);
     text(val, x, yy - 13, 10, bold);
   };
-  resume("Trajet", `${params.depart ?? "?"} -> ${params.destination ?? "?"}`, col1, y - 40);
-  resume("Date de depart", params.date_depart ?? "-", col2, y - 40);
-  resume("Type", params.aller_retour ? "Aller-retour" : "Aller simple", col1, y - 70);
-  resume("Passagers", String(params.nb_passagers ?? "-"), col2, y - 70);
+  resume("Trajet", `${params.depart ?? "?"} -> ${params.destination ?? "?"}`, col1, y - 36);
+  resume("Date de depart", params.date_depart ?? "-", col2, y - 36);
+  resume("Type", params.aller_retour ? "Aller-retour" : "Aller simple", col1, y - 62);
+  resume("Passagers", String(params.nb_passagers ?? "-"), col2, y - 62);
   y -= boxH + 30;
 
   // --- Prestation (version client : pas de marge ni de coefficients) ---
@@ -144,9 +147,30 @@ export async function buildDevisPdf(devis: DevisPdf, params: ParamsPdf): Promise
   right(eur(devis.prix_ttc), W - M - 12, y + 3, 13, bold, INK);
   y -= 60;
 
+  // --- Signature électronique (si le devis a été accepté en ligne) ---
+  if (params.signature_image && params.signe_par) {
+    const sy = y - 6;
+    page.drawLine({ start: { x: M, y: sy + 14 }, end: { x: W - M, y: sy + 14 }, thickness: 0.5, color: GREY });
+    text("BON POUR ACCORD", M, sy, 9, bold, BRAND);
+    text(`Signe par : ${params.signe_par}`, M, sy - 16, 10, bold);
+    if (params.signe_le) text(`Le ${new Date(params.signe_le).toLocaleString("fr-FR")}`, M, sy - 30, 9, font, GREY);
+    try {
+      const b64 = params.signature_image.split(",")[1] ?? "";
+      const png = await doc.embedPng(Buffer.from(b64, "base64"));
+      const h = 46;
+      const w = Math.min(190, (png.width / png.height) * h);
+      page.drawImage(png, { x: W - M - w, y: sy - 36, width: w, height: h });
+    } catch {
+      /* signature best-effort */
+    }
+    y = sy - 48;
+  }
+
   // --- Mentions ---
-  text("Tarif sous reserve de disponibilite. Devis genere automatiquement, valable 30 jours.", M, y, 9, font, GREY);
+  text("Tarif sous reserve de disponibilite. Devis valable 30 jours.", M, y, 9, font, GREY);
   text("Autocar Location - intermediation transport de groupe - depuis 2010", M, y - 14, 9, font, GREY);
+  if (params.signature_image)
+    text("Signature electronique simple (eIDAS niveau simple) - horodatee.", M, y - 28, 8, font, GREY);
 
   return doc.save();
 }

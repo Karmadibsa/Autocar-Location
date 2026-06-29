@@ -2,9 +2,9 @@
 
 // Onglet "Mes devis" : liste des devis (télécharger, accepter / refuser + motifs).
 // La garde d'accès, l'en-tête et les onglets sont gérés par le layout.
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, PenLine } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import StatutBadge from "@/app/components/StatutBadge";
 
@@ -38,6 +38,15 @@ export default function MesDevis() {
   const [thread, setThread] = useState<Message[]>([]);
   const [msgInput, setMsgInput] = useState("");
   const [msgLoading, setMsgLoading] = useState(false);
+  // Signature électronique (modale d'acceptation)
+  const [signId, setSignId] = useState<string | null>(null);
+  const [signNom, setSignNom] = useState("");
+  const [cgvOk, setCgvOk] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
+  const [nomDefaut, setNomDefaut] = useState("");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawingRef = useRef(false);
+  const lastRef = useRef<{ x: number; y: number } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!session) return;
@@ -49,21 +58,82 @@ export default function MesDevis() {
     const d = await r.json();
     setDevis(d.devis ?? []);
     setAAdresse(!!d.profil?.adresse);
+    setNomDefaut([d.profil?.prenom, d.profil?.nom].filter(Boolean).join(" "));
   }, [session]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  async function repondre(id: string, reponse: "accepte" | "refuse", motifs?: string[]) {
+  async function repondre(
+    id: string,
+    reponse: "accepte" | "refuse",
+    motifs?: string[],
+    extra?: { signature: string; signePar: string; cgv: boolean },
+  ) {
     if (!session) return;
     await fetch("/api/devis-reponse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: session.access_token, id, reponse, raisons: motifs }),
+      body: JSON.stringify({ token: session.access_token, id, reponse, raisons: motifs, ...extra }),
     });
     if (reponse === "accepte" && !aAdresse) setAdresseAlerte(true);
     loadData();
+  }
+
+  // --- Pad de signature (canvas) ---
+  function ouvrirSignature(id: string) {
+    setSignId(id);
+    setSignNom(nomDefaut);
+    setCgvOk(false);
+    setHasDrawn(false);
+  }
+  function sigPos(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = canvasRef.current!;
+    const r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+  }
+  function sigDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    const c = canvasRef.current;
+    if (!c) return;
+    c.setPointerCapture(e.pointerId);
+    drawingRef.current = true;
+    lastRef.current = sigPos(e);
+  }
+  function sigMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!drawingRef.current) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    const l = lastRef.current;
+    if (!ctx || !l) return;
+    const p = sigPos(e);
+    ctx.strokeStyle = "#14201d";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(l.x, l.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastRef.current = p;
+    setHasDrawn(true);
+  }
+  function sigUp() {
+    drawingRef.current = false;
+    lastRef.current = null;
+  }
+  function effacerSignature() {
+    const c = canvasRef.current;
+    if (c) c.getContext("2d")?.clearRect(0, 0, c.width, c.height);
+    setHasDrawn(false);
+  }
+  async function confirmerSignature() {
+    const c = canvasRef.current;
+    if (!c || !signId || !hasDrawn || !cgvOk || !signNom.trim()) return;
+    await repondre(signId, "accepte", undefined, {
+      signature: c.toDataURL("image/png"),
+      signePar: signNom.trim(),
+      cgv: true,
+    });
+    setSignId(null);
   }
 
   function toggleRaison(r: string) {
@@ -193,10 +263,10 @@ export default function MesDevis() {
                 {d.statut === "envoye" && (
                   <>
                     <button
-                      onClick={() => repondre(d.id, "accepte")}
-                      className="rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-dark)]"
+                      onClick={() => ouvrirSignature(d.id)}
+                      className="flex items-center gap-1.5 rounded-full bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--brand-dark)]"
                     >
-                      Accepter le devis
+                      <PenLine className="h-3.5 w-3.5" /> Accepter et signer
                     </button>
                     <button
                       onClick={() => {
@@ -321,6 +391,72 @@ export default function MesDevis() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modale de signature électronique (acceptation) */}
+      {signId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Signature du devis">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <PenLine className="h-5 w-5 text-[var(--brand)]" /> Accepter et signer le devis
+            </h3>
+            <p className="mt-1 text-xs text-[var(--ink-soft)]">
+              Signez ci-dessous, indiquez votre nom et acceptez les conditions pour valider votre accord.
+            </p>
+
+            <label className="mt-3 block text-xs font-medium text-[var(--ink)]">Nom du signataire</label>
+            <input
+              value={signNom}
+              onChange={(e) => setSignNom(e.target.value)}
+              placeholder="Prénom NOM"
+              className="mt-1 w-full rounded-lg border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
+            />
+
+            <div className="mt-3 flex items-center justify-between">
+              <label className="text-xs font-medium text-[var(--ink)]">Votre signature</label>
+              <button onClick={effacerSignature} className="text-xs text-[var(--brand)] underline hover:text-[var(--brand-dark)]">
+                Effacer
+              </button>
+            </div>
+            <canvas
+              ref={canvasRef}
+              width={420}
+              height={150}
+              onPointerDown={sigDown}
+              onPointerMove={sigMove}
+              onPointerUp={sigUp}
+              onPointerLeave={sigUp}
+              className="mt-1 w-full touch-none rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-muted)]"
+            />
+
+            <label className="mt-3 flex items-start gap-2 text-xs text-[var(--ink)]">
+              <input type="checkbox" checked={cgvOk} onChange={(e) => setCgvOk(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
+              <span>
+                J&apos;accepte le devis et les{" "}
+                <Link href="/cgv" target="_blank" className="text-[var(--brand)] underline hover:text-[var(--brand-dark)]">
+                  conditions générales de vente
+                </Link>
+                .
+              </span>
+            </label>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setSignId(null)}
+                className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--ink-soft)] transition hover:bg-[var(--bg-muted)]"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmerSignature}
+                disabled={!hasDrawn || !cgvOk || !signNom.trim()}
+                className="rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-40"
+              >
+                Valider ma signature
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

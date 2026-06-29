@@ -96,6 +96,11 @@ create table if not exists devis (
   nb_relances      integer not null default 0,
   token            uuid not null default gen_random_uuid(), -- lien email "refuser sans compte"
   raison_refus     text,                                    -- feedback du client en cas de refus
+  -- Signature électronique simple (apposée à l'acceptation en ligne)
+  signature_image  text,                                    -- data URL PNG du tracé
+  signe_par        text,                                    -- nom saisi par le signataire
+  signe_le         timestamptz,                             -- horodatage de la signature
+  cgv_acceptees    boolean not null default false,          -- CGV cochées à l'acceptation
   created_at       timestamptz not null default now()
 );
 create index if not exists devis_demande_idx on devis(demande_id);
@@ -125,6 +130,23 @@ create table if not exists conversations (
   updated_at  timestamptz not null default now()
 );
 create index if not exists conversations_client_idx on conversations(client_id);
+
+-- --------------------------- AUTOCARISTES -----------------------------------
+-- Annuaire des transporteurs partenaires (avec qui on travaille). Données mock.
+create table if not exists autocaristes (
+  id            uuid primary key default gen_random_uuid(),
+  nom           text not null,
+  ville         text,
+  departement   text,
+  nb_vehicules  integer,
+  capacite_max  integer,                        -- capacité du plus grand véhicule
+  contact_email text,
+  contact_tel   text,
+  note          numeric,                        -- note interne 0..5
+  specialites   text,
+  actif         boolean not null default true,
+  created_at    timestamptz not null default now()
+);
 
 -- --------------------------- PRICING CONFIG ---------------------------------
 -- Matrices pilotables (miroir de pricing/matrices.js). Modifiable sans toucher au code.
@@ -159,10 +181,9 @@ insert into pricing_config (id, data) values (1, '{
     {"max_jours":100000,"code":"DD_3MOISETPLUS","coef":-0.10}
   ],
   "pondation_capacite": [
-    {"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":63,"coef":0.15},
-    {"max":67,"coef":0.20},{"max":85,"coef":0.40}
+    {"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":55,"coef":0.15}
   ],
-  "seuil_escalade_passagers": 85,
+  "seuil_escalade_passagers": 55,
   "options": {"guide":80,"nuit_chauffeur":120,"peages":0},
   "marge": 0.15,
   "tva": 0.10
@@ -176,6 +197,7 @@ alter table devis         enable row level security;
 alter table relances      enable row level security;
 alter table conversations enable row level security;
 alter table profiles      enable row level security;
+alter table autocaristes  enable row level security;
 
 -- profiles : chacun lit/écrit son profil ; admin voit tout
 create policy profiles_self on profiles for select using (id = auth.uid() or is_admin());
@@ -194,6 +216,9 @@ create policy conversations_select on conversations for select
 
 -- relances : admin uniquement côté client (gérées par n8n via service role)
 create policy relances_admin on relances for select using (is_admin());
+
+-- autocaristes : annuaire interne, réservé à l'admin (lecture)
+create policy autocaristes_admin on autocaristes for select using (is_admin());
 
 -- NB : l'agent n8n et le dashboard admin écrivent via la SERVICE ROLE KEY,
 -- qui contourne RLS. pricing_config n'a aucune policy → lisible seulement en service role.
