@@ -62,7 +62,22 @@ npm run dev                        # http://localhost:3000
 | [COUTS_ET_PROD.md](COUTS_ET_PROD.md) | Choix MVP (tunnel) + coûts détaillés d'une vraie prod |
 | [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
 | [n8n/README.md](n8n/README.md) · [pricing/README.md](pricing/README.md) | Montage de l'agent · moteur de prix |
-| `livrables/` | Dossier de cadrage, argumentaire, wireframes |
+| [`livrables/`](livrables/README.md) | Livrables formatés : L1 cadrage, L2 prototype & artefacts, L3 passation, support de soutenance |
+
+## Livrables (rendus du cas d'étude)
+
+Documents formatés (`.docx`) dans **[`livrables/`](livrables/README.md)**, alignés sur la grille
+de notation et la liste « Ce qui doit être rendu » du brief.
+
+| # | Livrable | Document | Échéance |
+|---|----------|----------|----------|
+| **L1** | Dossier de cadrage | [Dossier-de-cadrage-NeoTravel.docx](livrables/L1-dossier-cadrage/Dossier-de-cadrage-NeoTravel.docx) (+ [Argumentaire](livrables/L1-dossier-cadrage/Argumentaire-des-choix-NeoTravel.docx) + [wireframes](livrables/L1-dossier-cadrage/wireframes)) | 24/06 |
+| **L2** | Prototype & artefacts | [L2-Prototype-et-artefacts-NeoTravel.docx](livrables/L2-prototype-et-artefacts/L2-Prototype-et-artefacts-NeoTravel.docx) + ce **dépôt Git** | 29/06 |
+| **L3** | Documentation de passation | [L3-Documentation-de-passation-NeoTravel.docx](livrables/L3-documentation-de-passation/L3-Documentation-de-passation-NeoTravel.docx) | 29/06 |
+| **—** | Support de soutenance | [Support-de-soutenance-NeoTravel.docx](livrables/support-de-soutenance/Support-de-soutenance-NeoTravel.docx) | 30/06 |
+
+> Les `.docx` sont **régénérables** depuis leurs scripts `build.js` (`node livrables/<dossier>/build.js`)
+> après un `npm install` à la racine. Détails dans [livrables/README.md](livrables/README.md).
 
 ## Variables d'environnement
 
