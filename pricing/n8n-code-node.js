@@ -38,9 +38,10 @@ const MATRICES = {
     { max_jours: Infinity, code: 'DD_3MOISETPLUS', coef: -0.10 },
   ],
   pondation_capacite: [
-    { max: 19, coef: -0.05 }, { max: 53, coef: 0 }, { max: 55, coef: 0.15 },
+    { max: 19, coef: -0.05 }, { max: 53, coef: 0 }, { max: 63, coef: 0.15 },
+    { max: 67, coef: 0.20 }, { max: 85, coef: 0.40 },
   ],
-  seuil_escalade_passagers: 55,
+  seuil_escalade_passagers: 85,
   options: { guide: 80, nuit_chauffeur: 120, peages: 0 },
   marge: 0.15,
   tva: 0.10,

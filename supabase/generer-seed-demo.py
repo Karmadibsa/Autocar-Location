@@ -42,8 +42,8 @@ PONDATION_DATE = [
     (89, "DD_NORMAL", -0.05),
     (10**9, "DD_3MOISETPLUS", -0.10),
 ]
-PONDATION_CAPACITE = [(19, -0.05), (53, 0.0), (55, 0.15)]
-SEUIL_ESCALADE = 55  # au-delà d'un autocar standard (~55 places) -> cas complexe
+PONDATION_CAPACITE = [(19, -0.05), (53, 0.0), (63, 0.15), (67, 0.20), (85, 0.40)]
+SEUIL_ESCALADE = 85
 OPTIONS = {"guide": 80, "nuit_chauffeur": 120, "peages": 0}
 MARGE = 0.15
 TVA = 0.10
@@ -343,7 +343,7 @@ def main():
         depart, destination, dist = forced.get("trajet") or random.choice(TRAJETS)
         anticip = random.choice([3, 7, 12, 20, 35, 50, 75, 100, 140, 175])
         date_depart = created + timedelta(days=anticip)
-        nb_pax = forced.get("pax") or random.choice([8, 12, 15, 20, 25, 30, 35, 40, 45, 48, 50, 53, 55])
+        nb_pax = forced.get("pax") or random.choice([8, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80])
         aller_retour = forced["ar"] if "ar" in forced else random.random() < 0.6
         options = []
         if random.random() < 0.18:
@@ -445,7 +445,7 @@ def main():
     for _ in range(args.complexes):
         cid = random.choice(clients)
         depart, destination, dist = random.choice(TRAJETS)
-        nb_pax = random.choice([58, 60, 65, 75, 90, 110, 140, 180, 220])
+        nb_pax = random.choice([90, 95, 110, 120, 140, 180, 220, 300])
         age_days = random.randint(0, 13)  # 'A traiter' : jamais plus vieux que 2 semaines
         created = today - timedelta(days=age_days)
         date_depart = created + timedelta(days=random.randint(10, 120))

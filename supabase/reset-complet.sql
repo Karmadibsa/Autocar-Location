@@ -97,8 +97,8 @@ insert into pricing_config (id, data) values (1, '{
   "longue_distance":{"seuil_km":180,"multiplicateur_distance":2,"prix_km":2.5},
   "saison_par_mois":{"1":{"niveau":"basse","coef":-0.07},"2":{"niveau":"basse","coef":-0.07},"8":{"niveau":"basse","coef":-0.07},"11":{"niveau":"basse","coef":-0.07},"9":{"niveau":"moyenne","coef":0},"10":{"niveau":"moyenne","coef":0},"12":{"niveau":"moyenne","coef":0},"3":{"niveau":"haute","coef":0.10},"4":{"niveau":"haute","coef":0.10},"7":{"niveau":"haute","coef":0.10},"5":{"niveau":"tres_haute","coef":0.15},"6":{"niveau":"tres_haute","coef":0.15}},
   "pondation_date":[{"max_jours":6,"code":"DD_PRIORITAIRE","coef":0.10},{"max_jours":29,"code":"DD_URGENT","coef":0.05},{"max_jours":89,"code":"DD_NORMAL","coef":-0.05},{"max_jours":100000,"code":"DD_3MOISETPLUS","coef":-0.10}],
-  "pondation_capacite":[{"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":55,"coef":0.15}],
-  "seuil_escalade_passagers":55,"options":{"guide":80,"nuit_chauffeur":120,"peages":0},"marge":0.15,"tva":0.10
+  "pondation_capacite":[{"max":19,"coef":-0.05},{"max":53,"coef":0},{"max":63,"coef":0.15},{"max":67,"coef":0.20},{"max":85,"coef":0.40}],
+  "seuil_escalade_passagers":85,"options":{"guide":80,"nuit_chauffeur":120,"peages":0},"marge":0.15,"tva":0.10
 }'::jsonb);
 
 -- ---------- RLS ----------
@@ -154,19 +154,19 @@ insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, li
 
 -- 3) Paul Martin — PERDU (refusé)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,55,100,'normal','refuse', now() - interval '5 days');
+ ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,60,100,'normal','refuse', now() - interval '5 days');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
  ('e0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004',1240.00,124.00,1364.00,'EUR',
   '[{"libelle":"Forfait transfert 100 km","montant":580},{"libelle":"Aller/retour (x2)","montant":580},{"libelle":"Coefficients (x1.15)","montant":174},{"libelle":"Marge +15%","montant":143.40}]'::jsonb,
-  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
+  '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
 
 -- 4) Sophie Leroy — À TRAITER (cas complexe > 85)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 55 : transfert a un commercial.', now() - interval '3 days');
+ ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 85 : transfert a un commercial.', now() - interval '3 days');
 
 -- 5) Thomas Moreau — À TRAITER (cas complexe, urgent)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 55 : transfert a un commercial.', now() - interval '4 hours');
+ ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 85 : transfert a un commercial.', now() - interval '4 hours');
 
 -- 6) Marie Dubois — EN ATTENTE (relance 1)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
@@ -190,7 +190,7 @@ insert into demandes (id, client_id, depart, destination, date_depart, aller_ret
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
  ('e0000000-0000-0000-0000-000000000008','d0000000-0000-0000-0000-000000000008','c5000000-0000-0000-0000-000000000005',720.00,72.00,792.00,'EUR',
   '[{"libelle":"Forfait transfert 25 km","montant":250},{"libelle":"Aller/retour (x2)","montant":250},{"libelle":"Coefficients (x1.15)","montant":75},{"libelle":"Marge +15%","montant":83.25}]'::jsonb,
-  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '40 days', 2, now() - interval '40 days');
+  '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '40 days', 2, now() - interval '40 days');
 
 -- 9-11) Haut de funnel (sans devis), reliés à des clients
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values

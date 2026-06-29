@@ -33,7 +33,7 @@ npm run demo  # affiche des devis exemples détaillés
 ```
 **Sortie** : un des trois cas
 - **Devis** : `{ prix_ht, tva, prix_ttc, devise, lignes[], coefficients[], meta }`
-- **Escalade** (> 55 passagers, au-delà d'un autocar standard) : `{ escalade: true, raison, params }`
+- **Escalade** (> 85 passagers) : `{ escalade: true, raison, params }`
 - **Erreur** de validation : `{ erreur: true, message, champ }`
 
 ## Pipeline de calcul
@@ -49,7 +49,7 @@ npm run demo  # affiche des devis exemples détaillés
 
 ## Garde-fous intégrés
 - **0 ou < 1 passager**, **distance ≤ 0**, **date incohérente** → `{ erreur }` (jamais de prix).
-- **> 55 passagers** → `{ escalade }` vers le commercial (HITL).
+- **> 85 passagers** → `{ escalade }` vers le commercial (HITL).
 - **Arrondi prévisible** au centime (robuste aux artefacts flottants).
 - **Déterminisme garanti** (testé) : deux appels identiques ⇒ résultat identique.
 

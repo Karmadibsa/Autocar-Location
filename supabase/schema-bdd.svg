@@ -17,7 +17,7 @@
   </defs>
 
   <text x="40" y="36" font-size="20" font-weight="bold" fill="#14201d">Autocar Location — Modèle de données (Supabase / PostgreSQL)</text>
-  <text x="40" y="56" class="note">Sécurisé par RLS · 7 tables métier + auth.users + pricing_config · seuil cas complexe = 55 passagers</text>
+  <text x="40" y="56" class="note">Sécurisé par RLS · 7 tables métier + auth.users + pricing_config · seuil cas complexe = 85 passagers</text>
 
   <!-- auth.users -->
   <g>

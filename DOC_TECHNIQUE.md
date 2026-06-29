@@ -132,7 +132,7 @@ flowchart TB
 3. n8n **extrait** les paramètres (1 appel LLM) ; le nœud **Code** calcule le devis **et** rédige la réponse (déterministe).
 4. De retour dans `/api/chat`, on **recalcule** avec la **distance routière réelle** (OSRM) — le 1ᵉʳ prix est ensuite **figé**.
 5. On **persiste** conversation + demande + devis dans Supabase, et on **envoie l'email** (PDF joint) si l'email est connu.
-6. Si **> 55 passagers** (au-delà d'un autocar standard) → pas de devis automatique : la demande devient **`cas_complexe`** (un conseiller la chiffre à la main via le dashboard).
+6. Si **> 85 passagers** → pas de devis automatique : la demande devient **`cas_complexe`** (un conseiller la chiffre à la main via le dashboard).
 
 ---
 
@@ -198,7 +198,7 @@ Calcul, dans l'ordre :
 2. **Aller-retour** : base × 2.
 3. **Coefficients additifs** : saison du mois + anticipation (jours avant départ) + capacité (nb passagers).
 4. **Marge** +15 %, puis **TVA** 10 %.
-5. **Escalade** si nb passagers > 55 (au-delà d'un autocar standard) → renvoie `{ escalade }` (intervention humaine).
+5. **Escalade** si nb passagers > 85 → renvoie `{ escalade }` (intervention humaine).
 
 Le barème est dans **`matrices.js`** (et en base dans `pricing_config`) : on peut changer
 un tarif **sans toucher à l'algorithme**.
@@ -242,7 +242,7 @@ npm run build && npx vitest run    # build + 26 tests
 | Je veux… | Fichier(s) |
 |----------|-----------|
 | Changer un **tarif** / la TVA / la marge | `pricing/matrices.js` + table `pricing_config` (+ `web/lib/calculerDevis.ts` qui en est le miroir) |
-| Changer la **règle d'escalade** (55 pax) | `seuil_escalade_passagers` dans les matrices |
+| Changer la **règle d'escalade** (85 pax) | `seuil_escalade_passagers` dans les matrices |
 | Changer la **cadence des relances** | `web/lib/relances.ts` |
 | Modifier l'**extraction** ou la **réponse** de l'agent | `n8n/build-workflow.js` (prompt d'extraction + texte de réponse du nœud Code) puis régénérer |
 | Changer le **design** / les couleurs | `web/app/globals.css` (variables CSS) |
@@ -278,7 +278,7 @@ Deux références **interactives** complètent ce document :
 
 - **Lead / demande** : un besoin de transport exprimé par un prospect.
 - **Devis déterministe** : prix calculé par des règles fixes (jamais par l'IA).
-- **Escalade / cas complexe** : demande qui dépasse l'automatisable (> 55 pax, au-delà d'un autocar standard) → traitée par un humain.
+- **Escalade / cas complexe** : demande qui dépasse l'automatisable (> 85 pax) → traitée par un humain.
 - **Relance** : email de rappel automatique si le client ne répond pas.
 - **RLS** : Row Level Security — chaque utilisateur ne voit que ses lignes en base.
 - **Service role** : clé Supabase serveur qui contourne la RLS (usage backend uniquement).

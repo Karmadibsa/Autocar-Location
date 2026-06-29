@@ -47,14 +47,14 @@ flowchart TB
 ## 2. Parcours PROSPECT — du chat au devis
 
 L'agent ne fait **qu'un appel LLM** (extraction) ; le **prix et la réponse** sont
-calculés/écrits par le nœud Code (déterministe). Au-delà de 55 passagers (un autocar standard) → cas complexe.
+calculés/écrits par le nœud Code (déterministe). Au-delà de 85 passagers → cas complexe.
 
 ```mermaid
 flowchart TB
     A[Le prospect décrit son besoin dans le chat] --> B["/api/chat relaie à n8n"]
     B --> C[n8n - Extraction des paramètres - 1 appel LLM]
     C --> D[Nœud Code - calcul déterministe + réponse]
-    D --> E{Plus de 55 passagers ?}
+    D --> E{Plus de 85 passagers ?}
     E -->|Oui| F[Cas complexe - un conseiller recontacte]
     E -->|Non| G[Devis calculé]
     G --> H["/api/chat - distance réelle OSRM + persistance Supabase"]

@@ -49,19 +49,19 @@ insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, li
 
 -- 3) Paul Martin — PERDU
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
- ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,55,100,'normal','refuse', now() - interval '5 days');
+ ('d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004','Marseille','Avignon','2026-05-10',true,60,100,'normal','refuse', now() - interval '5 days');
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
  ('e0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000003','c4000000-0000-0000-0000-000000000004',1240.00,124.00,1364.00,'EUR',
   '[{"libelle":"Forfait transfert 100 km","montant":580},{"libelle":"Aller/retour (x2)","montant":580},{"libelle":"Coefficients (x1.15)","montant":174},{"libelle":"Marge +15%","montant":143.40}]'::jsonb,
-  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
+  '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'refuse', now() - interval '5 days', 1, now() - interval '5 days');
 
 -- 4) Sophie Leroy — À TRAITER (cas complexe)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 55 : transfert a un commercial.', now() - interval '3 days');
+ ('d0000000-0000-0000-0000-000000000004','c5000000-0000-0000-0000-000000000005','Toulouse','Lourdes','2026-04-18',true,95,180,'normal','cas_complexe','Volume de 95 passagers > 85 : transfert a un commercial.', now() - interval '3 days');
 
 -- 5) Thomas Moreau — À TRAITER (cas complexe, urgent)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, commentaire, created_at) values
- ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 55 : transfert a un commercial.', now() - interval '4 hours');
+ ('d0000000-0000-0000-0000-000000000005','c6000000-0000-0000-0000-000000000006','Dijon','Beaune','2026-07-12',false,120,45,'urgent','cas_complexe','Volume de 120 passagers > 85 : transfert a un commercial.', now() - interval '4 hours');
 
 -- 6) Marie Dubois — EN ATTENTE (relance 1)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values
@@ -85,7 +85,7 @@ insert into demandes (id, client_id, depart, destination, date_depart, aller_ret
 insert into devis (id, demande_id, client_id, prix_ht, tva, prix_ttc, devise, lignes, coefficients, statut, date_envoi, nb_relances, created_at) values
  ('e0000000-0000-0000-0000-000000000008','d0000000-0000-0000-0000-000000000008','c5000000-0000-0000-0000-000000000005',720.00,72.00,792.00,'EUR',
   '[{"libelle":"Forfait transfert 25 km","montant":250},{"libelle":"Aller/retour (x2)","montant":250},{"libelle":"Coefficients (x1.15)","montant":75},{"libelle":"Marge +15%","montant":83.25}]'::jsonb,
-  '[{"libelle":"Capacite 55 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '40 days', 2, now() - interval '40 days');
+  '[{"libelle":"Capacite 60 pax","valeur":0.15}]'::jsonb,'expire', now() - interval '40 days', 2, now() - interval '40 days');
 
 -- 9-11) Haut de funnel (sans devis)
 insert into demandes (id, client_id, depart, destination, date_depart, aller_retour, nb_passagers, distance_km, urgence, statut, created_at) values

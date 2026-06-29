@@ -72,5 +72,5 @@ les cas qui dépassent l'automatisable.
 `nouveau_lead → incomplete → qualifiee → devis_envoye → relance_1 → relance_2 → (accepte | refuse | cloture)`
 
 Branche humaine (HITL) : `qualifiee → cas_complexe → (devis sur-mesure → devis_envoye | refuse)`.
-Le seuil d'escalade est de **55 passagers** (au-delà d'un autocar standard) ; un trajet
+Le seuil d'escalade est de **85 passagers** ; un trajet
 hors France bascule également en `cas_complexe`.

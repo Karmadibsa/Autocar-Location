@@ -12,7 +12,7 @@ dans `web`).
 | 3 | **Hors zone (>180 km)** | Paris → Marseille, 40 pax, aller simple | Au-delà de 180 km, tarif au km (km × 2 × 2,5 €) au lieu du forfait grille. |
 | 4 | **0 passager** | Lyon → Annecy, 0 passager | Garde-fou : `calculerDevis` renvoie `{ erreur, champ: "nb_passagers" }` → **aucun prix**, l'agent redemande le nombre de passagers. |
 | 5 | **Date incohérente** | Lyon → Annecy, départ 12/07 **et retour 10/06** | Retour antérieur au départ → l'agent **refuse de chiffrer** et demande de corriger les dates. (Le moteur garde aussi le contrôle départ < demande.) |
-| 6 | **Gros volume** | Marseille → Lille, 120 pax | > 55 places (un autocar standard) → **escalade cas complexe** : pas de devis auto, la demande passe en `cas_complexe`, message **discret** au client + collecte des coordonnées pour rappel sous 24 h. |
+| 6 | **Gros volume** | Marseille → Lille, 120 pax | > 85 passagers → **escalade cas complexe** : pas de devis auto, la demande passe en `cas_complexe`, message **discret** au client + collecte des coordonnées pour rappel sous 24 h. |
 | 7 | **Option nuit chauffeur** | Lille → Bruxelles, 30 pax, + nuit chauffeur | Ligne supplémentaire **+120 €/nuit** ajoutée au devis (avant marge/TVA). |
 
 ## Règles géographiques (nouvelles)
@@ -25,7 +25,7 @@ dans `web`).
 ## Où c'est implémenté
 
 - **Moteur de prix déterministe** : `web/lib/calculerDevis.ts` (miroir : `pricing/matrices.js` + `pricing/calculer_devis.js`, utilisé par n8n).
-  - Forfait/longue distance, coefficients, marge, TVA, **garde-fous** (0 pax, distance ≤ 0, date incohérente), **escalade > 55 pax**.
+  - Forfait/longue distance, coefficients, marge, TVA, **garde-fous** (0 pax, distance ≤ 0, date incohérente), **escalade > 85 pax**.
 - **Vérifs géographiques** : `web/lib/distance.ts` → `geocodeVille()` / `analyserTrajet()` (Nominatim) : `horsFrance` + `ambigue`.
 - **Orchestration** : `web/app/api/chat/route.ts` :
   - recalcul du prix avec la distance routière réelle (OSRM) ;
@@ -41,4 +41,4 @@ dans `web`).
   l'agent n8n — voir le prompt d'extraction.)
 - **Règle d'or** : le prix vient **toujours** du moteur déterministe, jamais du LLM.
   Le bouton bonus « tentative de remise » le prouve (le « -20 % » est ignoré).
-- **Seuil cas complexe = 55** (moyenne de places d'un autocar standard).
+- **Seuil cas complexe = 85** (au-delà : multi-véhicules / étude humaine).

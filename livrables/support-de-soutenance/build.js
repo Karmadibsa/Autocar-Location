@@ -95,7 +95,7 @@ slide(6, 'Démo — cas complexe (HITL)', {
   qui: 'Zakaria', duree: '1 min',
   sousTitre: 'Chat : « Marseille vers Lille, 120 personnes ».',
   puces: [
-    'Au-delà de 55 passagers (un autocar standard) → escalade, pas de devis automatique.',
+    'Au-delà de 85 passagers → message d’escalade, pas de devis automatique.',
     'La demande devient un cas complexe transmis à un humain avec le contexte.',
   ],
   note: 'Montrer que le système sait dire « non » à l’automatisation totale : c’est un gage de fiabilité, pas une limite.',

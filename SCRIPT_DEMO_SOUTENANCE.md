@@ -20,7 +20,7 @@ pour des données propres.
 - Phrase clé : *« le prix est calculé par notre moteur, pas par l'IA ; et la distance est la vraie distance routière. »*
 
 ## 2. Le cas complexe (intervention humaine) — 1 min
-- Taper : *« Marseille vers Lille, 120 personnes »* → message d'**escalade** (> 55 passagers, au-delà d'un autocar standard).
+- Taper : *« Marseille vers Lille, 120 personnes »* → message d'**escalade** (> 85 passagers).
 - Phrase clé : *« au-delà d'un seuil, on bascule sur un humain — c'est le HITL. »*
 
 ## 3. Côté client — 1,5 min
