@@ -23,6 +23,7 @@ body.push(H1('Mode d’emploi du support'));
 body.push(P([run('Trame de la soutenance : '), run('~20 min de présentation + démo', { bold: true }), run(', puis '), run('10-15 min de questions', { bold: true }), run('. Une slide = une idée. Les blocs « À dire » sont les notes de l’orateur ; « Orateur » indique qui prend la parole — '), run('chaque membre intervient', { bold: true }), run('. À mettre en forme dans l’outil de slides de votre choix (ou à présenter tel quel en PDF).')]));
 body.push(callout('Avant de commencer :', [run('lancer '), code('lancer-n8n-tunnel.bat'), run(' (2 fenêtres n8n + tunnel) et rejouer '), code('reset-complet.sql'), run(' pour des données propres. Filet de sécurité : un jeu de démo est déjà en base si le chat live échoue.')]));
 body.push(H2('Répartition de la parole (proposition)'));
+body.push(P('Le tableau ci-dessous propose une répartition de la prise de parole, par bloc et par slides, afin que chaque membre intervienne sur son périmètre.'));
 body.push(makeTable(
   ['Bloc', 'Orateur', 'Slides'],
   [
@@ -180,6 +181,7 @@ slide(13, 'Clôture & questions', {
 // ---------------------------------------------------------------------------
 body.push(pageBreak());
 body.push(H1('Annexe — Questions probables & réponses prêtes'));
+body.push(P('Le tableau ci-dessous rassemble les questions les plus probables du jury et une réponse prête, courte et défendable, pour chacune.'));
 body.push(makeTable(
   ['Question', 'Réponse'],
   [

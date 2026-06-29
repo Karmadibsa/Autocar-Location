@@ -26,6 +26,7 @@ body.push(P([run('Périmètre couvert vs barème : '), run('Prototype fonctionne
 // ---------------------------------------------------------------------------
 body.push(H1('2. Prototype fonctionnel — la chaîne complète'));
 body.push(P('Le prototype couvre l’intégralité du cycle commercial, de la captation du lead au pilotage. Le parcours est démontrable en direct (agent joignable via n8n local + tunnel).'));
+body.push(P('Le tableau suivant récapitule, maillon par maillon, ce que réalise concrètement le prototype et la brique technique qui le porte.'));
 body.push(makeTable(
   ['Maillon', 'Ce que fait le prototype', 'Brique'],
   [
@@ -70,6 +71,7 @@ body.push(...codeBlock([
   '   n8n + Gemma     OSRM        Supabase     Resend',
   '   (extraction)  (distance)  (PG + Auth + RLS) (emails)',
 ]));
+body.push(P('Le tableau ci-dessous précise, pour chaque brique, la technologie retenue et le rôle qu’elle remplit dans l’architecture.'));
 body.push(makeTable(
   ['Brique', 'Techno retenue', 'Rôle'],
   [
@@ -115,6 +117,7 @@ body.push(...codeBlock([
 body.push(P([run('Sous Windows, '), code('start.bat'), run(' lance le front + n8n en un clic.')]));
 body.push(H2('4.3 Variables d’environnement'));
 body.push(P([run('Liste exacte dans '), code('web/.env.local.example'), run('. La clé du LLM reste '), run('dans n8n', { bold: true }), run(' (jamais sur le front).')]));
+body.push(P('Le tableau ci-dessous regroupe les variables attendues, leur rôle et leur niveau de visibilité — publique (exposée au navigateur), serveur ou secret.'));
 body.push(makeTable(
   ['Variable', 'Rôle', 'Visibilité'],
   [
@@ -152,6 +155,7 @@ body.push(...codeBlock([
 ]));
 body.push(H2('5.3 Barème (matrices pilotables)'));
 body.push(P([run('Tout le barème est centralisé dans '), code('pricing/matrices.js'), run(' (et en base dans '), code('pricing_config'), run(') : on change un tarif '), run('sans toucher à l’algorithme', { bold: true }), run('.')]));
+body.push(P('Le tableau suivant détaille les règles effectivement appliquées par le moteur, bloc de calcul par bloc de calcul.'));
 body.push(makeTable(
   ['Bloc', 'Règle implémentée'],
   [
@@ -167,6 +171,7 @@ body.push(makeTable(
 ));
 body.push(H2('5.4 Jeu de tests (cas types ET cas limites)'));
 body.push(P([run('Tests du moteur : '), code('npm test'), run(' — 13 tests ('), code('node:test'), run(', sans dépendance). Tests front (Vitest) : pricing, distance, PDF, email, relances, noms, messagerie.')]));
+body.push(P('Le tableau ci-dessous classe les cas vérifiés en cinq familles, des cas nominaux aux cas limites, avec le résultat attendu pour chacune.'));
 body.push(makeTable(
   ['Catégorie', 'Cas couverts', 'Attendu'],
   [
@@ -274,6 +279,7 @@ body.push(H2('9.1 Qualité du code & technique'));
 body.push(H2('9.2 Démarche projet (Agile)'));
 body.push(P([run('Méthode '), run('Agile sur une semaine', { bold: true }), run(', cadencée par le plan J1→J8 du brief : setup & cadrage, comprendre avant de coder, architecture & données (remise L1), moteur fiable d’abord, agent connecté, expérience & automatisation (remises L2/L3), préparation de la restitution, soutenance.')]));
 body.push(H2('9.3 Backlog priorisé'));
+body.push(P('Le backlog est priorisé en trois niveaux, du cœur du MVP (P1) à démontrer en premier, jusqu’aux bonus (P3) :'));
 body.push(makeTable(
   ['Priorité', 'Éléments'],
   [
@@ -284,6 +290,7 @@ body.push(makeTable(
   [2000, 7360],
 ));
 body.push(H2('9.4 Journal de décisions (extraits) & rétro'));
+body.push(P('Le tableau suivant retrace les principales décisions d’architecture prises pendant la semaine et la raison qui a guidé chaque choix.'));
 body.push(makeTable(
   ['Décision', 'Choix retenu & raison'],
   [
@@ -297,6 +304,7 @@ body.push(makeTable(
 ));
 body.push(callout('Rétro :', 'le pricing testé en premier a évité toute dérive de prix ; le passage à un seul appel LLM a réglé les lenteurs et les 503 ; la principale dette assumée reste l’agent dépendant du tunnel (choix MVP).'));
 body.push(H2('9.5 Répartition des rôles'));
+body.push(P('Le tableau ci-dessous résume la responsabilité principale portée par chaque membre de l’équipe sur le projet.'));
 body.push(makeTable(
   ['Membre', 'Responsabilités principales'],
   [
@@ -313,6 +321,7 @@ body.push(P([run('Note : '), run('répartition indicative', { italics: true, col
 // ---------------------------------------------------------------------------
 body.push(pageBreak());
 body.push(H1('10. Index des artefacts remis (dépôt Git)'));
+body.push(P('Le tableau ci-dessous indique, pour chaque artefact remis, son emplacement précis dans le dépôt Git afin de le retrouver rapidement.'));
 body.push(makeTable(
   ['Artefact', 'Emplacement'],
   [

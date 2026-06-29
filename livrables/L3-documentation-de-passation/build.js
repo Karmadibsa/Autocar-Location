@@ -8,7 +8,7 @@ const body = [];
 
 // ---------------------------------------------------------------------------
 body.push(H1('1. Objet & mode d’emploi'));
-body.push(P([run('Cette documentation permet à la solution de '), run('vivre et d’évoluer sans ses créateurs', { bold: true }), run('. Elle comporte deux parties complémentaires :')]));
+body.push(P([run('Cette documentation permet à la solution de '), run('vivre et d’évoluer sans ses créateurs', { bold: true }), run('. Elle s’organise en quatre parties complémentaires, chacune destinée à un public précis et résumées dans le tableau ci-dessous :')]));
 body.push(makeTable(
   ['Partie', 'Pour qui', 'Contenu'],
   [
@@ -29,6 +29,7 @@ body.push(H2('A.1 Le projet en 30 secondes'));
 body.push(P([run('Application qui '), run('automatise le cycle commercial', { bold: true }), run(' d’un intermédiaire en transport de groupe : un chatbot qualifie le besoin → un devis chiffré automatiquement (règles fixes, jamais l’IA) → email + PDF → relances auto → dashboard. Stack : Next.js (Netlify) + Supabase + n8n/Gemma + Resend.')]));
 body.push(callout('Règle d’or :', [run('l’IA comprend et oriente, mais le '), run('prix vient toujours du code déterministe', { bold: true, color: k.ACCENT_DK }), run(' ('), code('calculerDevis'), run('), jamais du modèle de langage.')]));
 body.push(H2('A.2 Carte des documents'));
+body.push(P('Le tableau ci-dessous oriente vers le bon document selon ce que l’on cherche à faire, pour éviter de tout lire en bloc.'));
 body.push(makeTable(
   ['Tu veux…', 'Lis'],
   [
@@ -63,6 +64,7 @@ body.push(H2('A.4 Les 5 choses à savoir'));
   'n8n en tunnel = choix MVP (0 €, PC allumé). Pour la prod 24/7 → n8n hébergé (voir COUTS_ET_PROD.md).',
 ].forEach((t) => body.push(numbered(t)));
 body.push(H2('A.5 Carte du code (où se trouve quoi)'));
+body.push(P('Le tableau suivant situe, dossier par dossier, où se trouve quoi dans le code, afin de localiser rapidement la partie à faire évoluer.'));
 body.push(makeTable(
   ['Dossier', 'Rôle'],
   [
@@ -85,6 +87,7 @@ body.push(pageBreak());
 body.push(H1('Partie B — Procédure « équipe NeoTravel »'));
 body.push(P('Cette partie s’adresse aux commerciaux et à la direction : elle explique le vocabulaire en mots simples, puis l’usage quotidien de l’outil. Aucune compétence technique requise.'));
 body.push(H2('B.1 Les termes clés, expliqués simplement'));
+body.push(P('Le tableau ci-dessous traduit en mots simples les termes que l’on rencontre dans l’outil et la documentation, sans jargon technique.'));
 body.push(makeTable(
   ['Terme', 'En clair'],
   [
@@ -103,6 +106,7 @@ body.push(makeTable(
 body.push(callout('À ne jamais dire :', [run('« l’IA calcule le prix ». La bonne formulation : '), run('l’agent collecte les informations et appelle le moteur', { bold: true }), run(' qui calcule le prix de manière déterministe.')]));
 body.push(H2('B.2 Utiliser l’outil au quotidien'));
 body.push(P([run('Se connecter sur '), code('/login'), run(' (compte admin) → arrivée sur le dashboard '), code('/admin'), run('.')]));
+body.push(P('Le tableau ci-dessous regroupe les actions les plus courantes et la manière de les réaliser depuis le dashboard.'));
 body.push(makeTable(
   ['Je veux…', 'Comment faire'],
   [
@@ -118,6 +122,7 @@ body.push(makeTable(
   [3000, 6360],
 ));
 body.push(H2('B.3 Les 7 situations gérées'));
+body.push(P('Le tableau suivant décrit les sept situations commerciales que l’outil sait gérer et le comportement attendu pour chacune.'));
 body.push(makeTable(
   ['Situation', 'Ce qui se passe'],
   [
@@ -174,6 +179,7 @@ body.push(H1('Partie D — Backlog P1/P2/P3 & prochaines évolutions'));
 body.push(H2('D.1 État livré (MVP)'));
 body.push(P('Sont livrés et fonctionnels : moteur de devis testé, agent de qualification, devis PDF + email, relances, escalade HITL, dashboard de pilotage, espace client, messagerie HITL.'));
 body.push(H2('D.2 Backlog priorisé des évolutions'));
+body.push(P('Le tableau ci-dessous liste les évolutions envisagées, priorisées de P1 (la plus utile à court terme) à P3, avec le bénéfice attendu pour chacune.'));
 body.push(makeTable(
   ['Priorité', 'Évolution', 'Bénéfice'],
   [
