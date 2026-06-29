@@ -37,7 +37,10 @@ export async function POST(request: Request) {
         ),
     )
       .order("created_at", { ascending: false })
-      .limit(20),
+      // On charge largement pour que les filtres de catégorie (gagnés, en attente…)
+      // refletent les compteurs KPI calculés sur toute la base. 2000 couvre la démo
+      // et une prod modeste ; au-delà il faudrait paginer côté serveur.
+      .limit(2000),
     range(sb.from("devis").select("raison_refus, created_at").not("raison_refus", "is", null)),
   ]);
 
