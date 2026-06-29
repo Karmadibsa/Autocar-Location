@@ -2,7 +2,7 @@
 // et nb_relances < 2. Envoie l'email, met à jour les statuts, planifie la suivante
 // ou clôture. Appelable par : un admin (token) OU un planificateur (secret n8n).
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { prochaineRelance, estUrgent, typeRelance, estExpire } from "@/lib/relances";
+import { prochaineRelance, estUrgent, typeRelance, VALIDITE_JOURS } from "@/lib/relances";
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
 import { formatNomComplet } from "@/lib/noms";
@@ -46,17 +46,26 @@ export async function POST(request: Request) {
 
   const now = new Date().toISOString();
 
-  // 0) Expiration : un devis envoyé depuis plus de 30 jours expire (demande clôturée).
+  // 0) Expiration EN MASSE : un devis envoyé depuis plus de 30 jours expire (demande
+  // clôturée). On le fait en 2 requêtes (pas une boucle) pour rester rapide même
+  // avec des centaines de devis anciens.
   let expirees = 0;
-  const { data: envoyes } = await sb.from("devis").select("id, demande_id, date_envoi").eq("statut", "envoye");
-  for (const v of envoyes ?? []) {
-    if (estExpire(v.date_envoi)) {
-      await sb.from("devis").update({ statut: "expire", prochaine_relance: null }).eq("id", v.id);
-      await sb.from("demandes").update({ statut: "cloture" }).eq("id", v.demande_id);
-      expirees++;
-    }
+  const cutoff = new Date(Date.now() - VALIDITE_JOURS * 86400000).toISOString();
+  const { data: exp } = await sb
+    .from("devis")
+    .update({ statut: "expire", prochaine_relance: null })
+    .eq("statut", "envoye")
+    .lt("date_envoi", cutoff)
+    .select("demande_id");
+  if (exp && exp.length) {
+    await sb.from("demandes").update({ statut: "cloture" }).in("id", exp.map((e) => e.demande_id));
+    expirees = exp.length;
   }
 
+  // 1) Relances dues, traitées PAR LOTS (chaque relance = email + PDF, donc coûteux).
+  // Un lot borné garantit qu'on ne dépasse jamais le timeout de la fonction serverless.
+  // S'il en reste, l'admin relance le traitement (on renvoie `restantes`).
+  const BATCH = 30;
   const { data: dus } = await sb
     .from("devis")
     .select(
@@ -64,7 +73,9 @@ export async function POST(request: Request) {
     )
     .eq("statut", "envoye")
     .lte("prochaine_relance", now)
-    .lt("nb_relances", 2);
+    .lt("nb_relances", 2)
+    .order("prochaine_relance", { ascending: true })
+    .limit(BATCH);
 
   let envoyees = 0;
   let cloturees = 0;
@@ -100,7 +111,15 @@ export async function POST(request: Request) {
     if (!next) cloturees++;
   }
 
-  return Response.json({ ok: true, envoyees, cloturees, expirees });
+  // Combien de relances restent dues après ce lot (pour informer l'admin) ?
+  const { count: restantes } = await sb
+    .from("devis")
+    .select("id", { count: "exact", head: true })
+    .eq("statut", "envoye")
+    .lte("prochaine_relance", new Date().toISOString())
+    .lt("nb_relances", 2);
+
+  return Response.json({ ok: true, envoyees, cloturees, expirees, restantes: restantes ?? 0 });
 }
 
 async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {

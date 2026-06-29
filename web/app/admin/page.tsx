@@ -313,8 +313,10 @@ export default function AdminPage() {
     if (!j.ok) setRelanceMsg("Erreur lors du traitement.");
     else if ((j.envoyees ?? 0) + (j.cloturees ?? 0) + (j.expirees ?? 0) === 0)
       setRelanceMsg("Aucune relance à envoyer pour le moment.");
-    else
-      setRelanceMsg(`${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s).`);
+    else {
+      const reste = (j.restantes ?? 0) > 0 ? ` — ${j.restantes} encore dues (relancez)` : "";
+      setRelanceMsg(`${j.envoyees} relance(s) · ${j.cloturees} clôturée(s) · ${j.expirees ?? 0} expirée(s)${reste}.`);
+    }
     loadData();
   }
 
