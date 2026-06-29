@@ -5,6 +5,8 @@ Déployable et **quasi 100 % gratuit**. Seule contrainte : n8n doit tourner quel
 
 ## Vue d'ensemble
 
+Le tableau ci-dessous résume où vit chaque brique de la solution et son coût.
+
 | Brique | Hébergement | Coût |
 |--------|-------------|------|
 | Front Next.js | **Netlify** (plugin Next) | Gratuit |

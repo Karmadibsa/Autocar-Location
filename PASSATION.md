@@ -13,6 +13,9 @@ Stack : **Next.js (Netlify)** + **Supabase** + **n8n/Gemma** + **Resend**.
 > (`web/lib/calculerDevis.ts` / `pricing/`), **jamais** du modèle de langage.
 
 ## La carte des documents (quel fichier pour quoi)
+
+Selon ton besoin, voici le document à ouvrir en priorité.
+
 | Tu veux… | Lis |
 |----------|-----|
 | Comprendre vite le projet | **ce fichier** puis [README.md](README.md) |
