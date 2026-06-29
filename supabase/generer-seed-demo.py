@@ -164,6 +164,19 @@ TRAJETS = [
 ]
 RAISONS = ["Prix trop élevé", "Délai / disponibilité", "Meilleure offre ailleurs", "Projet annulé ou reporté", "Autre"]
 
+# Client "vedette" garanti dans le jeu (reconnaissable en demo), avec des devis varies.
+SHOWCASE = {
+    "id": "c0000000-0000-0000-0000-00000000c0de",
+    "email": "v.conter@live.fr",
+    "prenom": "Vincent",
+    "nom": "Conter",
+    "type_client": "entreprise",
+    "telephone": "0651237890",
+    "adresse": "14 rue des Capucins",
+    "code_postal": "67000",
+    "ville": "Strasbourg",
+}
+
 
 # ------------------------------ UTILITAIRES SQL ------------------------------
 def ruuid():
@@ -213,8 +226,8 @@ def main():
     ap = argparse.ArgumentParser(description="Genere un seed demo volumineux et coherent.")
     ap.add_argument("--devis", type=int, default=500, help="Nombre de devis chiffres (defaut 500)")
     ap.add_argument("--clients", type=int, default=150, help="Nombre de clients (defaut 150)")
-    ap.add_argument("--complexes", type=int, default=40, help="Nombre de cas complexes a traiter (defaut 40)")
-    ap.add_argument("--funnel", type=int, default=60, help="Leads haut de funnel sans devis (defaut 60)")
+    ap.add_argument("--complexes", type=int, default=25, help="Nombre de cas complexes a traiter, <= 2 semaines (defaut 25)")
+    ap.add_argument("--funnel", type=int, default=35, help="Leads haut de funnel sans devis (defaut 35)")
     ap.add_argument("--seed", type=int, default=42, help="Graine aleatoire (reproductible)")
     ap.add_argument("--out", default="seed-demo-volume.sql", help="Fichier SQL de sortie")
     args = ap.parse_args()
@@ -247,6 +260,17 @@ def main():
     clients = []
     emails_vus = set()
     client_rows = []
+
+    # Client vedette garanti (v.conter@live.fr) en premier
+    clients.append(SHOWCASE["id"])
+    emails_vus.add(SHOWCASE["email"])
+    client_rows.append([
+        sql_str(SHOWCASE["id"]), sql_str(SHOWCASE["email"]), sql_str(SHOWCASE["type_client"]),
+        sql_str(SHOWCASE["prenom"]), sql_str(SHOWCASE["nom"]), sql_str(SHOWCASE["telephone"]),
+        sql_str(SHOWCASE["adresse"]), sql_str(SHOWCASE["code_postal"]), sql_str(SHOWCASE["ville"]),
+        "true", sql_ts(today - timedelta(days=120)),
+    ])
+
     for _ in range(args.clients):
         prenom = random.choice(PRENOMS)
         nom = random.choice(NOMS)
@@ -298,18 +322,14 @@ def main():
 
     demande_rows, devis_rows, conv_rows = [], [], []
 
-    # Poids mensuels : un peu plus de volume sur les mois recents (croissance).
-    for _ in range(args.devis):
-        cid = random.choice(clients)
-        depart, destination, dist = random.choice(TRAJETS)
-        # created_at sur les 12 derniers mois, pondere vers le recent
-        age_days = int(random.triangular(0, 365, 60))
-        created = today - timedelta(days=age_days)
-        # date_depart : anticipation 5..180 j apres la demande
+    def build_devis(cid, created, forced=None):
+        """Cree (demande + devis [+ conversation]) coherents. `forced` impose statut/trajet/pax/ar."""
+        forced = forced or {}
+        depart, destination, dist = forced.get("trajet") or random.choice(TRAJETS)
         anticip = random.choice([3, 7, 12, 20, 35, 50, 75, 100, 140, 175])
         date_depart = created + timedelta(days=anticip)
-        nb_pax = random.choice([8, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80])
-        aller_retour = random.random() < 0.6
+        nb_pax = forced.get("pax") or random.choice([8, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80])
+        aller_retour = forced["ar"] if "ar" in forced else random.random() < 0.6
         options = []
         if random.random() < 0.18:
             options.append({"code": "guide", "quantite": random.choice([1, 2])})
@@ -318,18 +338,16 @@ def main():
 
         d = calculer_devis(nb_pax, date_depart, created, dist, aller_retour, options)
         if d is None:
-            continue  # securite (ne devrait pas, nb_pax <= 80)
+            return  # securite (ne devrait pas, nb_pax <= 80)
 
-        statut = random.choices(statut_choices, weights=statut_weights, k=1)[0]
+        statut = forced.get("statut") or random.choices(statut_choices, weights=statut_weights, k=1)[0]
         dem_statut, nb_relances = map_demande(statut)
         devis_statut = "envoye" if statut in ("envoye", "relance_1", "relance_2", "brouillon_perdu") else statut
         if statut == "brouillon_perdu":
             devis_statut = "expire"
 
         urgence = "urgent" if anticip <= 29 else "normal"
-        did = ruuid()
-        eid = ruuid()
-        token = ruuid()
+        did, eid, token = ruuid(), ruuid(), ruuid()
 
         demande_rows.append([
             sql_str(did), sql_str(cid), sql_str(depart), sql_str(destination), sql_date(date_depart),
@@ -344,9 +362,7 @@ def main():
         elif statut == "relance_1":
             relance_clause = sql_ts(created + timedelta(days=random.choice([5, 6, 7])))
         elif statut == "relance_2":
-            # certaines dues (passees), d'autres a venir
-            delta = random.choice([-1, 1, 7])
-            relance_clause = sql_ts(today + timedelta(days=delta))
+            relance_clause = sql_ts(today + timedelta(days=random.choice([-1, 1, 7])))
 
         raison = sql_str(",".join(random.sample(RAISONS, random.choice([1, 1, 2])))) if statut == "refuse" else "null"
 
@@ -358,7 +374,6 @@ def main():
             sql_ts(created),
         ])
 
-        # Conversation pour ~30% des devis
         if random.random() < 0.30:
             msgs = [
                 {"role": "agent", "content": "Bonjour ! Quel est votre projet de déplacement ?"},
@@ -368,6 +383,26 @@ def main():
             conv_rows.append([
                 sql_str(ruuid()), sql_str(cid), sql_str(did), sql_json(msgs), sql_ts(created),
             ])
+
+    # Devis vedette (v.conter@live.fr) : varies et RECENTS -> visibles dans la table admin.
+    SHOWCASE_DEVIS = [
+        {"statut": "accepte", "trajet": ("Strasbourg", "Colmar", 75), "pax": 45, "ar": True},
+        {"statut": "envoye", "trajet": ("Strasbourg", "Metz", 160), "pax": 30, "ar": False},
+        {"statut": "refuse", "trajet": ("Strasbourg", "Mulhouse", 115), "pax": 55, "ar": True},
+        {"statut": "relance_1", "trajet": ("Lyon", "Annecy", 139), "pax": 40, "ar": True},
+    ]
+    for spec in SHOWCASE_DEVIS:
+        build_devis(SHOWCASE["id"], today - timedelta(days=random.randint(1, 10)), forced=spec)
+
+    # Devis tout-venant. Recency : ~25% sur les 3 dernieres semaines (pour peupler la
+    # table "demandes recentes" avec des PRIX), le reste etale sur 12 mois (courbes).
+    for _ in range(args.devis):
+        cid = random.choice(clients)
+        if random.random() < 0.25:
+            age_days = random.randint(0, 20)
+        else:
+            age_days = int(random.triangular(10, 365, 120))
+        build_devis(cid, today - timedelta(days=age_days))
 
     out.append(f"-- {len(devis_rows)} devis chiffres (+ demandes associees)\n")
     batched_insert(out, "demandes",
@@ -388,7 +423,7 @@ def main():
         cid = random.choice(clients)
         depart, destination, dist = random.choice(TRAJETS)
         nb_pax = random.choice([90, 95, 110, 120, 140, 180, 220, 300])
-        age_days = int(random.triangular(0, 30, 5))
+        age_days = random.randint(0, 13)  # 'A traiter' : jamais plus vieux que 2 semaines
         created = today - timedelta(days=age_days)
         date_depart = created + timedelta(days=random.randint(10, 120))
         urgence = "urgent" if random.random() < 0.4 else "normal"
@@ -412,7 +447,7 @@ def main():
         cid = random.choice(clients)
         depart, destination, dist = random.choice(TRAJETS)
         st = random.choices(["nouveau_lead", "qualifiee", "incomplete"], weights=[0.5, 0.3, 0.2])[0]
-        age_days = int(random.triangular(0, 20, 2))
+        age_days = random.randint(0, 45)
         created = today - timedelta(days=age_days)
         if st == "incomplete":
             funnel_rows.append([
@@ -440,6 +475,11 @@ def main():
                        ["id", "client_id", "demande_id", "messages", "updated_at"], conv_rows)
         out.append("\n")
 
+    # Lie les clients generes a un eventuel compte Auth de meme email -> ils verront
+    # leurs devis dans /espace-client (ex: creer un compte v.conter@live.fr pour la demo).
+    out.append("-- Liaison auto client <-> compte Auth (meme email)\n")
+    out.append("update clients set auth_user_id = u.id from auth.users u "
+               "where lower(u.email) = lower(clients.email) and clients.auth_user_id is null;\n\n")
     out.append("-- Fin du seed.\n")
 
     with open(args.out, "w", encoding="utf-8") as f:
