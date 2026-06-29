@@ -1,7 +1,7 @@
 # Diagrammes — Autocar Location
 
 Tous les schémas du projet au même endroit (Mermaid, rendus par GitHub / mermaid.live).
-Pour le détail des tables, voir aussi **[supabase/SCHEMA.md](supabase/SCHEMA.md)**.
+Pour le détail des tables, voir aussi **[supabase/SCHEMA.md](../supabase/SCHEMA.md)**.
 
 ---
 
@@ -127,4 +127,4 @@ flowchart LR
 
 ## 6. Modèle de données
 
-Diagramme complet (tables + colonnes + relations) dans **[supabase/SCHEMA.md](supabase/SCHEMA.md)**.
+Diagramme complet (tables + colonnes + relations) dans **[supabase/SCHEMA.md](../supabase/SCHEMA.md)**.

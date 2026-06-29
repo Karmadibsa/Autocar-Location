@@ -232,7 +232,7 @@ npm run build && npx vitest run    # build + 26 tests
 ```
 
 - Clés à brancher : **`web/.env.local.example`** (Supabase, n8n, Resend, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`)
-- Déploiement (Vercel + n8n) : **`DEPLOIEMENT.md`**
+- Déploiement (Netlify + n8n) : **`DEPLOIEMENT.md`**
 - En un clic (Windows) : **`start.bat`**
 
 ---

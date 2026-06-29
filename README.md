@@ -6,7 +6,7 @@ relances automatiques → dashboard de pilotage.
 
 Cas d'étude MBA Epitech. Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOUAMI.
 
-> 🧭 **Tu reprends le projet ?** Commence par **[PASSATION.md](PASSATION.md)** (orientation en 5 min).
+> 🧭 **Tu reprends le projet ?** Commence par **[PASSATION.md](docs/PASSATION.md)** (orientation en 5 min).
 
 > ⭐ **Règle d'or** : l'IA qualifie et oriente ; le **prix vient toujours du code
 > déterministe** (`calculerDevis`), **jamais** du modèle de langage.
@@ -55,13 +55,13 @@ npm run dev                        # http://localhost:3000
 
 | Document | Contenu |
 |----------|---------|
-| **[PASSATION.md](PASSATION.md)** | 🧭 **Point d'entrée** : orientation, ordre de lecture, 5 choses à savoir. |
-| **[DIAGRAMMES.md](DIAGRAMMES.md)** | Tous les schémas (archi, parcours prospect/client/admin, statuts, BDD). |
-| **[DOC_TECHNIQUE.md](DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, install, « où modifier quoi », flux. |
+| **[PASSATION.md](docs/PASSATION.md)** | 🧭 **Point d'entrée** : orientation, ordre de lecture, 5 choses à savoir. |
+| **[DIAGRAMMES.md](docs/DIAGRAMMES.md)** | Tous les schémas (archi, parcours prospect/client/admin, statuts, BDD). |
+| **[DOC_TECHNIQUE.md](docs/DOC_TECHNIQUE.md)** | 👉 **Comprendre le code** : architecture, modules, install, « où modifier quoi », flux. |
 | **API interactive (Swagger)** | Lancer le front → **http://localhost:3000/docs** (explorateur de toutes les routes). |
 | **Référence du code (TypeDoc)** | `cd web && npm run doc` → ouvrir `web/docs/index.html` (style Javadoc). |
-| [DEPLOIEMENT.md](DEPLOIEMENT.md) | Mise en ligne (Netlify + n8n tunnel) |
-| [COUTS_ET_PROD.md](COUTS_ET_PROD.md) | Choix MVP (tunnel) + coûts détaillés d'une vraie prod |
+| [DEPLOIEMENT.md](docs/DEPLOIEMENT.md) | Mise en ligne (Netlify + n8n tunnel) |
+| [COUTS_ET_PROD.md](docs/COUTS_ET_PROD.md) | Choix MVP (tunnel) + coûts détaillés d'une vraie prod |
 | [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
 | [n8n/README.md](n8n/README.md) · [pricing/README.md](pricing/README.md) | Montage de l'agent · moteur de prix |
 | [`livrables/`](livrables/README.md) | Livrables formatés : L1 cadrage, L2 prototype & artefacts, L3 passation, support de soutenance |

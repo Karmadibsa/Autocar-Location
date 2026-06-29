@@ -22,12 +22,12 @@ Selon ton besoin, voici le document à ouvrir en priorité.
 | Voir les schémas (archi, parcours, BDD, statuts) | [DIAGRAMMES.md](DIAGRAMMES.md) |
 | Comprendre le **code** (modules, « où modifier quoi ») | [DOC_TECHNIQUE.md](DOC_TECHNIQUE.md) |
 | L'**API** en interactif | lancer le front → `/docs` (Swagger) ; ou `cd web && npm run doc` (TypeDoc) |
-| Le **modèle de données** | [supabase/SCHEMA.md](supabase/SCHEMA.md) |
+| Le **modèle de données** | [supabase/SCHEMA.md](../supabase/SCHEMA.md) |
 | **Déployer** | [DEPLOIEMENT.md](DEPLOIEMENT.md) |
 | Les **coûts** / passage en prod | [COUTS_ET_PROD.md](COUTS_ET_PROD.md) |
 | **Tester** que tout marche | [RECETTE_END_TO_END.md](RECETTE_END_TO_END.md) |
-| Monter l'**agent n8n** | [n8n/README.md](n8n/README.md) |
-| Le **moteur de prix** | [pricing/README.md](pricing/README.md) |
+| Monter l'**agent n8n** | [n8n/README.md](../n8n/README.md) |
+| Le **moteur de prix** | [pricing/README.md](../pricing/README.md) |
 
 ## Ordre de lecture conseillé
 1. **PASSATION.md** (ici) → 2. **DIAGRAMMES.md** (vue d'ensemble visuelle) →
