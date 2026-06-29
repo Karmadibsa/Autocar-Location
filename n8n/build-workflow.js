@@ -65,6 +65,7 @@ const MATRICES = {
     {max:19,coef:-0.05},{max:53,coef:0},{max:63,coef:0.15},{max:67,coef:0.20},{max:85,coef:0.40}
   ],
   seuil_escalade_passagers: 85,
+  seuil_escalade_km: 300,
   options: { guide:80, nuit_chauffeur:120, peages:0 },
   marge: 0.15, tva: 0.10
 };
@@ -79,6 +80,7 @@ function calculer_devis(params){
   if(isNaN(anticip)) return {erreur:true,champ:'date_depart'};
   if(anticip<0) return {erreur:true,champ:'date_depart'};
   if(nb_passagers>M.seuil_escalade_passagers) return {escalade:true,raison:'Volume de '+nb_passagers+' passagers > '+M.seuil_escalade_passagers+' : transfert a un commercial.'};
+  if(M.seuil_escalade_km && distance_km>M.seuil_escalade_km) return {escalade:true,raison:'Longue distance '+distance_km+' km > '+M.seuil_escalade_km+' : transfert a un commercial.'};
   const lignes=[],coefficients=[];
   let base;
   if(distance_km<=M.longue_distance.seuil_km){ const pal=M.grille_forfait.find(x=>distance_km<=x.max_km); base=pal.prix; lignes.push({libelle:'Forfait transfert '+distance_km+' km',montant:base}); }

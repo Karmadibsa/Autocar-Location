@@ -328,7 +328,10 @@ export default function AdminPage() {
     });
     const j = await r.json();
     setMsgThread(j.messages ?? []);
-    loadData(); // le drapeau "non lu admin" a été remis à zéro
+    // NB : on ne recharge PAS la table ici. Le serveur a marqué le fil comme « lu »,
+    // mais recharger re-filtrerait la liste et ferait disparaître la ligne en cours
+    // de lecture (surtout sous le filtre « nouveaux messages »). Le compteur se met à
+    // jour au prochain rafraîchissement.
   }
 
   async function repondreMessage(demandeId: string) {

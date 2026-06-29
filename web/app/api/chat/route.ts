@@ -112,6 +112,11 @@ export async function POST(request: Request) {
         escalade: null,
         params: data.params,
       });
+    } else if (geo.km && geo.km > 300) {
+      // Trajet très longue distance (> 300 km aller) : double équipage / nuit chauffeur
+      // probables → étude humaine plutôt qu'un devis automatique.
+      data.escalade = data.escalade ?? `Longue distance (${geo.km} km > 300) : etude sur-mesure (double equipage / nuit).`;
+      data.devis = null;
     } else if (geo.km) {
       const recalc = await devisAvecOSRM(data.params, data.devis, geo.km);
       if (recalc) data.devis = recalc;

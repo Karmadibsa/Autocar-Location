@@ -44,6 +44,7 @@ PONDATION_DATE = [
 ]
 PONDATION_CAPACITE = [(19, -0.05), (53, 0.0), (63, 0.15), (67, 0.20), (85, 0.40)]
 SEUIL_ESCALADE = 85
+SEUIL_ESCALADE_KM = 300
 OPTIONS = {"guide": 80, "nuit_chauffeur": 120, "peages": 0}
 MARGE = 0.15
 TVA = 0.10
@@ -63,8 +64,8 @@ def calculer_devis(nb_passagers, date_depart, date_demande, distance_km, aller_r
     anticip = (date_depart - date_demande).days
     if anticip < 0:
         return None
-    if nb_passagers > SEUIL_ESCALADE:
-        return None  # escalade -> pas de devis
+    if nb_passagers > SEUIL_ESCALADE or distance_km > SEUIL_ESCALADE_KM:
+        return None  # escalade (capacite ou longue distance) -> pas de devis
 
     lignes = []
     coefficients = []

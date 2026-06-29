@@ -92,6 +92,13 @@ function calculer_devis(params, matrices = MATRICES) {
       params,
     };
   }
+  if (matrices.seuil_escalade_km && distance_km > matrices.seuil_escalade_km) {
+    return {
+      escalade: true,
+      raison: `Longue distance ${distance_km} km > ${matrices.seuil_escalade_km} : transfert à un commercial (flux manuel).`,
+      params,
+    };
+  }
 
   const lignes = [];
   const coefficients = [];

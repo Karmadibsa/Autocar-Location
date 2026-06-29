@@ -52,6 +52,11 @@ describe("calculerDevis (port TS du moteur déterministe)", () => {
     expect(ok(d).coefficients.some((c) => c.valeur === 0.4)).toBe(true);
   });
 
+  it("> 300 km — escalade longue distance", () => {
+    const d = calculerDevis({ ...base, distance_km: 350 });
+    expect("escalade" in d && d.escalade).toBe(true);
+  });
+
   it("option nuit chauffeur — augmente le prix", () => {
     const sans = ok(calculerDevis(base));
     const avec = ok(calculerDevis({ ...base, options: [{ code: "nuit_chauffeur", quantite: 2 }] }));

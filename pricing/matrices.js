@@ -70,8 +70,9 @@ const MATRICES = {
     { max: 67, coef: 0.20 },
     { max: 85, coef: 0.40 },
   ],
-  // Au-delà de ce seuil : pas de devis auto -> escalade commercial (flux manuel).
+  // Au-delà de ces seuils : pas de devis auto -> escalade commercial (flux manuel).
   seuil_escalade_passagers: 85,
+  seuil_escalade_km: 300, // trajet > 300 km (aller) = longue distance, étude humaine
 
   // Options / suppléments.
   options: {

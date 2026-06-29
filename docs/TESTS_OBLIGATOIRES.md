@@ -9,7 +9,7 @@ dans `web`).
 |---|------|-----------------|----------------------|
 | 1 | **Cas simple** | Lyon → Annecy, 50 pax, A/R, 12/07/2026 | Devis chiffré normal : forfait selon la distance + coefficients (saison, anticipation, capacité), marge +15 %, TVA 10 %. |
 | 2 | **Demande urgente** | Bordeaux → Arcachon, 40 pax, dans 4 j | Départ < 7 jours → coefficient d'anticipation majoré (DD_PRIORITAIRE +10 % / DD_URGENT +5 %), demande marquée « urgent », 1re relance à J+2. |
-| 3 | **Hors zone (>180 km)** | Paris → Marseille, 40 pax, aller simple | Au-delà de 180 km, tarif au km (km × 2 × 2,5 €) au lieu du forfait grille. |
+| 3 | **Hors zone (>180 km)** | trajet 180–300 km | Au-delà de 180 km : tarif au km (km × 2 × 2,5 €) au lieu du forfait grille. **Au-delà de 300 km → cas complexe** (longue distance : double équipage / nuit → étude humaine). |
 | 4 | **0 passager** | Lyon → Annecy, 0 passager | Garde-fou : `calculerDevis` renvoie `{ erreur, champ: "nb_passagers" }` → **aucun prix**, l'agent redemande le nombre de passagers. |
 | 5 | **Date incohérente** | Lyon → Annecy, départ 12/07 **et retour 10/06** | Retour antérieur au départ → l'agent **refuse de chiffrer** et demande de corriger les dates. (Le moteur garde aussi le contrôle départ < demande.) |
 | 6 | **Gros volume** | Marseille → Lille, 120 pax | > 85 passagers → **escalade cas complexe** : pas de devis auto, la demande passe en `cas_complexe`, message **discret** au client + collecte des coordonnées pour rappel sous 24 h. |
@@ -25,7 +25,7 @@ dans `web`).
 ## Où c'est implémenté
 
 - **Moteur de prix déterministe** : `web/lib/calculerDevis.ts` (miroir : `pricing/matrices.js` + `pricing/calculer_devis.js`, utilisé par n8n).
-  - Forfait/longue distance, coefficients, marge, TVA, **garde-fous** (0 pax, distance ≤ 0, date incohérente), **escalade > 85 pax**.
+  - Forfait/longue distance, coefficients, marge, TVA, **garde-fous** (0 pax, distance ≤ 0, date incohérente), **escalade > 85 pax** et **> 300 km** (`seuil_escalade_passagers` / `seuil_escalade_km`).
 - **Vérifs géographiques** : `web/lib/distance.ts` → `geocodeVille()` / `analyserTrajet()` (Nominatim) : `horsFrance` + `ambigue`.
 - **Orchestration** : `web/app/api/chat/route.ts` :
   - recalcul du prix avec la distance routière réelle (OSRM) ;

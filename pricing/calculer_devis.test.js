@@ -46,6 +46,12 @@ test('hors zone / longue distance (> 180 km) — formule km × 2 × 2,5 €', ()
   assert.equal(d.prix_ht, 1638.75);          // 1500 × 0.95 × 1.15
 });
 
+test('très longue distance (> 300 km) — escalade flux manuel', () => {
+  const d = calculer_devis({ ...baseSimple, distance_km: 350 });
+  assert.equal(d.escalade, true);
+  assert.equal(d.prix_ttc, undefined);
+});
+
 test('0 passager — erreur de validation (pas de prix)', () => {
   const d = calculer_devis({ ...baseSimple, nb_passagers: 0 });
   assert.equal(d.erreur, true);

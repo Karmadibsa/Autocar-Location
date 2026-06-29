@@ -185,6 +185,7 @@ insert into pricing_config (id, data) values (1, '{
     {"max":67,"coef":0.20},{"max":85,"coef":0.40}
   ],
   "seuil_escalade_passagers": 85,
+  "seuil_escalade_km": 300,
   "options": {"guide":80,"nuit_chauffeur":120,"peages":0},
   "marge": 0.15,
   "tva": 0.10

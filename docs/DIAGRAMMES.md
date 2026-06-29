@@ -47,7 +47,7 @@ flowchart TB
 ## 2. Parcours PROSPECT — du chat au devis
 
 L'agent ne fait **qu'un appel LLM** (extraction) ; le **prix et la réponse** sont
-calculés/écrits par le nœud Code (déterministe). Au-delà de 85 passagers → cas complexe.
+calculés/écrits par le nœud Code (déterministe). Cas complexe si **> 85 passagers**, **> 300 km**, trajet **hors France** ou **ville ambiguë**.
 
 ```mermaid
 flowchart TB

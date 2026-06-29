@@ -88,6 +88,6 @@
   <line class="flow" x1="450" y1="453" x2="300" y2="306" marker-end="url(#a)"/>
   <line class="flow" x1="700" y1="453" x2="762" y2="150" marker-end="url(#a)"/>
 
-  <text x="40" y="540" class="note">Cas complexe (&gt; 85 passagers, hors France, atypique) ou ambiguïté de ville → escalade humaine (HITL), pas de devis automatique.</text>
+  <text x="40" y="540" class="note">Cas complexe (&gt; 85 passagers, &gt; 300 km, hors France, atypique) ou ambiguïté de ville → escalade humaine (HITL), pas de devis automatique.</text>
   <text x="40" y="560" class="note">Pilotage : dashboard direction (KPIs, courbes, motifs de refus, messagerie HITL, relances, annuaire autocaristes).</text>
 </svg>

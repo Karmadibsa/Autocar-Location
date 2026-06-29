@@ -56,6 +56,7 @@ export const MATRICES = {
     { max: 67, coef: 0.2 }, { max: 85, coef: 0.4 },
   ],
   seuil_escalade_passagers: 85,
+  seuil_escalade_km: 300,
   options: { guide: 80, nuit_chauffeur: 120, peages: 0 } as Record<string, number>,
   marge: 0.15,
   tva: 0.1,
@@ -97,6 +98,8 @@ export function calculerDevis(params: ParamsDevis, M = MATRICES): DevisResult {
   if (anticip < 0) return { erreur: true, message: "Date incohérente", champ: "date_depart" };
   if (nb_passagers > M.seuil_escalade_passagers)
     return { escalade: true, raison: `Volume de ${nb_passagers} passagers > ${M.seuil_escalade_passagers} : transfert à un commercial.` };
+  if (M.seuil_escalade_km && distance_km > M.seuil_escalade_km)
+    return { escalade: true, raison: `Longue distance ${distance_km} km > ${M.seuil_escalade_km} : transfert à un commercial.` };
 
   const lignes: Ligne[] = [];
   const coefficients: Coefficient[] = [];
