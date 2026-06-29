@@ -164,6 +164,10 @@ TRAJETS = [
 ]
 RAISONS = ["Prix trop élevé", "Délai / disponibilité", "Meilleure offre ailleurs", "Projet annulé ou reporté", "Autre"]
 
+# Domaine fictif des clients de demo. Doit correspondre a un domaine "demo" cote
+# front (lib/emailGuard.ts / env EMAIL_DEMO_DOMAINS) pour qu'AUCUN email reel ne parte.
+DEMO_DOMAINE = "demo.autocar-location.fr"
+
 # Client "vedette" garanti dans le jeu (reconnaissable en demo), avec des devis varies.
 SHOWCASE = {
     "id": "c0000000-0000-0000-0000-00000000c0de",
@@ -277,11 +281,13 @@ def main():
         ville, cp = random.choice(VILLES)
         # email unique
         base_email = f"{prenom}.{nom}".lower().replace("é", "e").replace("è", "e").replace("ç", "c").replace(" ", "")
-        email = f"{base_email}@example.fr"
+        # Domaine sentinelle de DEMO : le code (lib/emailGuard.ts) n'envoie AUCUN
+        # email reel a ce domaine, mais traite toute la logique (statuts, relances).
+        email = f"{base_email}@{DEMO_DOMAINE}"
         n = 1
         while email in emails_vus:
             n += 1
-            email = f"{base_email}{n}@example.fr"
+            email = f"{base_email}{n}@{DEMO_DOMAINE}"
         emails_vus.add(email)
         cid = ruuid()
         tel = "06" + "".join(str(random.randint(0, 9)) for _ in range(8))

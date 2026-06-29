@@ -7,6 +7,7 @@ import { calculerDevis } from "@/lib/calculerDevis";
 import { distanceKm } from "@/lib/distance";
 import { estUrgent, prochaineRelance } from "@/lib/relances";
 import { devisEmailHtml } from "@/lib/emailDevis";
+import { estEmailDemo } from "@/lib/emailGuard";
 
 type Devis = {
   prix_ht?: number;
@@ -278,6 +279,8 @@ async function sendDevisEmail(to: string, devis: Devis, params: Params, id?: str
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
+  // Adresse de démo : on ne déclenche pas d'envoi réel (logique déjà persistée).
+  if (estEmailDemo(to)) return;
   const html = devisEmailHtml(devis, params, { refuseToken: token });
   let attachments: { filename: string; content: string }[] | undefined;
   try {

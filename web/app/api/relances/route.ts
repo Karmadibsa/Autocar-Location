@@ -6,6 +6,7 @@ import { prochaineRelance, estUrgent, typeRelance, VALIDITE_JOURS } from "@/lib/
 import { buildDevisPdf, refDevis } from "@/lib/devisPdf";
 import { devisEmailHtml } from "@/lib/emailDevis";
 import { formatNomComplet } from "@/lib/noms";
+import { estEmailDemo } from "@/lib/emailGuard";
 
 type DevisDu = {
   id: string;
@@ -126,6 +127,8 @@ async function sendRelanceEmail(to: string, d: DevisDu, numero: number) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
   if (!key) return;
+  // Adresse de démo : on traite la relance (statut, trace) sans envoi réel.
+  if (estEmailDemo(to)) return;
   const html = devisEmailHtml(
     { prix_ht: d.prix_ht, tva: d.tva, prix_ttc: d.prix_ttc, devise: d.devise },
     {
