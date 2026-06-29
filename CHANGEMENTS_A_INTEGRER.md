@@ -41,6 +41,16 @@
 
 ### f) Tests obligatoires accessibles EN PRODUCTION
 - Voir le récap détaillé du comportement attendu : **`TESTS_OBLIGATOIRES.md`** (à la racine).
+
+### g-bis) Email de courtoisie au refus (scénario 6 du brief)
+- Au refus d'un devis (connecté **ou** lien public), envoi d'un **email de remerciement**
+  invitant à revenir. Best-effort, respecte le garde-fou démo.
+- Fichiers : `web/lib/emailDevis.ts` (`devisRefusCourtoisieHtml`), `web/lib/mailer.ts`
+  (`envoyerEmail`), `web/app/api/devis-reponse/route.ts`, `web/app/api/devis-refuser-public/route.ts`.
+
+### h) Date incohérente = retour avant départ
+- `/api/chat` : si `date_retour < date_depart` → l'agent refuse de chiffrer et demande de corriger.
+- L'agent n8n extrait désormais `date_retour` (prompt d'extraction mis à jour dans `n8n/build-workflow.js`).
 - Le panneau « Tests rapides (cas obligatoires) » du chat n'est plus masqué en prod.
 - 7 boutons = liste imposée : Cas simple, Demande urgente, Hors zone, 0 passager,
   Date incohérente, Gros volume (→ cas complexe), Option nuit chauffeur (+ 2 bonus).

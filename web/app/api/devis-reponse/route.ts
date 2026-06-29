@@ -2,6 +2,9 @@
 // Le client envoie son token ; on vérifie qu'il est bien propriétaire du devis
 // et que celui-ci est encore en attente. Met à jour devis + demande, stoppe les relances.
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { devisRefusCourtoisieHtml } from "@/lib/emailDevis";
+import { envoyerEmail } from "@/lib/mailer";
+import { formatNomComplet } from "@/lib/noms";
 
 export async function POST(request: Request) {
   const { token, id, reponse, raisons, signature, signePar, cgv } = await request.json().catch(() => ({}));
@@ -46,5 +49,25 @@ export async function POST(request: Request) {
     })
     .eq("id", id);
   await sb.from("demandes").update({ statut: reponse }).eq("id", d.demande_id);
+
+  // Refus : email de courtoisie (on remercie + invitation à revenir). Best-effort.
+  if (reponse === "refuse") {
+    const [{ data: dem }, { data: c }] = await Promise.all([
+      sb.from("demandes").select("depart, destination, date_depart, nb_passagers, aller_retour").eq("id", d.demande_id).maybeSingle(),
+      sb.from("clients").select("prenom, nom").eq("id", client.id).maybeSingle(),
+    ]);
+    await envoyerEmail(
+      email,
+      "Merci pour votre intérêt — Autocar Location",
+      devisRefusCourtoisieHtml({
+        depart: dem?.depart,
+        destination: dem?.destination,
+        date_depart: dem?.date_depart,
+        nb_passagers: dem?.nb_passagers,
+        aller_retour: dem?.aller_retour,
+        nom: formatNomComplet(c?.prenom, c?.nom),
+      }),
+    );
+  }
   return Response.json({ ok: true, statut: reponse });
 }

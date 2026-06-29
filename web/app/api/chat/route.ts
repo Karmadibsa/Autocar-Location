@@ -20,6 +20,7 @@ type Devis = {
 type Params = {
   nb_passagers?: number;
   date_depart?: string;
+  date_retour?: string;
   aller_retour?: boolean;
   distance_km?: number;
   options?: unknown;
@@ -78,6 +79,22 @@ export async function POST(request: Request) {
   // Client connecté : on connaît déjà son email → on l'injecte pour lier/envoyer
   // le devis automatiquement (l'agent n'a pas besoin de le redemander).
   if (clientEmail) data.params = { ...(data.params ?? {}), email: clientEmail };
+
+  // --- Cohérence des dates : un retour AVANT le départ est invalide ---
+  const dDep = data.params?.date_depart;
+  const dRet = data.params?.date_retour;
+  if (dDep && dRet && dRet < dDep) {
+    const fr = (s: string) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+    };
+    return Response.json({
+      reply: `La date de retour (${fr(dRet)}) est antérieure à la date de départ (${fr(dDep)}). Pouvez-vous corriger les dates ?`,
+      devis: null,
+      escalade: null,
+      params: data.params,
+    });
+  }
 
   // --- Vérifs géographiques + distance routière réelle ---
   // hors France -> cas complexe (transfrontalier) ; ville ambiguë -> on demande le CP.

@@ -45,7 +45,7 @@ const SCENARIOS: { label: string; message: string }[] = [
   { label: "Demande urgente (départ proche)", message: "Bordeaux vers Arcachon, 40 personnes, aller-retour dans 4 jours" },
   { label: "Hors zone (>180 km)", message: "Paris vers Marseille, 40 personnes, aller simple le 20 aout 2026" },
   { label: "0 passager (garde-fou)", message: "Lyon vers Annecy, 0 passager, aller-retour le 12 juillet 2026" },
-  { label: "Date incohérente (déjà passée)", message: "Lyon vers Annecy, 40 personnes, le 10 janvier 2024" },
+  { label: "Date incohérente (retour avant départ)", message: "Lyon vers Annecy, 40 personnes, départ le 12 juillet 2026 et retour le 10 juin 2026" },
   { label: "Gros volume → cas complexe", message: "Marseille vers Lille, 120 personnes, depart le 12 juillet 2026 et retour le 16 juillet 2026" },
   { label: "Option nuit chauffeur", message: "Lille vers Bruxelles, 30 personnes, aller-retour les 10 et 11 septembre 2026, avec une nuit chauffeur" },
   // Bonus

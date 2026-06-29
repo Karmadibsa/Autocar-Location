@@ -28,7 +28,7 @@ const EXTRACTION_PROMPT =
   "=A partir de la conversation ci-dessous, extrais les parametres du devis en JSON STRICT et RIEN d'autre (aucun texte autour). " +
   "Date du jour : {{ new Date().toISOString().substring(0,10) }}. Pour date_depart, si l'annee n'est pas precisee, choisis la prochaine date FUTURE correspondante (jamais une date passee). " +
   "Si une information requise manque, mets sa valeur a null. Estime distance_km (distance routiere approximative en km entre la ville de depart et la destination). " +
-  "Les cles attendues : nb_passagers (entier ou null), date_depart (format AAAA-MM-JJ ou null), aller_retour (true ou false), distance_km (nombre ou null), options (liste parmi guide, nuit_chauffeur, peages), depart (ville ou null), destination (ville ou null), email (ou null), nom (ou null). " +
+  "Les cles attendues : nb_passagers (entier ou null), date_depart (format AAAA-MM-JJ ou null), date_retour (format AAAA-MM-JJ ou null, uniquement si un aller-retour avec date de retour est precise), aller_retour (true ou false), distance_km (nombre ou null), options (liste parmi guide, nuit_chauffeur, peages), depart (ville ou null), destination (ville ou null), email (ou null), nom (ou null). " +
   "Conversation :\\n{{ " + HISTORY + " }}";
 
 // Code du nœud "Calculer Devis" : parse le JSON extrait + calcul deterministe.

@@ -19,6 +19,42 @@ const dateFrEmail = (s?: string | null) => {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : (s ?? "—");
 };
 
+/**
+ * Email de **courtoisie** envoyé quand le client refuse un devis : on remercie,
+ * on reste positif et on invite à revenir. (Scénario « Devis refusé » du brief.)
+ */
+export function devisRefusCourtoisieHtml(params: EmailParams): string {
+  const trajet = `${params.depart ?? "?"} &rarr; ${params.destination ?? "?"}`;
+  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000";
+  return `
+  <div style="font-family:Arial,Helvetica,sans-serif;color:#14201d;max-width:560px;margin:auto;background:#ffffff">
+    <div style="padding:18px 22px;border:1px solid #e3e8e6;border-bottom:3px solid ${BRAND};border-radius:12px 12px 0 0">
+      <img src="${base}/logo.png" alt="" width="42" height="29" style="vertical-align:middle;margin-right:8px" />
+      <span style="font-size:18px;font-weight:bold;color:${BRAND};vertical-align:middle">Autocar Location</span>
+    </div>
+    <div style="border:1px solid #e3e8e6;border-top:none;border-radius:0 0 12px 12px;padding:22px">
+      <h2 style="margin:0 0 6px;color:${BRAND};font-size:18px">Merci pour votre intérêt</h2>
+      <p style="margin:0 0 14px;font-size:14px">
+        ${params.nom ? `Bonjour ${params.nom},<br/>` : ""}
+        Nous avons bien noté que notre proposition pour le trajet <b>${trajet}</b> ne vous convient pas cette fois-ci.
+        Nous vous remercions sincèrement d'avoir pensé à nous.
+      </p>
+      <p style="margin:0 0 14px;font-size:14px">
+        Votre projet reste le bienvenu : n'hésitez pas à revenir vers nous, ce sera avec grand plaisir.
+        Nous adaptons volontiers nos offres (dates, options, capacité) pour mieux coller à vos besoins.
+      </p>
+      <div style="text-align:center;margin-top:20px">
+        <a href="${base}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:bold;font-size:14px">
+          Demander un nouveau devis
+        </a>
+      </div>
+      <p style="color:#8a958f;font-size:11px;margin-top:18px">
+        À très bientôt — l'équipe Autocar Location.
+      </p>
+    </div>
+  </div>`;
+}
+
 function ligneResume(label: string, valeur: string) {
   return `<tr>
     <td style="padding:3px 0;color:#5c6b66;font-size:13px">${label}</td>
