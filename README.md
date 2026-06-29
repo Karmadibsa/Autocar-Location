@@ -61,7 +61,7 @@ npm run dev                        # http://localhost:3000
 | [COUTS_ET_PROD.md](COUTS_ET_PROD.md) | Choix MVP (tunnel) + coûts détaillés d'une vraie prod |
 | [supabase/SCHEMA.md](supabase/SCHEMA.md) | Modèle de données expliqué (mermaid) |
 | [n8n/README.md](n8n/README.md) · [pricing/README.md](pricing/README.md) | Montage de l'agent · moteur de prix |
-| `livrables/` | Dossier de cadrage, argumentaire, wireframes |
+| [`livrables/`](livrables/README.md) | Livrables formatés : L1 cadrage, L2 prototype & artefacts, L3 passation, support de soutenance |
 
 ## Variables d'environnement
 

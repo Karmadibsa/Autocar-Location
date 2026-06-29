@@ -28,3 +28,6 @@ logs/
 
 # Temp
 /tmp/
+
+# Outils locaux (Claude Code)
+.claude/
