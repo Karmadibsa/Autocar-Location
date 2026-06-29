@@ -38,6 +38,10 @@ flowchart TB
     Front_NextJS --> Resend
 ```
 
+> Version image détaillée (routes, services, relances, HITL) : **[architecture.svg](architecture.svg)**.
+
+![Architecture Autocar Location](architecture.svg)
+
 ---
 
 ## 2. Parcours PROSPECT — du chat au devis

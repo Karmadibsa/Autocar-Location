@@ -73,7 +73,7 @@ de notation et la liste « Ce qui doit être rendu » du brief.
 
 | # | Livrable | Document | Échéance |
 |---|----------|----------|----------|
-| **L1** | Dossier de cadrage | [Dossier-de-cadrage-NeoTravel.docx](livrables/L1-dossier-cadrage/Dossier-de-cadrage-NeoTravel.docx) (+ [Argumentaire](livrables/L1-dossier-cadrage/Argumentaire-des-choix-NeoTravel.docx) + [wireframes](livrables/L1-dossier-cadrage/wireframes)) | 24/06 |
+| **L1** | Dossier de cadrage | [Dossier de cadrage V4.pdf](livrables/L1-dossier-cadrage/Dossier%20de%20cadrage%20V4.pdf) (+ [Argumentaire](livrables/L1-dossier-cadrage/Argumentaire-des-choix-NeoTravel.docx) + [wireframes](livrables/L1-dossier-cadrage/wireframes)) | 24/06 |
 | **L2** | Prototype & artefacts | [L2-Prototype-et-artefacts-NeoTravel.docx](livrables/L2-prototype-et-artefacts/L2-Prototype-et-artefacts-NeoTravel.docx) + ce **dépôt Git** | 29/06 |
 | **L3** | Documentation de passation | [L3-Documentation-de-passation-NeoTravel.docx](livrables/L3-documentation-de-passation/L3-Documentation-de-passation-NeoTravel.docx) | 29/06 |
 | **—** | Support de soutenance | [Support-de-soutenance-NeoTravel.docx](livrables/support-de-soutenance/Support-de-soutenance-NeoTravel.docx) | 30/06 |

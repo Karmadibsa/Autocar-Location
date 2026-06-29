@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 720" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#0e7a66"/>
+    </marker>
+    <style>
+      .tbl { fill:#ffffff; stroke:#cdd8d4; stroke-width:1.5; rx:10; }
+      .hdr { fill:#0e7a66; }
+      .htxt { fill:#ffffff; font-weight:bold; font-size:14px; }
+      .fld { fill:#3a4a45; font-size:11.5px; }
+      .ref { fill:#f4f7f6; stroke:#cdd8d4; stroke-width:1.5; }
+      .rel { stroke:#0e7a66; stroke-width:1.6; fill:none; }
+      .reld { stroke:#9bb4ad; stroke-width:1.4; fill:none; stroke-dasharray:5 4; }
+      .card { fill:#0a5346; font-size:11px; font-weight:bold; }
+      .note { fill:#8a958f; font-size:11px; }
+    </style>
+  </defs>
+
+  <text x="40" y="36" font-size="20" font-weight="bold" fill="#14201d">Autocar Location — Modèle de données (Supabase / PostgreSQL)</text>
+  <text x="40" y="56" class="note">Sécurisé par RLS · 7 tables métier + auth.users + pricing_config · seuil cas complexe = 55 passagers</text>
+
+  <!-- auth.users -->
+  <g>
+    <rect class="tbl ref" x="60" y="80" width="210" height="40" rx="10"/>
+    <text x="75" y="105" font-size="13" font-weight="bold" fill="#14201d">auth.users</text>
+    <text x="180" y="105" class="note">(Supabase Auth)</text>
+  </g>
+
+  <!-- profiles -->
+  <g>
+    <rect class="tbl" x="340" y="80" width="220" height="56" rx="10"/>
+    <rect class="hdr" x="340" y="80" width="220" height="24" rx="10"/>
+    <rect class="hdr" x="340" y="92" width="220" height="12"/>
+    <text x="352" y="97" class="htxt">profiles</text>
+    <text x="352" y="122" class="fld">id (= auth.users.id) · role (client/admin)</text>
+  </g>
+
+  <!-- clients -->
+  <g>
+    <rect class="tbl" x="60" y="180" width="280" height="72" rx="10"/>
+    <rect class="hdr" x="60" y="180" width="280" height="24" rx="10"/>
+    <rect class="hdr" x="60" y="192" width="280" height="12"/>
+    <text x="72" y="197" class="htxt">clients</text>
+    <text x="72" y="222" class="fld">email (unique) · prenom · nom · telephone</text>
+    <text x="72" y="240" class="fld">adresse · code_postal · ville · consentement</text>
+  </g>
+
+  <!-- conversations -->
+  <g>
+    <rect class="tbl" x="640" y="180" width="300" height="72" rx="10"/>
+    <rect class="hdr" x="640" y="180" width="300" height="24" rx="10"/>
+    <rect class="hdr" x="640" y="192" width="300" height="12"/>
+    <text x="652" y="197" class="htxt">conversations</text>
+    <text x="652" y="222" class="fld">messages jsonb (chat + messagerie HITL)</text>
+    <text x="652" y="240" class="fld">role = user / admin / agent</text>
+  </g>
+
+  <!-- demandes -->
+  <g>
+    <rect class="tbl" x="60" y="312" width="320" height="92" rx="10"/>
+    <rect class="hdr" x="60" y="312" width="320" height="24" rx="10"/>
+    <rect class="hdr" x="60" y="324" width="320" height="12"/>
+    <text x="72" y="329" class="htxt">demandes</text>
+    <text x="72" y="354" class="fld">depart · destination · date_depart · aller_retour</text>
+    <text x="72" y="372" class="fld">nb_passagers · distance_km · statut · commentaire</text>
+    <text x="72" y="390" class="fld">msg_non_lu_admin · msg_non_lu_client</text>
+  </g>
+
+  <!-- autocaristes -->
+  <g>
+    <rect class="tbl" x="640" y="312" width="300" height="92" rx="10"/>
+    <rect class="hdr" x="640" y="312" width="300" height="24" rx="10"/>
+    <rect class="hdr" x="640" y="324" width="300" height="12"/>
+    <text x="652" y="329" class="htxt">autocaristes</text>
+    <text x="652" y="354" class="fld">nom · ville · departement · nb_vehicules</text>
+    <text x="652" y="372" class="fld">capacite_max · contact · note · specialites</text>
+    <text x="652" y="390" class="note">annuaire partenaires (admin)</text>
+  </g>
+
+  <!-- devis -->
+  <g>
+    <rect class="tbl" x="60" y="462" width="360" height="100" rx="10"/>
+    <rect class="hdr" x="60" y="462" width="360" height="24" rx="10"/>
+    <rect class="hdr" x="60" y="474" width="360" height="12"/>
+    <text x="72" y="479" class="htxt">devis</text>
+    <text x="72" y="504" class="fld">prix_ht · tva · prix_ttc · lignes · coefficients</text>
+    <text x="72" y="522" class="fld">statut · prochaine_relance · nb_relances · token · raison_refus</text>
+    <text x="72" y="540" class="fld">signature_image · signe_par · signe_le · cgv_acceptees</text>
+  </g>
+
+  <!-- relances -->
+  <g>
+    <rect class="tbl" x="60" y="620" width="300" height="64" rx="10"/>
+    <rect class="hdr" x="60" y="620" width="300" height="24" rx="10"/>
+    <rect class="hdr" x="60" y="632" width="300" height="12"/>
+    <text x="72" y="637" class="htxt">relances</text>
+    <text x="72" y="662" class="fld">type (J2/J3/J7) · dates · cle_idempotence (unique)</text>
+  </g>
+
+  <!-- pricing_config -->
+  <g>
+    <rect class="tbl ref" x="640" y="462" width="300" height="48" rx="10"/>
+    <text x="655" y="487" font-size="13" font-weight="bold" fill="#14201d">pricing_config</text>
+    <text x="655" y="503" class="note">barème jsonb pilotable (1 ligne)</text>
+  </g>
+
+  <!-- relations -->
+  <!-- auth.users 1-1 profiles -->
+  <line class="rel" x1="270" y1="100" x2="338" y2="108" marker-end="url(#arrow)"/>
+  <text x="280" y="95" class="card">1-1</text>
+  <!-- auth.users 0:1 clients -->
+  <line class="rel" x1="150" y1="120" x2="170" y2="178" marker-end="url(#arrow)"/>
+  <text x="158" y="150" class="card">0-1</text>
+  <!-- clients 1-N demandes -->
+  <line class="rel" x1="190" y1="252" x2="200" y2="310" marker-end="url(#arrow)"/>
+  <text x="205" y="285" class="card">1-N</text>
+  <!-- clients 1-N conversations -->
+  <line class="reld" x1="340" y1="212" x2="638" y2="214" marker-end="url(#arrow)"/>
+  <text x="470" y="206" class="card">1-N</text>
+  <!-- demandes 1-1 conversations (dashed) -->
+  <line class="reld" x1="380" y1="340" x2="700" y2="254" marker-end="url(#arrow)"/>
+  <text x="540" y="300" class="card">1-1</text>
+  <!-- demandes 1-1 devis -->
+  <line class="rel" x1="210" y1="404" x2="220" y2="460" marker-end="url(#arrow)"/>
+  <text x="225" y="436" class="card">1-1</text>
+  <!-- devis 1-N relances -->
+  <line class="rel" x1="200" y1="562" x2="200" y2="618" marker-end="url(#arrow)"/>
+  <text x="208" y="595" class="card">1-N</text>
+
+  <!-- legend -->
+  <line class="rel" x1="640" y1="600" x2="690" y2="600"/>
+  <text x="698" y="604" class="note">lien obligatoire</text>
+  <line class="reld" x1="640" y1="622" x2="690" y2="622"/>
+  <text x="698" y="626" class="note">lien optionnel / dénormalisé</text>
+</svg>

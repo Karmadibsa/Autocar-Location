@@ -31,6 +31,10 @@ flowchart TB
     devis -->|"1-N"| relances
 ```
 
+> Version image (utilisable hors GitHub / pour les livrables) : **[schema-bdd.svg](schema-bdd.svg)**.
+
+![Schéma de la base de données Autocar Location](schema-bdd.svg)
+
 ## Tables
 
 Chaque table porte une responsabilité unique ; le détail des colonnes utiles est
