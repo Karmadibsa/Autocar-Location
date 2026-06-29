@@ -9,7 +9,7 @@ flowchart TB
     auth_users["auth.users — comptes (Supabase Auth)"]
     profiles["profiles — id, role (client/admin)"]
     clients["clients — email, prenom, nom, adresse, code_postal, ville, telephone"]
-    demandes["demandes — depart, destination, date, pax, distance, statut, commentaire"]
+    demandes["demandes — depart, destination, date, pax, distance, statut, commentaire, msg_non_lu_admin/client"]
     devis["devis — prix_ht, tva, prix_ttc, lignes, coefficients, statut, prochaine_relance, token, raison_refus"]
     relances["relances — type (J2/J3/J7), date_planifiee, date_envoi, cle_idempotence"]
     conversations["conversations — messages (jsonb)"]
