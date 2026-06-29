@@ -22,7 +22,7 @@ Stack : **Next.js (Netlify)** + **Supabase** + **n8n/Gemma** + **Resend**.
 | Le **modèle de données** | [supabase/SCHEMA.md](supabase/SCHEMA.md) |
 | **Déployer** | [DEPLOIEMENT.md](DEPLOIEMENT.md) |
 | Les **coûts** / passage en prod | [COUTS_ET_PROD.md](COUTS_ET_PROD.md) |
-| **Tester** que tout marche | [A_FAIRE_DEMAIN.md](A_FAIRE_DEMAIN.md) |
+| **Tester** que tout marche | [RECETTE_END_TO_END.md](RECETTE_END_TO_END.md) |
 | Monter l'**agent n8n** | [n8n/README.md](n8n/README.md) |
 | Le **moteur de prix** | [pricing/README.md](pricing/README.md) |
 

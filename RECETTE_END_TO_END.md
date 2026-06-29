@@ -1,4 +1,4 @@
-# Check-list de test — Autocar Location (app déployée)
+# Recette end-to-end — Autocar Location (app déployée)
 
 À dérouler dans l'ordre. ✅ = OK, sinon note l'étape + l'erreur.
 Site : **https://autocar-location.axel-momper.fr** · Admin n8n : **https://tummy-sheet-valiant.ngrok-free.dev**
