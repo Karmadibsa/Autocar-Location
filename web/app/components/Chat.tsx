@@ -8,7 +8,7 @@ import {
   Users,
   Repeat,
   Plus,
-  AlertTriangle,
+  Headset,
   RotateCcw,
   Wrench,
   ChevronDown,
@@ -274,9 +274,9 @@ export default function Chat() {
               >
                 {m.content}
                 {m.escalade && (
-                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#E08A1E] bg-[#FDF4E6] px-3 py-2 text-[13px] text-[#8A5A12]">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-                    <span><b>Cas particulier.</b> {m.escalade} Un conseiller vous recontacte sous 24 h.</span>
+                  <div className="mt-2 flex items-start gap-2 rounded-xl border border-[var(--brand)] bg-[var(--brand-soft)] px-3 py-2 text-[13px] text-[var(--brand-dark)]">
+                    <Headset className="mt-0.5 h-4 w-4 flex-none" />
+                    <span>{m.escalade}</span>
                   </div>
                 )}
                 {m.devis && <DevisCard devis={m.devis} />}

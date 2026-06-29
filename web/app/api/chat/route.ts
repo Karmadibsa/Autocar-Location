@@ -92,7 +92,19 @@ export async function POST(request: Request) {
     console.error("[chat] persistance échouée:", e);
   }
 
-  return Response.json({ reply: data.reply, devis: data.devis, escalade: data.escalade, params: data.params });
+  // Cas complexe (escalade) : on reste DISCRET côté client (jamais la raison interne
+  // ni le seuil), et on RÉCLAME les coordonnées pour pouvoir recontacter.
+  // La vraie raison reste en base (commentaire) pour l'admin — persist l'a déjà utilisée.
+  let escaladeClient: string | null = null;
+  if (data.escalade) {
+    const emailConnu = clientEmail || data.params?.email;
+    escaladeClient = "Demande prise en charge par un conseiller — réponse sous 24 h.";
+    data.reply = emailConnu
+      ? "Votre groupe nécessite une étude personnalisée : un conseiller vous établit un devis sur-mesure et vous recontacte sous 24 h. Merci !"
+      : "Votre groupe nécessite une étude personnalisée par un conseiller. Laissez-moi votre email (et votre nom) pour qu'il vous recontacte sous 24 h.";
+  }
+
+  return Response.json({ reply: data.reply, devis: data.devis, escalade: escaladeClient, params: data.params });
 }
 
 // Supprime un éventuel raisonnement interne du modèle (Gemma) et ne garde que la

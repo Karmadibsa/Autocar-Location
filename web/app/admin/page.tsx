@@ -32,7 +32,7 @@ type DemandeRow = {
   commentaire: string | null;
   statut: string;
   created_at: string;
-  clients: { email: string | null; prenom: string | null; nom: string | null } | null;
+  clients: { email: string | null; prenom: string | null; nom: string | null; telephone: string | null } | null;
   devis: DevisFull[];
 };
 
@@ -520,6 +520,17 @@ export default function AdminPage() {
                             </div>
                             <p className="mt-1 text-[#8A5A12]">
                               {d.commentaire ?? "Cas atypique : à étudier par un conseiller."}
+                            </p>
+                            <p className="mt-2 text-[#8A5A12]">
+                              <b>Contact :</b>{" "}
+                              {d.clients?.email ? (
+                                <>
+                                  {d.clients.email}
+                                  {d.clients.telephone ? ` · ${d.clients.telephone}` : ""}
+                                </>
+                              ) : (
+                                <span className="text-[#A12B2B]">aucune coordonnée laissée par le prospect</span>
+                              )}
                             </p>
                             <div className="mt-3 rounded-lg border border-[var(--border)] bg-white p-3">
                               <div className="font-semibold text-[var(--ink)]">Établir un devis sur-mesure</div>

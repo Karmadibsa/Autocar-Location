@@ -132,7 +132,11 @@ let clientEmail = "";
 try { clientEmail = $('Webhook').item.json.body.clientEmail || ""; } catch (e) {}
 let reply;
 if (escalade) {
-  reply = escalade + " Un conseiller vous recontactera sous 24 h.";
+  // On reste DISCRET cote client : jamais la raison interne ni le seuil.
+  // La vraie raison (variable "escalade") part en base pour l'admin via /api/chat.
+  reply = clientEmail
+    ? "Votre groupe necessite une etude personnalisee : un conseiller vous etablit un devis sur-mesure et vous recontacte sous 24 h. Merci !"
+    : "Votre groupe necessite une etude personnalisee par un conseiller. Laissez-moi votre email (et votre nom) pour qu'il vous recontacte sous 24 h.";
 } else {
   const manque = [];
   if (!p || !p.depart) manque.push("la ville de départ");
