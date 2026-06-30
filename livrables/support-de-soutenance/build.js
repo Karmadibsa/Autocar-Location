@@ -1,13 +1,14 @@
 // build.js — Génère le « Support de soutenance » NeoTravel en .docx (trame de slides + notes)
 // Lancer : node build.js   (depuis ce dossier). Sortie : Support-de-soutenance-NeoTravel.docx
+// Miroir, en version document, du PowerPoint produit par build-pptx.js (même plan 18 slides).
 const k = require('../_docx-kit');
 const { H1, H2, P, run, code, bullet, makeTable, callout, cover, toc, buildDoc, pageBreak, path } = k;
 
 const logo = path.join(__dirname, '..', 'assets', 'logo-neotravel.png');
 const body = [];
 
-// Rendu d'une "slide" : titre (H1), sous-titre optionnel, puces, note orateur, qui parle.
-function slide(n, titre, { sousTitre, puces = [], note, qui, duree } = {}) {
+// Rendu d'une "slide" : titre (H1), méta (orateur/durée), sous-titre, puces, tableau optionnel, note.
+function slide(n, titre, { sousTitre, puces = [], table, note, qui, duree } = {}) {
   body.push(H1(`Slide ${n} — ${titre}`));
   const meta = [];
   if (qui) meta.push(run('Orateur : ', { bold: true, color: k.ACCENT_DK })), meta.push(run(qui + '   '));
@@ -15,25 +16,29 @@ function slide(n, titre, { sousTitre, puces = [], note, qui, duree } = {}) {
   if (meta.length) body.push(P(meta));
   if (sousTitre) body.push(P([run(sousTitre, { italics: true, color: k.GREY })]));
   puces.forEach((t) => body.push(bullet(t)));
+  if (table) body.push(makeTable(table.head, table.rows, table.widths));
   if (note) body.push(callout('À dire :', note));
 }
 
 // ---------------------------------------------------------------------------
 body.push(H1('Mode d’emploi du support'));
-body.push(P([run('Trame de la soutenance : '), run('~20 min de présentation + démo', { bold: true }), run(', puis '), run('10-15 min de questions', { bold: true }), run('. Une slide = une idée. Les blocs « À dire » sont les notes de l’orateur ; « Orateur » indique qui prend la parole — '), run('chaque membre intervient', { bold: true }), run('. À mettre en forme dans l’outil de slides de votre choix (ou à présenter tel quel en PDF).')]));
+body.push(P([run('Trame de la soutenance : '), run('~20 min de présentation + démo', { bold: true }), run(', puis '), run('10-15 min de questions', { bold: true }), run('. Une slide = une idée. Les blocs « À dire » sont les notes de l’orateur ; « Orateur » indique qui prend la parole — '), run('chaque membre intervient', { bold: true }), run('. Ce document est le miroir du PowerPoint (build-pptx.js) ; présentez le .pptx, ce .docx sert de script.')]));
 body.push(callout('Avant de commencer :', [run('lancer '), code('lancer-n8n-tunnel.bat'), run(' (2 fenêtres n8n + tunnel) et rejouer '), code('reset-complet.sql'), run(' pour des données propres. Filet de sécurité : un jeu de démo est déjà en base si le chat live échoue.')]));
 body.push(H2('Répartition de la parole (proposition)'));
 body.push(P('Le tableau ci-dessous propose une répartition de la prise de parole, par bloc et par slides, afin que chaque membre intervienne sur son périmètre.'));
 body.push(makeTable(
   ['Bloc', 'Orateur', 'Slides'],
   [
-    ['Problème & solution', 'Axel MOMPER', '1 → 4'],
-    ['Démo live (parcours complet)', 'Zakaria TOUAMI', '5 → 8'],
-    ['Fiabilité, choix techniques, limites', 'Vincent CONTER', '9 → 12'],
-    ['Clôture & Q&R', 'Toute l’équipe', '13'],
+    ['Problème, objectifs & solution', 'Axel MOMPER', '1 → 5, 9'],
+    ['Choix techniques, fiabilité, prévu vs réalisé', 'Vincent CONTER', '6 → 8'],
+    ['Démo live (parcours complet)', 'Zakaria TOUAMI', '10 → 14'],
+    ['Limites, coûts, ouverture & passation', 'Vincent CONTER', '15 → 16'],
+    ['Clôture & Q&R', 'Toute l’équipe', '17'],
   ],
-  [3200, 3360, 2800],
+  [3600, 3160, 2600],
 ));
+body.push(H2('Plan & ordre logique'));
+body.push(P('Objectifs → contexte → solution → choix techniques justifiés → prévu vs réalisé → correspondance attentes/réponses → démo (ce qui fonctionne) → limites & ouverture → conclusion.'));
 body.push(pageBreak());
 
 // ---------------------------------------------------------------------------
@@ -41,24 +46,35 @@ slide(1, 'Titre', {
   qui: 'Axel', duree: '30 s',
   sousTitre: 'NeoTravel — Automatisation du cycle commercial (transport de groupe en autocar).',
   puces: [
-    'Cas d’étude MBA1 — InterstellLabs.',
+    'Cas d’étude MBA1 — InterstellLabs · 1ᵉʳ juillet 2026.',
     'Équipe : Axel MOMPER · Vincent CONTER · Zakaria TOUAMI.',
   ],
-  note: 'Se présenter brièvement et annoncer le plan : problème, solution, démo live, choix techniques, limites, questions.',
+  note: 'Se présenter brièvement et annoncer le plan : objectifs du client → contexte → solution → choix techniques → prévu vs réalisé → démo live → ouverture & passation → questions. Annoncer la règle d’or dès l’ouverture.',
 });
 
-slide(2, 'Le problème', {
-  qui: 'Axel', duree: '2 min',
+slide(2, 'Objectifs & attentes initiales du client', {
+  qui: 'Axel', duree: '1,5 min',
+  sousTitre: 'Le cadre posé AVANT d’écrire la première ligne de code (dossier de cadrage L1).',
+  puces: [
+    'Périmètre — 10 fonctions : capter le lead, centraliser (CRM), qualifier, détecter les manquants, calculer le devis, générer le PDF, l’envoyer, relancer, suivre le pipeline, piloter via dashboard.',
+    'Irritants à résoudre : leads payants jamais recontactés, devis trop lents, relances oubliées, tarif manuel faillible, direction sans visibilité.',
+    'KPIs visés : part des leads traités → ~100 %, délai demande→devis en minutes, taux de conversion, aucune relance oubliée, coût IA/devis maîtrisé (bonus).',
+  ],
+  note: 'Poser le cadre : voici ce que le client attendait. On y reviendra (slide 9) pour prouver qu’on répond au besoin.',
+});
+
+slide(3, 'Le contexte & le problème', {
+  qui: 'Axel', duree: '1,5 min',
   sousTitre: 'NeoTravel reçoit ~60 leads/jour — l’acquisition n’est pas le problème, l’exploitation l’est.',
   puces: [
     'Friction 1 : les commerciaux (commissionnés) priorisent les gros leads → des leads payants ne sont jamais recontactés (manque à gagner).',
     'Friction 2 : acquisition bridée — sans automatisation, plus de leads = plus de charge, pas plus de CA.',
-    'Tarification manuelle lente et faillible, relances oubliées, direction sans visibilité.',
+    'S’ajoutent : tarification manuelle lente et faillible, relances oubliées, direction sans visibilité.',
   ],
-  note: 'Insister : on veut mieux exploiter le flux existant et libérer les commerciaux pour les tâches à forte valeur (conseil, négociation).',
+  note: 'Insister : mieux exploiter le flux existant et libérer les commerciaux pour les tâches à forte valeur (conseil, négociation).',
 });
 
-slide(3, 'La solution & la règle d’or', {
+slide(4, 'La solution & la règle d’or', {
   qui: 'Axel', duree: '1,5 min',
   sousTitre: 'Un copilote qui automatise la chaîne sans déshumaniser.',
   puces: [
@@ -69,18 +85,91 @@ slide(3, 'La solution & la règle d’or', {
   note: 'La règle d’or est le fil rouge de toute la soutenance : reproductible, auditable, zéro hallucination tarifaire.',
 });
 
-slide(4, 'Architecture', {
-  qui: 'Axel', duree: '1,5 min',
+slide(5, 'Architecture', {
+  qui: 'Axel', duree: '1 min',
   sousTitre: 'Option A hybride : Next.js (Netlify) + n8n/Gemma + Supabase + Resend.',
   puces: [
     'Front Next.js = UI + toute la logique métier (routes /api).',
     'Agent n8n = UN SEUL appel LLM (extraction) ; le nœud Code calcule le prix ET rédige la réponse.',
     'Supabase = PostgreSQL + Auth + RLS ; OSRM = distance routière réelle ; Resend = emails.',
   ],
-  note: 'Montrer le schéma de DIAGRAMMES.md. Expliquer pourquoi un seul appel LLM : rapidité, fiabilité, pas de fuite de raisonnement.',
+  note: 'Montrer le schéma (docs/architecture.svg / DIAGRAMMES.md). Pourquoi un seul appel LLM : rapidité, fiabilité, pas de fuite de raisonnement.',
 });
 
-slide(5, 'Démo — parcours prospect (le cœur)', {
+slide(6, 'Choix techniques justifiés', {
+  qui: 'Vincent', duree: '2 min',
+  sousTitre: 'Pas seulement ce qu’on a fait, mais pourquoi — avec les critères.',
+  table: {
+    head: ['Décision', 'Retenu', 'Critères & pourquoi'],
+    rows: [
+      ['Orchestration', 'n8n (Option A)', 'Mise en place visuelle et rapide, relances intégrées, courbe d’apprentissage douce — vs Vercel AI SDK.'],
+      ['Modèle IA', 'Gemma (gemma-4-31b-it)', 'Coût gratuit (quota AI Studio), sorties JSON structurées fiables, latence basse ; rôle d’assistance seul.'],
+      ['Données & Auth', 'Supabase (PostgreSQL)', 'Base + Auth + RLS dans une seule stack → dashboard custom sans surcoût, sécurité par ligne — vs Airtable.'],
+      ['Appels LLM', 'Un seul (extraction)', 'Tient dans le timeout 30 s, moins d’erreurs 503, aucune fuite de raisonnement vers le client.'],
+      ['Limite observée', '503 ponctuels du LLM', 'Mitigée : retries + prix et réponse indépendants du LLM → le devis sort même si le modèle hésite.'],
+    ],
+    widths: [1700, 2200, 5460],
+  },
+  note: 'Défendre chaque décision par ses critères (coût, qualité, latence, sorties structurées, compatibilité stack) et assumer la limite. Renvoyer à l’« Argumentaire des choix » (L1).',
+});
+
+slide(7, 'Fiabilité & garde-fous', {
+  qui: 'Vincent', duree: '1 min',
+  sousTitre: 'Un système sûr, juste et auditable.',
+  puces: [
+    'Prix 100 % déterministe (calculer_devis() testé) ; 1ᵉʳ prix figé (distance réelle OSRM).',
+    'Jeu de tests : cas types ET cas limites (0 passager, date incohérente, gros volume, > 85 pax → escalade).',
+    'RGPD (minimisation, domaine de démo sans envoi réel) ; prompt injection (le code ne négocie jamais le prix) ; HITL.',
+  ],
+  note: 'Montrer rapidement npm test qui passe, et /docs (Swagger) : « toute l’API est documentée et explorable ».',
+});
+
+slide(8, 'Prévu (L1) vs réalisé (L2/L3)', {
+  qui: 'Vincent', duree: '1,5 min',
+  sousTitre: 'Transparence sur les écarts entre le cadrage et la réalisation.',
+  table: {
+    head: ['Prévu — cadrage L1', 'Réalisé', 'Raison de l’écart'],
+    rows: [
+      ['Modèle gpt-4o-mini', 'Gemma (gratuit)', 'Quota AI Studio, sorties JSON suffisantes ; le LLM ne fait qu’extraire.'],
+      ['Distance estimée (API en P2)', 'Distance routière réelle (OSRM) dès le MVP', 'Service gratuit, sans clé → devis plus juste tout de suite.'],
+      ['n8n hébergé (cloud)', 'Tunnel local à URL fixe (0 €)', 'MVP gratuit et suffisant pour la démo ; voie de prod documentée.'],
+      ['Espace client = bonus', 'Livré : suivi devis + conversations + messagerie HITL', 'Forte valeur client, faisable simplement dans Supabase.'],
+      ['Dashboard simple', 'Dashboard riche : courbe, camembert, export PDF', 'Supabase facilitait un vrai pilotage par la donnée.'],
+    ],
+    widths: [2500, 2900, 3960],
+  },
+  note: 'Assumer les écarts comme des décisions, pas des oublis. On a tenu le cap (chaîne complète) et certains arbitrages ont amélioré le résultat.',
+});
+
+slide(9, 'Attentes du client → réponses livrées', {
+  qui: 'Axel', duree: '1,5 min',
+  sousTitre: 'On boucle avec la slide 2 : chaque attente a sa réponse concrète.',
+  table: {
+    head: ['Attente du client', 'Réponse apportée par la solution'],
+    rows: [
+      ['Capter et centraliser chaque lead', 'Chat + création automatique de la fiche (clients / demandes) en base.'],
+      ['Qualifier et détecter les manquants', 'Agent n8n : extraction des paramètres + questions ciblées avant devis.'],
+      ['Un devis juste, en quelques secondes', 'calculer_devis() déterministe + distance routière réelle, figé.'],
+      ['Une proposition professionnelle', 'PDF généré + email avec boutons Accepter / Refuser.'],
+      ['Ne plus oublier les relances', 'Séquences automatiques J+2 / J+3 / J+7 (max 2) + relance manuelle.'],
+      ['Donner de la visibilité à la direction', 'Dashboard /admin : KPIs, courbe, camembert des refus, export PDF.'],
+      ['Garder l’humain sur les cas sensibles', 'Escalade HITL (> 85 pax) + messagerie bidirectionnelle client ↔ conseiller.'],
+    ],
+    widths: [3400, 5960],
+  },
+  note: 'C’est la preuve qu’on a traité le besoin du client, pas seulement construit une démo.',
+});
+
+slide(10, 'Ce qui fonctionne — démo live', {
+  qui: 'Zakaria',
+  sousTitre: 'Démonstration du parcours complet, en conditions réelles.',
+  puces: [
+    'Au programme : parcours prospect · cas complexe (HITL) · espace client · dashboard admin.',
+  ],
+  note: 'Transition vers la démo. Pré-requis lancés (tunnel + données propres). Filet : jeu de démo déjà en base si le chat échoue.',
+});
+
+slide(11, 'Démo — parcours prospect (le cœur)', {
   qui: 'Zakaria', duree: '2 min',
   sousTitre: 'Chat : « Lyon vers Annecy, 50 personnes, aller-retour le 12 juillet 2026 ».',
   puces: [
@@ -91,7 +180,7 @@ slide(5, 'Démo — parcours prospect (le cœur)', {
   note: 'Si Gemma renvoie un 503 ponctuel, renvoyer le message. Garder le filet : devis de démo déjà en base.',
 });
 
-slide(6, 'Démo — cas complexe (HITL)', {
+slide(12, 'Démo — cas complexe (HITL)', {
   qui: 'Zakaria', duree: '1 min',
   sousTitre: 'Chat : « Marseille vers Lille, 120 personnes ».',
   puces: [
@@ -101,7 +190,7 @@ slide(6, 'Démo — cas complexe (HITL)', {
   note: 'Montrer que le système sait dire « non » à l’automatisation totale : c’est un gage de fiabilité, pas une limite.',
 });
 
-slide(7, 'Démo — côté client', {
+slide(13, 'Démo — côté client', {
   qui: 'Zakaria', duree: '1,5 min',
   sousTitre: 'De l’email à l’espace client.',
   puces: [
@@ -109,10 +198,10 @@ slide(7, 'Démo — côté client', {
     'Espace client : Mes devis (PDF, accepter/refuser avec motifs), Mes conversations, Mon compte.',
     '« Refuser » depuis l’email → page de motifs → relances stoppées.',
   ],
-  note: 'Souligner le différenciateur bonus : le prospect suit ses devis et son historique.',
+  note: 'Souligner le différenciateur (bonus livré) : le prospect suit ses devis et son historique.',
 });
 
-slide(8, 'Démo — dashboard admin (pilotage)', {
+slide(14, 'Démo — dashboard admin (pilotage)', {
   qui: 'Zakaria', duree: '2 min',
   sousTitre: 'Connexion admin → /admin.',
   puces: [
@@ -123,52 +212,30 @@ slide(8, 'Démo — dashboard admin (pilotage)', {
   note: 'C’est la preuve du pilotage par la donnée : la direction voit tout en temps réel.',
 });
 
-slide(9, 'Fiabilité & garde-fous', {
+slide(15, 'Limites, MVP vs prod & coûts', {
   qui: 'Vincent', duree: '1,5 min',
-  sousTitre: 'Un système sûr, juste et auditable.',
-  puces: [
-    'Prix 100 % déterministe (calculer_devis() testé) ; 1ᵉʳ prix figé.',
-    'Jeu de tests : cas types ET cas limites (0 passager, date incohérente, gros volume…).',
-    'RGPD (minimisation, domaine de démo sans envoi réel) ; prompt injection (le code ne négocie jamais le prix) ; HITL.',
-  ],
-  note: 'Montrer rapidement npm test qui passe, et /docs (Swagger) : « toute l’API est documentée et explorable ».',
-});
-
-slide(10, 'Choix techniques défendus', {
-  qui: 'Vincent', duree: '1,5 min',
-  sousTitre: 'Pourquoi ces décisions.',
-  puces: [
-    'n8n (Option A) : orchestration visuelle + relances intégrées.',
-    'Un seul appel LLM : rapide, fiable, économe.',
-    'Supabase plutôt qu’Airtable : base + Auth + RLS dans une seule stack (dashboard custom sans surcoût).',
-    'Gemma (gratuit) : rôle d’assistance uniquement.',
-  ],
-  note: 'Renvoyer à l’« Argumentaire des choix » (L1) pour le détail des décisions.',
-});
-
-slide(11, 'Limites & arbitrages assumés', {
-  qui: 'Vincent', duree: '1 min',
-  sousTitre: 'Ce qu’on assume, et pourquoi.',
+  sousTitre: 'Ce qu’on assume, et le passage en production.',
   puces: [
     'n8n en tunnel local = choix MVP (0 €, dépend du PC) ; voie de prod 24/7 documentée.',
-    'Périmètre : prototype cohérent de bout en bout, pas une app de production (cas limites non exhaustifs).',
-    'Distance estimée/réelle au MVP ; péages forfaitaires (P2).',
+    'Prototype cohérent de bout en bout, pas une app de production (cas limites non exhaustifs) ; péages forfaitaires (P2).',
+    'Coûts : ~0 €/mois (MVP) · ~0-1 €/mois (éco 24/7, n8n Oracle Free) · ~30 €/mois (prod sereine, recommandée).',
   ],
-  note: 'Assumer franchement : la cohérence du parcours prime sur la perfection d’un maillon.',
+  note: 'Assumer franchement : la cohérence du parcours prime sur la perfection d’un maillon. Le seul élément à changer pour la prod : héberger n8n. 4 scénarios chiffrés dans COUTS_ET_PROD.md.',
 });
 
-slide(12, 'MVP vs prod & coûts', {
-  qui: 'Vincent', duree: '1 min',
-  sousTitre: 'Du 0 € à la prod sereine.',
+slide(16, 'Ouverture vers une V2 & passation livrée', {
+  qui: 'Vincent', duree: '1,5 min',
+  sousTitre: 'Le projet a une suite claire et il est déjà reprenable.',
   puces: [
-    'Aujourd’hui (MVP) : ~0 €/mois (tunnel local).',
-    'Prod « éco » 24/7 : ~0-1 €/mois (n8n sur Oracle Free).',
-    'Prod « sereine » recommandée : ~30 €/mois (Supabase Pro + n8n hébergé).',
+    'Ouverture V2 — P1 : héberger n8n 24/7 + Supabase Pro (base toujours active).',
+    'Ouverture V2 — P2 : distance & péages enrichis par trajet, observabilité coût/tokens par devis, notifications internes (urgent, cas complexe).',
+    'Ouverture V2 — P3 : canal WhatsApp officiel, A/B testing des relances, rôles fins (commercial / manager).',
+    'Passation livrée (L3) : procédure repreneur (5 min), procédure équipe (termes en clair), maintenance (pricing, emails, statuts, relances), backlog ; + README, Swagger /docs, TypeDoc.',
   ],
-  note: 'Détails et 4 scénarios chiffrés dans COUTS_ET_PROD.md. Le seul élément à changer pour la prod : héberger n8n.',
+  note: 'Deux messages : (1) le projet a une suite priorisée, (2) il vit déjà sans nous grâce à la doc de passation L3. Répond au critère « rendre la solution reprenable ».',
 });
 
-slide(13, 'Clôture & questions', {
+slide(17, 'Clôture & questions', {
   qui: 'Toute l’équipe', duree: '+ 10-15 min Q/R',
   sousTitre: 'Ce qu’on a prouvé.',
   puces: [

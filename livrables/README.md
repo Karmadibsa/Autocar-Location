@@ -9,7 +9,7 @@ Dossier des livrables formatés, organisés selon la grille de notation
 | **L1** | Dossier de cadrage | [L1-dossier-cadrage/Dossier de cadrage V4.pdf](L1-dossier-cadrage/Dossier%20de%20cadrage%20V4.pdf) (+ [Argumentaire des choix](L1-dossier-cadrage/Argumentaire-des-choix-NeoTravel.docx) + [wireframes](L1-dossier-cadrage/wireframes)) | 24/06 |
 | **L2** | Prototype & artefacts | [L2-prototype-et-artefacts/L2-Prototype-et-artefacts-NeoTravel.docx](L2-prototype-et-artefacts/L2-Prototype-et-artefacts-NeoTravel.docx) + le **dépôt Git** (code, README, workflows) | 29/06 |
 | **L3** | Documentation de passation | [L3-documentation-de-passation/L3-Documentation-de-passation-NeoTravel.docx](L3-documentation-de-passation/L3-Documentation-de-passation-NeoTravel.docx) | 29/06 |
-| **—** | Support de soutenance | [support-de-soutenance/Support-de-soutenance-NeoTravel.docx](support-de-soutenance/Support-de-soutenance-NeoTravel.docx) | 30/06 |
+| **—** | Support de soutenance | [support-de-soutenance/Support-de-soutenance-NeoTravel.pptx](support-de-soutenance/Support-de-soutenance-NeoTravel.pptx) (PowerPoint à présenter) + [.docx](support-de-soutenance/Support-de-soutenance-NeoTravel.docx) (script/notes) | 30/06 |
 
 ## Correspondance avec la grille de notation
 
@@ -32,6 +32,10 @@ node L2-prototype-et-artefacts/build.js
 node L3-documentation-de-passation/build.js
 node support-de-soutenance/build.js
 # (L1 : node L1-dossier-cadrage/build.js  +  build-argumentaire.js)
+
+# Support de soutenance — PowerPoint (.pptx) à présenter :
+npm install pptxgenjs        # une fois
+node support-de-soutenance/build-pptx.js
 ```
 
 > À l’ouverture dans Word, accepter la mise à jour des champs pour renseigner la
